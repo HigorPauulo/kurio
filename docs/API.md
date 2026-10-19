@@ -238,12 +238,14 @@ criação e nunca recalculado.
 |---|---|---|---|
 | `GET /me` | | 200 `User` | |
 | `PATCH /me` | `{ name?, username?, email?, ensName? }` | 200 `User` | 409 `USERNAME_TAKEN`, `EMAIL_TAKEN`; 422 |
-| `POST /me/avatar` | multipart `file`: PNG, JPEG ou WebP, até 100 KB | 200 `{ avatarUrl }` | 422 `VALIDATION_FAILED` |
+| `POST /me/avatar` | multipart `file`: PNG, JPEG ou WebP, até 32 KB | 200 `{ avatarUrl }` | 422 `VALIDATION_FAILED` |
 | `DELETE /me/avatar` | | 200 `{ avatarUrl: null }` | |
 | `POST /me/password` | `{ currentPassword, newPassword }` | 204, sessão mantida | 422 `WRONG_PASSWORD`, `VALIDATION_FAILED` |
 
-`ensName` aceita o rótulo com ou sem `.eth` e grava com o sufixo; `null` limpa. O limite de 100 KB do
-avatar protege a cota de storage do mock; o cliente confere tipo e tamanho antes de enviar.
+`ensName` aceita o rótulo com ou sem `.eth` e grava com o sufixo; `null` limpa. O limite de 32 KB do
+avatar e a cota total de avatares (400 mil caracteres em data URL, cerca de 9) protegem o orçamento de
+1 MB do snapshot; acabada a cota, o upload responde 422 no campo `file`. O cliente confere tipo e
+tamanho antes de enviar.
 
 ### Carteiras (privado)
 
