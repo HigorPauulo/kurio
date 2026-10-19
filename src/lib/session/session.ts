@@ -8,7 +8,7 @@ export async function switchIdentity(
   queryClient: QueryClient,
   next: Session | null,
 ): Promise<void> {
-  await queryClient.cancelQueries();
+  await queryClient.cancelQueries({ queryKey: keys.privRoot() });
   queryClient.removeQueries({ queryKey: keys.privRoot() });
 
   if (!next) {
