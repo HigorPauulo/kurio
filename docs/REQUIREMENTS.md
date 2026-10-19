@@ -73,7 +73,7 @@ validade, e só ela vira pedido; o **recibo** é snapshot imutável do pedido.
 | AUT-2 | Sessão recuperável após refresh; expiração na navegação e no checkout preserva o contexto | `auth` |
 | AUT-3 | Logout e troca de usuário limpam cache privado e subscriptions | `auth` |
 | AUT-4 | Senha nunca armazenada em claro, nem no cliente nem no mock (hash PBKDF2-SHA256 com salt) | `mockDb.test.ts` |
-| AUT-5 | Pedido de outro usuário não é exibido: a API responde 403 e a tela é a mesma de pedido inexistente, sem nenhum dado | `auth` |
+| AUT-5 | Pedido de outro usuário não é exibido: a API responde 403 e a tela é a mesma de pedido inexistente, sem nenhum dado | `checkout` |
 | PER-1 | Perfil com todos os campos do layout (nome de exibição, usuário, e-mail, Nome ENS, avatar, senha), validação e erro da API por campo; persiste após refresh | `account` |
 | WAL-1 | Carteiras principal e secundária com todos os campos do layout: cadastro, edição, validação | `account` |
 | **Tempo real** | | |

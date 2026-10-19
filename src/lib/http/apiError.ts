@@ -92,3 +92,13 @@ export function normalizeError(error: AxiosError): ApiError {
     serverError?.message ?? error.message,
   );
 }
+
+export function parseResponse<Schema extends z.ZodType>(schema: Schema, data: unknown): z.output<Schema> {
+  const result = schema.safeParse(data);
+  if (result.success) return result.data;
+  const path = result.error.issues[0]?.path.join(".") ?? "";
+  throw new ApiError(
+    { kind: "contract", code: "CONTRACT_VIOLATION", path, retryable: false },
+    "A resposta do servidor não segue o contrato.",
+  );
+}
