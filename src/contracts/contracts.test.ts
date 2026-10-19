@@ -3,7 +3,7 @@ import { ethAmountSchema } from "./common";
 import { nftListQuerySchema } from "./nft";
 import { createOrderBodySchema } from "./order";
 import { realtimeEventSchema } from "./events";
-import { emailSchema, ensNameSchema, passwordSchema } from "./user";
+import { emailSchema, ensNameSchema, passwordSchema, updateMeBodySchema } from "./user";
 import { backupAddressSchema, referralCodeSchema } from "./wallet";
 
 describe("ethAmountSchema", () => {
@@ -33,6 +33,11 @@ describe("campos do usuário", () => {
     }
   });
 
+  it("trata o Nome ENS apagado no perfil como null", () => {
+    expect(updateMeBodySchema.parse({ ensName: "" })).toEqual({ ensName: null });
+    expect(updateMeBodySchema.parse({ ensName: "Ana" })).toEqual({ ensName: "ana.eth" });
+  });
+
   it("normaliza o e-mail para minúsculas sem espaços", () => {
     expect(emailSchema.parse("  Ana@Kurio.TEST ")).toBe("ana@kurio.test");
     expect(emailSchema.safeParse("ana@").success).toBe(false);
@@ -54,6 +59,8 @@ describe("campos da carteira", () => {
 
   it("aceita carteira secundária vazia, endereço 0x ou nome .eth", () => {
     expect(backupAddressSchema.parse(null)).toBeNull();
+    expect(backupAddressSchema.parse("")).toBeNull();
+    expect(backupAddressSchema.parse("   ")).toBeNull();
     expect(backupAddressSchema.safeParse(`0x${"a".repeat(40)}`).success).toBe(true);
     expect(backupAddressSchema.safeParse("nova.eth").success).toBe(true);
     expect(backupAddressSchema.safeParse("nova").success).toBe(false);

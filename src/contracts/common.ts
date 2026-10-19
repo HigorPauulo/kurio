@@ -19,6 +19,10 @@ export const ethAmountSchema = z
   .regex(ETH_AMOUNT_PATTERN, "Valor em ETH inválido.")
   .brand<"EthAmount">();
 
+export function emptyToNull(value: unknown): unknown {
+  return typeof value === "string" && value.trim() === "" ? null : value;
+}
+
 export const dateTimeSchema = z.iso.datetime();
 
 export const chainSchema = z.enum(["ethereum", "polygon", "base"]);
