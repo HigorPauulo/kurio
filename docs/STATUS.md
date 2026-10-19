@@ -8,10 +8,9 @@
 
 > **Fatia 1 de 9, em andamento.** Existem o esqueleto (Vite, React, TypeScript strict), o MSW com o
 > Socket.IO simulado, o Playwright, o ESLint com as regras de fronteira, o Tailwind v4, o shadcn/ui, o Router (com a
-> tela de não encontrado), o Query e o transporte HTTP com `configureHttp`. O spike aprovou o binding com três contornos
+> tela de não encontrado), o Query, o transporte HTTP com `configureHttp` e o Vitest. O spike aprovou o binding com três contornos
 > ([DECISIONS](DECISIONS.md)), provados por 4 testes E2E em desktop e mobile. Falta o resto da
-> fundação: Vitest, CI e `vercel.json`. Os comandos
-> `test:unit` e `verify` do README ainda não existem.
+> fundação: CI e `vercel.json`. `pnpm verify` roda o gate completo.
 
 | | |
 |---|---|
@@ -22,8 +21,7 @@
 
 ## O que fazer agora, nesta ordem
 
-1. **Fatia 1, restante da fundação:** Vitest, script `verify`, CI e `vercel.json`, em
-   `feature/foundation`.
+1. **Fatia 1, restante da fundação:** CI e `vercel.json`, em `feature/foundation`.
 2. **Fechar a fatia 1:** conectar a Vercel, PR para `develop` com CI verde.
 3. **Fatia 2:** contratos e mocks.
 
@@ -45,7 +43,7 @@
 |---|---|
 | Fatias | 0 de 9 (18 h estimadas, 6 h de margem) |
 | Requisitos | 45 funcionais e 7 não funcionais em [REQUIREMENTS](REQUIREMENTS.md) |
-| Verificação | 7 specs E2E, 3 arquivos de unidade e o roteiro manual em [QUALITY](QUALITY.md) |
+| Verificação | 7 specs E2E, 4 arquivos de unidade e o roteiro manual em [QUALITY](QUALITY.md) |
 | Decisões | 30 em [DECISIONS](DECISIONS.md) |
 
 Contados em 2026-10-19. Mudou um documento, atualize esta tabela no mesmo commit.

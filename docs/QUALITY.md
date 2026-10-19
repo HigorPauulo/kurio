@@ -9,7 +9,7 @@ erro não aparece na tela, e o resto é roteiro manual executado antes da entreg
 | Nível | Ferramenta | Alvo | Reprova |
 |---|---|---|---|
 | Estático | `tsc --noEmit`, ESLint `--max-warnings=0` | `src/`, `mocks/`, `e2e/` | qualquer erro ou warning |
-| Unidade | Vitest | `lib/eth`, `eventStore`, `MockDb` | qualquer falha |
+| Unidade | Vitest | `lib/eth`, `normalizeError`, `eventStore`, `MockDb` | qualquer falha |
 | E2E | Playwright 1.64.1, Chromium, desktop (1440) e mobile (390) | fluxos pela UI, com MSW e Socket.IO reais | qualquer falha; flake não se resolve com `retries` |
 | Acessibilidade | `@axe-core/playwright` em toda spec | telas visitadas | violação `serious` ou `critical` (WCAG 2.2 AA) |
 | Roteiro | navegador, 390, 768 e 1440 | §4 | item não conferido |
@@ -21,6 +21,7 @@ erro não aparece na tela, e o resto é roteiro manual executado antes da entreg
 |---|---|
 | `eth.test.ts` | 18 casas; `0.1 + 0.2`; acima de `2^53` wei; `floor` do desconto; formato inválido; `formatEth` exato com vírgula; `parseEthInput` com vírgula e ponto |
 | `eventStore.test.ts` | duplicata por `id`; versão menor e igual; audiência de outro usuário; pedido terminal; semeadura por REST |
+| `apiError.test.ts` | timeout e falha de rede recuperáveis; corpo de erro da API com mensagem, `details` e `fieldErrors`; 5xx fora do formato vira `INTERNAL` recuperável; 4xx fora do formato vira `BAD_REQUEST` não recuperável |
 | `mockDb.test.ts` | idempotência (mesmo hash, hash diferente); cotação de uso único; reserva e liberação; remoção parcial do carrinho; hash PBKDF2 sem senha em claro; rollback de commit; fixtures com ≥ 2 usuários e variedade para filtros |
 
 ## 3. E2E
