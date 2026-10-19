@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ETH_AMOUNT_PATTERN } from "@/lib/eth";
 
 export function idSchema(prefix: string): z.ZodString {
   return z.string().startsWith(`${prefix}_`, `ID inválido: esperado prefixo ${prefix}_.`);
@@ -15,8 +16,12 @@ export const walletIdSchema = idSchema("wal");
 
 export const ethAmountSchema = z
   .string()
-  .regex(/^(0|[1-9]\d*)(\.\d{1,18})?$/, "Valor em ETH inválido.")
+  .regex(ETH_AMOUNT_PATTERN, "Valor em ETH inválido.")
   .brand<"EthAmount">();
+
+export function emptyToNull(value: unknown): unknown {
+  return typeof value === "string" && value.trim() === "" ? null : value;
+}
 
 export const dateTimeSchema = z.iso.datetime();
 

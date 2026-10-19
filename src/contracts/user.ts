@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { dateTimeSchema, userIdSchema } from "./common";
+import { dateTimeSchema, emptyToNull, userIdSchema } from "./common";
 
 const ENS_SUFFIX = ".eth";
 const ENS_LABEL = /^[a-z0-9](?:[a-z0-9-]{1,61}[a-z0-9])$/;
@@ -78,7 +78,7 @@ export const updateMeBodySchema = z
     name: displayNameSchema,
     username: usernameSchema,
     email: emailSchema,
-    ensName: ensNameSchema.nullable(),
+    ensName: z.preprocess(emptyToNull, ensNameSchema.nullable()),
   })
   .partial();
 

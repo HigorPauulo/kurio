@@ -1,5 +1,5 @@
 import type { UserId } from "@/contracts/common";
-import type { Tables } from "./tables";
+import { emptyTables, type Tables } from "./tables";
 
 export const SCHEMA_VERSION = 1;
 export const STORAGE_KEY = `kurio:mockdb:v${SCHEMA_VERSION}`;
@@ -102,15 +102,30 @@ function assertInvariants(draft: Tables): void {
   }
 }
 
+const TABLE_NAMES = Object.keys(emptyTables()) as (keyof Tables)[];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
 function isSnapshot(value: unknown): value is { schemaVersion: number; tables: Tables } {
+  if (!isRecord(value) || !isRecord(value.tables)) return false;
+  const { tables } = value;
   return (
-    typeof value === "object" &&
-    value !== null &&
-    "schemaVersion" in value &&
-    "tables" in value &&
-    typeof value.tables === "object" &&
-    value.tables !== null
+    TABLE_NAMES.every((name) => isRecord(tables[name])) &&
+    isRecord(tables.meta) &&
+    typeof tables.meta.sequence === "number"
   );
+}
+
+function carryVersions<Row extends Versioned>(
+  previous: Record<string, Row>,
+  next: Record<string, Row>,
+): void {
+  for (const [id, row] of Object.entries(next)) {
+    const before = previous[id];
+    if (before) row.version = before.version + 1;
+  }
 }
 
 export function createMockDb(options: MockDbOptions): MockDb {
@@ -196,7 +211,13 @@ export function createMockDb(options: MockDbOptions): MockDb {
       persist(draft);
 
       state = draft;
-      for (const listener of listeners) listener(events);
+      for (const listener of listeners) {
+        try {
+          listener(events);
+        } catch (error) {
+          globalThis.reportError?.(error);
+        }
+      }
       return events;
     },
 
@@ -206,7 +227,12 @@ export function createMockDb(options: MockDbOptions): MockDb {
     },
 
     reset() {
-      state = seed();
+      const next = seed();
+      next.meta.sequence = state.meta.sequence;
+      carryVersions(state.nfts, next.nfts);
+      carryVersions(state.carts, next.carts);
+      carryVersions(state.orders, next.orders);
+      state = next;
       storage?.removeItem(STORAGE_KEY);
     },
   };

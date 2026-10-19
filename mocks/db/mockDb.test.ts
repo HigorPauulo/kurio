@@ -15,6 +15,7 @@ import { nftSchema } from "@/contracts/nft";
 import { userSchema } from "@/contracts/user";
 import { createWalletBodySchema, walletSchema } from "@/contracts/wallet";
 import { compareEth, minEth } from "@/lib/eth";
+import { refreshNft } from "./nftUpdates";
 import { verifyPassword } from "./password";
 import { createSeed } from "./seed";
 
@@ -183,6 +184,23 @@ describe("commit", () => {
     ).toThrow(MockDbError);
   });
 
+  it("não deixa a falha de um inscrito derrubar o commit nem os outros inscritos", () => {
+    const db = createDb();
+    const received: string[] = [];
+    db.subscribe(() => {
+      throw new Error("inscrito com defeito");
+    });
+    db.subscribe((events) => received.push(...events.map((event) => event.id)));
+
+    const events = db.commit((draft, { emit }) => {
+      draft.nfts.nft_a.likes = 1;
+      emit({ type: "nft.updated", resourceId: "nft_a", audience: null, data: {} });
+    });
+
+    expect(events).toHaveLength(1);
+    expect(received).toEqual(["evt_1"]);
+  });
+
   it("avisa os inscritos com os eventos do commit e para depois de cancelar", () => {
     const db = createDb();
     const received: string[] = [];
@@ -232,6 +250,33 @@ describe("persistência", () => {
     ).toThrow(expect.objectContaining({ code: "VALIDATION_FAILED" }));
 
     expect(db.read((tables) => tables.nfts.nft_a.likes)).toBe(0);
+  });
+
+  it("reset continua a sequência de eventos e sobe as versões, para o cliente não descartar o que vem depois", () => {
+    const db = createDb();
+    const emitPrice = (): ReturnType<typeof db.commit> =>
+      db.commit((draft, { emit }) => {
+        draft.nfts.nft_a.likes += 1;
+        emit({ type: "nft.updated", resourceId: "nft_a", audience: null, data: {} });
+      });
+
+    const [before] = emitPrice();
+    db.reset();
+    const [after] = emitPrice();
+
+    expect(after.id).not.toBe(before.id);
+    expect(after.version).toBeGreaterThan(before.version);
+  });
+
+  it("descarta snapshot sem alguma das tabelas e usa o seed", () => {
+    const withoutQuotes: Partial<Tables> = emptyTables();
+    delete withoutQuotes.quotes;
+    storage.setItem(STORAGE_KEY, JSON.stringify({ schemaVersion: SCHEMA_VERSION, tables: withoutQuotes }));
+
+    const db = createDb();
+
+    expect(Object.keys(db.read((tables) => tables.nfts))).toEqual(["nft_a", "nft_b"]);
+    expect(() => db.commit((draft) => void draft)).not.toThrow();
   });
 
   it("reset restaura o seed e apaga o snapshot", () => {
@@ -306,6 +351,21 @@ describe("seed", () => {
     expect(prices.every((price) => (price.split(".")[1] ?? "").length <= 6)).toBe(true);
     for (const nft of nfts) {
       expect(nft.priceFrom).toBe(nft.editions.map((edition) => edition.price).reduce(minEth));
+    }
+  });
+
+  it("gera IDs de coleção sem acento", () => {
+    const collectionIds = new Set(nfts.map((nft) => nft.collection.id));
+    expect(collectionIds).toContain("col_nomades");
+    expect(collectionIds).toContain("col_baroes");
+    expect([...collectionIds].every((id) => /^col_[a-z0-9]+(-[a-z0-9]+)*$/.test(id))).toBe(true);
+  });
+
+  it("calcula status e priceFrom com as mesmas regras do servidor", () => {
+    for (const nft of nfts) {
+      const recalculated = structuredClone(nft);
+      refreshNft(recalculated);
+      expect(recalculated).toEqual(nft);
     }
   });
 

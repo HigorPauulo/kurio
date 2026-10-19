@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { chainSchema, dateTimeSchema, walletIdSchema } from "./common";
+import { chainSchema, dateTimeSchema, emptyToNull, walletIdSchema } from "./common";
 import { displayNameSchema } from "./user";
 
 const EVM_ADDRESS = /^0x[0-9a-fA-F]{40}$/;
@@ -13,14 +13,17 @@ export const walletAddressSchema = z
   .trim()
   .regex(EVM_ADDRESS, "Endereço inválido: use 0x seguido de 40 caracteres hexadecimais.");
 
-export const backupAddressSchema = z
-  .string()
-  .trim()
-  .refine(
-    (value) => EVM_ADDRESS.test(value) || ENS_NAME.test(value.toLowerCase()),
-    "Use um endereço 0x ou um nome .eth.",
-  )
-  .nullable();
+export const backupAddressSchema = z.preprocess(
+  emptyToNull,
+  z
+    .string()
+    .trim()
+    .refine(
+      (value) => EVM_ADDRESS.test(value) || ENS_NAME.test(value.toLowerCase()),
+      "Use um endereço 0x ou um nome .eth.",
+    )
+    .nullable(),
+);
 
 export const walletLabelSchema = z
   .string()

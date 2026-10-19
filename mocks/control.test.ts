@@ -27,6 +27,7 @@ beforeEach(() => {
     setScenarioNames: (names) => {
       scenarioNames = names;
     },
+    defaultScenarioNames: ["default"],
     build: "abc1234",
   });
 });
@@ -95,11 +96,13 @@ describe("sessions e inspect", () => {
     expect(control.inspect.orders()).toEqual([]);
   });
 
-  it("reset volta ao seed e expõe o SHA do build", () => {
+  it("reset volta ao seed e ao cenário padrão, e expõe o SHA do build", () => {
     control.catalog.setPrice("nft_001", "ed_001_1", "1.99");
+    control.scenario.set("offline");
     control.reset();
 
     expect(db.read((tables) => tables.nfts.nft_001.priceFrom)).toBe("2.38");
+    expect(control.scenario.get()).toBe("default");
     expect(control.build).toBe("abc1234");
   });
 });

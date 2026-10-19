@@ -1,6 +1,6 @@
 import type { Category, Chain, EthAmount } from "@/contracts/common";
 import type { Edition, Nft } from "@/contracts/nft";
-import { minEth } from "@/lib/eth";
+import { refreshNft } from "../db/nftUpdates";
 
 const PLACEHOLDER_IMAGE = "/images/nfts/placeholder.svg";
 const FIRST_CREATED_AT = Date.parse("2026-09-01T12:00:00.000Z");
@@ -64,7 +64,12 @@ const ROWS: NftRow[] = [
 ];
 
 function collectionId(name: string): string {
-  return `col_${name.normalize("NFD").replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase()}`;
+  const slug = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .toLowerCase();
+  return `col_${slug}`;
 }
 
 function buildEdition(nftNumber: string, index: number, row: EditionRow): Edition {
@@ -76,7 +81,7 @@ function buildEdition(nftNumber: string, index: number, row: EditionRow): Editio
     available,
     supply,
     maxPerOrder,
-    status: unavailable ? "unavailable" : available > 0 ? "available" : "sold_out",
+    status: unavailable ? "unavailable" : "available",
   };
 }
 
@@ -85,7 +90,7 @@ function buildNft(row: NftRow, index: number): Nft {
   const editions = row.editions.map((edition, editionIndex) =>
     buildEdition(number, editionIndex, edition),
   );
-  return {
+  const nft: Nft = {
     id: `nft_${number}`,
     name: row.name,
     description: `${row.name}, da coleção ${row.collection}.`,
@@ -100,12 +105,14 @@ function buildNft(row: NftRow, index: number): Nft {
       height: 600,
     })),
     editions,
-    priceFrom: editions.map((edition) => edition.price).reduce(minEth),
+    priceFrom: editions[0].price,
     featured: row.featured ?? false,
     likes: row.likes,
     createdAt: new Date(FIRST_CREATED_AT + index * DAY_MS).toISOString(),
     version: 0,
   };
+  refreshNft(nft);
+  return nft;
 }
 
 export const NFT_FIXTURES: readonly Nft[] = ROWS.map(buildNft);

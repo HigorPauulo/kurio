@@ -4,6 +4,7 @@ import {
   addEth,
   compareEth,
   formatEth,
+  formatEthInput,
   fromWei,
   minEth,
   multiplyEth,
@@ -69,6 +70,15 @@ describe("formatEth", () => {
     expect(formatEth(eth("1234567.000000000000000001"))).toBe("1.234.567,000000000000000001");
     expect(formatEth(eth("12.50"))).toBe("12,5");
     expect(formatEth(eth("0"))).toBe("0");
+  });
+});
+
+describe("formatEthInput", () => {
+  it("prepara o valor para campo de formulário, sem milhar, e volta igual pelo parseEthInput", () => {
+    expect(formatEthInput(eth("1234.5"))).toBe("1234,5");
+    for (const value of ["1234", "1234.5", "0.000000000000000001", "12.5"]) {
+      expect(parseEthInput(formatEthInput(eth(value)))).toBe(value);
+    }
   });
 });
 
