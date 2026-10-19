@@ -169,12 +169,30 @@ describe("perfil", () => {
     };
 
     const ok = await upload(1_000, "image/webp");
-    const big = await upload(100_001, "image/webp");
+    const big = await upload(32_001, "image/webp");
     const gif = await upload(1_000, "image/gif");
 
     expect(ok.json.avatarUrl).toMatch(/^data:image\/webp;base64,/);
     expect(big.json.error.fieldErrors.file).toBeDefined();
     expect(gif.json.error.fieldErrors.file).toBeDefined();
+  });
+
+  it("recusa avatar quando a cota do ambiente acaba, sem travar o resto do banco", async () => {
+    const statuses: number[] = [];
+    for (let index = 0; index < 12; index += 1) {
+      const { json } = await call("POST", "/auth/register", {
+        body: { username: `user${index}`, email: `user${index}@kurio.test`, password: "Senha123" },
+      });
+      const form = new FormData();
+      form.set("file", new File([new Uint8Array(32_000)], "avatar", { type: "image/png" }));
+      statuses.push((await call("POST", "/me/avatar", { token: json.token, form })).status);
+    }
+
+    expect(statuses).toContain(200);
+    expect(statuses.at(-1)).toBe(422);
+    const persisted = db.read((tables) => JSON.stringify(tables).length);
+    expect(persisted).toBeLessThan(600_000);
+    expect(await login("ana@kurio.test")).toMatch(/^tok_/);
   });
 });
 

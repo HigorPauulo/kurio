@@ -12,7 +12,8 @@ import {
 } from "./shared";
 
 const AVATAR_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
-const AVATAR_MAX_BYTES = 100_000;
+const AVATAR_MAX_BYTES = 32_000;
+const AVATAR_TOTAL_CHARS = 400_000;
 
 async function toDataUrl(file: File): Promise<string> {
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -72,10 +73,25 @@ export function meHandlers(deps: HandlerDeps): HttpHandler[] {
           return fieldError(request, 422, "VALIDATION_FAILED", "file", "Envie uma imagem PNG, JPEG ou WebP.");
         }
         if (file.size > AVATAR_MAX_BYTES) {
-          return fieldError(request, 422, "VALIDATION_FAILED", "file", "A imagem deve ter até 100 KB.");
+          return fieldError(request, 422, "VALIDATION_FAILED", "file", "A imagem deve ter até 32 KB.");
         }
 
         const avatarUrl = await toDataUrl(file);
+        const othersChars = db.read((tables) =>
+          Object.values(tables.users).reduce(
+            (total, user) => (user.id === auth.userId ? total : total + (user.avatarUrl?.length ?? 0)),
+            0,
+          ),
+        );
+        if (othersChars + avatarUrl.length > AVATAR_TOTAL_CHARS) {
+          return fieldError(
+            request,
+            422,
+            "VALIDATION_FAILED",
+            "file",
+            "O ambiente de demonstração não tem espaço para mais avatares. Reinicie os dados para liberar.",
+          );
+        }
         db.commit((draft) => {
           draft.users[auth.userId].avatarUrl = avatarUrl;
         });
