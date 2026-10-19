@@ -299,7 +299,7 @@ Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lan�
 
   `worker-src` registra o Service Worker; `connect-src 'self'` basta porque `ws.link` substitui o
   `WebSocket` e nenhuma conexão real abre; `img-src data:` serve o avatar; `style-src 'unsafe-inline'`
-  cobre os atributos `style` do Radix. Não há script inline.
+  cobre os atributos `style` de posicionamento do Base UI. Não há script inline.
 
 ## 14. Comportamento de interface
 

@@ -62,7 +62,7 @@ Executado no build de produção antes da entrega, em 390, 768 e 1440:
 ## 5. Acessibilidade
 
 - Landmarks e um `h1` por rota; foco vai ao `h1` após navegar; `document.title` por rota.
-- Diálogos (Radix): foco preso, `Esc` fecha, foco devolvido ao gatilho.
+- Diálogos (Base UI): foco preso, `Esc` fecha, foco devolvido ao gatilho.
 - Campo com `<label>`; erro em `aria-describedby` com `aria-invalid`; submit inválido foca o primeiro erro.
 - Live region única alimentada por `announce()`; anúncio de tempo real passa pelo dedupe do `eventStore`.
 - Estado nunca só por cor: esgotado, preço alterado e recusado têm texto e ícone.
