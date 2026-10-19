@@ -4,6 +4,8 @@ import type * as ClientModule from "./client";
 
 let client: typeof ClientModule;
 
+let rejectionCode = "SESSION_EXPIRED";
+
 function rejectAsSessionExpired(request: InternalAxiosRequestConfig): Promise<never> {
   return Promise.reject(
     new AxiosError("expired", "ERR_BAD_REQUEST", request, undefined, {
@@ -13,7 +15,7 @@ function rejectAsSessionExpired(request: InternalAxiosRequestConfig): Promise<ne
       config: request,
       data: {
         error: {
-          code: "SESSION_EXPIRED",
+          code: rejectionCode,
           message: "Sessão expirada.",
           retryable: false,
           requestId: "req-1",
@@ -25,6 +27,7 @@ function rejectAsSessionExpired(request: InternalAxiosRequestConfig): Promise<ne
 
 beforeEach(async () => {
   vi.resetModules();
+  rejectionCode = "SESSION_EXPIRED";
   client = await import("./client");
   client.http.defaults.adapter = rejectAsSessionExpired;
 });
@@ -76,6 +79,20 @@ describe("expiração de sessão", () => {
     await client.http.get("/me").catch(() => undefined);
 
     expect(onSessionExpired).toHaveBeenCalledTimes(2);
+  });
+
+  it("trata como expirada a sessão que o servidor não reconhece mais", async () => {
+    rejectionCode = "UNAUTHENTICATED";
+    const onSessionExpired = vi.fn();
+    client.configureHttp({
+      getToken: () => "token-a",
+      getGuestCartId: () => null,
+      onSessionExpired,
+    });
+
+    await client.http.get("/me").catch(() => undefined);
+
+    expect(onSessionExpired).toHaveBeenCalledTimes(1);
   });
 
   it("não dispara para requisição enviada sem token", async () => {

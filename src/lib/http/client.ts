@@ -8,6 +8,7 @@ export type HttpConfig = {
 };
 
 const BEARER_PREFIX = "Bearer ";
+const SESSION_LOST_CODES = new Set(["SESSION_EXPIRED", "UNAUTHENTICATED"]);
 
 let config: HttpConfig = {
   getToken: () => null,
@@ -57,7 +58,7 @@ http.interceptors.response.use(undefined, (error: unknown) => {
   }
 
   const apiError = normalizeError(error);
-  if (apiError.info.code === "SESSION_EXPIRED") {
+  if (SESSION_LOST_CODES.has(apiError.info.code)) {
     const sentToken = readSentToken(error.config);
     if (sentToken !== null && sentToken !== lastExpiredToken) {
       lastExpiredToken = sentToken;
