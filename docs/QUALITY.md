@@ -9,7 +9,7 @@ erro não aparece na tela, e o resto é roteiro manual executado antes da entreg
 | Nível | Ferramenta | Alvo | Reprova |
 |---|---|---|---|
 | Estático | `tsc --noEmit`, ESLint `--max-warnings=0` | `src/`, `mocks/`, `e2e/` | qualquer erro ou warning |
-| Unidade | Vitest | `lib/eth`, `normalizeError`, `eventStore`, `MockDb` | qualquer falha |
+| Unidade | Vitest | `lib/eth`, `lib/http`, `eventStore`, `MockDb`, handshake do mock | qualquer falha |
 | E2E | Playwright 1.64.1, Chromium, desktop (1440) e mobile (390) | fluxos pela UI, com MSW e Socket.IO reais | qualquer falha; flake não se resolve com `retries` |
 | Acessibilidade | `@axe-core/playwright` em toda spec | telas visitadas | violação `serious` ou `critical` (WCAG 2.2 AA) |
 | Roteiro | navegador, 390, 768 e 1440 | §4 | item não conferido |
@@ -21,7 +21,9 @@ erro não aparece na tela, e o resto é roteiro manual executado antes da entreg
 |---|---|
 | `eth.test.ts` | 18 casas; `0.1 + 0.2`; acima de `2^53` wei; `floor` do desconto; formato inválido; `formatEth` exato com vírgula; `parseEthInput` com vírgula e ponto |
 | `eventStore.test.ts` | duplicata por `id`; versão menor e igual; audiência de outro usuário; pedido terminal; semeadura por REST |
-| `apiError.test.ts` | timeout e falha de rede recuperáveis; corpo de erro da API com mensagem, `details` e `fieldErrors`; 5xx fora do formato vira `INTERNAL` recuperável; 4xx fora do formato vira `BAD_REQUEST` não recuperável |
+| `apiError.test.ts` | timeout e falha de rede recuperáveis; corpo de erro da API com mensagem, `details` e `fieldErrors`; fora do formato, código derivado do status (400, 401, 404, 500, 503) e 408, 429 e 5xx recuperáveis; código desconhecido preserva mensagem e `requestId` |
+| `client.test.ts` | expiração dispara uma vez por token enviado, inclusive com requisições simultâneas e novo login antes da resposta antiga; requisição sem token não dispara; erro fora do Axios chega intacto |
+| `handshake.test.ts` | token do CONNECT com e sem namespace; JSON ilegível, token que não é texto e auth ausente viram `null` |
 | `mockDb.test.ts` | idempotência (mesmo hash, hash diferente); cotação de uso único; reserva e liberação; remoção parcial do carrinho; hash PBKDF2 sem senha em claro; rollback de commit; fixtures com ≥ 2 usuários e variedade para filtros |
 
 ## 3. E2E
@@ -45,6 +47,7 @@ declara o cenário. Regras:
 | `checkout` | `fast` | catálogo até o recibo; Carla bloqueada sem Nome ENS; `setPrice` depois não altera o recibo; carrinho perde só o comprado | PAG-4, PED-2..4, MOC-2 |
 | `checkout-failures` | `payment-refused`, `order-timeout`, `wallet-reject` | duplo clique e retry geram um pedido só; reload no timeout recupera o mesmo pedido; recusa preserva o carrinho | PAG-1, PAG-3, PED-3 |
 | `realtime` | `price-change-on-review`, `socket-duplicates`, `socket-drop` | anúncio e resumo novo; "Confirmar" bloqueado até aceite; valor não regride; anúncio único; reload no pendente mantém o pedido; `stats()` zera após sair | CRT-5, PAG-2, PED-1, RT, MOC-7 |
+| `bootstrap` | Service Worker bloqueado | aviso no lugar da tela em branco | NF-6 |
 
 ## 4. Roteiro manual
 
@@ -78,6 +81,8 @@ auditoria. O relatório (HTML) da URL pública vai em `lighthouse/` na entrega.
 
 ## 7. CI
 
-GitHub Actions a cada push e PR: `pnpm install --frozen-lockfile` → `pnpm verify` (lint, typecheck,
-unidade, build) → `pnpm exec playwright install --with-deps chromium` → `pnpm test:e2e` → upload do
-relatório e dos traces. É o mesmo gate da máquina local.
+GitHub Actions a cada PR e a cada push em `main` e `develop` (branch de trabalho roda pelo PR, sem
+execução duplicada): `pnpm install --frozen-lockfile` → `pnpm verify` (lint, typecheck, unidade,
+build) → `pnpm exec playwright install --with-deps chromium` → `pnpm test:e2e`, que no CI serve o
+`dist` do `verify` sem compilar de novo → upload do relatório e dos traces. É o mesmo gate da
+máquina local.

@@ -1,6 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const PORT = 4173;
+const PREVIEW = `pnpm preview --port ${PORT} --strictPort`;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -33,7 +34,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `pnpm build && pnpm preview --port ${PORT} --strictPort`,
+    command: process.env.CI ? PREVIEW : `pnpm build && ${PREVIEW}`,
     port: PORT,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
