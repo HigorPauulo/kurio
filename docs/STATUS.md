@@ -2,34 +2,33 @@
 
 **Este é o único documento que declara estado.** Voltou de uma pausa? Leia só este.
 
-**Atualizado em 2026-10-19: especificação fechada; nenhuma linha de código; entrega em até 24 h.**
+**Atualizado em 2026-10-19: especificação fechada e repositório no GitHub; nenhuma linha de código;
+entrega em até 24 h.**
 
 ## Onde estou
 
-> **Fatia 0 de 9.** A documentação é o contrato que o código vai cumprir. Não existe repositório,
-> `package.json` nem deploy, então os comandos do README ainda não rodam. A primeira fatia é a
-> fundação com o spike de Socket.IO sobre MSW, o maior risco técnico ([ROADMAP](ROADMAP.md#a-fila)).
+> **Fatia 0 de 9.** A documentação é o contrato que o código vai cumprir. Não existe `package.json`
+> nem deploy, então os comandos do README ainda não rodam. A primeira fatia é a fundação com o spike
+> de Socket.IO sobre MSW, o maior risco técnico ([ROADMAP](ROADMAP.md#a-fila)).
 
 | | |
 |---|---|
-| **Repositório** | Não existe |
-| **`develop` / `main`** | Não existem |
+| **Repositório** | github.com/HigorPauulo/kurio |
+| **`develop` / `main`** | Existem; `main` é a padrão e só recebe publicação |
 | **Deploy** | Não existe |
 | **Protótipo** | Figma do desafio; campos já mapeados em [API](API.md#campos-do-layout) |
 
 ## O que fazer agora, nesta ordem
 
-1. **Iniciar o repositório:** `git init -b main`, commit da documentação, branch `develop`, publicação
-   no GitHub.
-2. **Fatia 1:** fundação e spike. Se o binding não funcionar em 2 h, seguir com polling
-   ([ROADMAP](ROADMAP.md#riscos)).
-3. **Fatia 2:** contratos e mocks.
+1. **Fatia 1:** fundação e spike, em `feature/foundation`. Se o binding não funcionar em 2 h, seguir
+   com polling ([ROADMAP](ROADMAP.md#riscos)).
+2. **Fatia 2:** contratos e mocks.
 
 ## O que trava
 
 | Trava | Bloqueia | Dono |
 |---|---|---|
-| Conta GitHub e Vercel de destino (**G1**) | CI da fatia 1 e publicação da fatia 9 | Higor |
+| Conta Vercel de destino (**G1**, GitHub resolvido) | Publicação da fatia 9 | Higor |
 
 ## Dívida aberta
 
