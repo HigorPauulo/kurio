@@ -1,0 +1,115 @@
+import { expect, test } from "@playwright/test";
+import { expectNoA11yViolations, login, logout, PASSWORD, startFresh } from "./support/kurio.js";
+
+test.beforeEach(async ({ page }) => {
+  await startFresh(page);
+});
+
+test("cadastro confere a confirmação de senha, mostra conflito no campo e entra com a conta nova", async ({
+  page,
+}) => {
+  await page.goto("/register");
+  const dialog = page.getByRole("dialog", { name: "Criar conta" });
+  await expect(dialog).toBeVisible();
+  await expectNoA11yViolations(page);
+  await dialog.getByLabel("Nome de usuário").fill("carla");
+  await dialog.getByLabel("E-mail").fill("nova@kurio.test");
+  await dialog.getByLabel("Senha", { exact: true }).fill("Senha123");
+  await dialog.getByLabel("Confirmar senha").fill("Outra123");
+  await dialog.getByRole("button", { name: "Criar conta" }).click();
+  await expect(dialog.getByText("As senhas não conferem.")).toBeVisible();
+
+  await dialog.getByLabel("Confirmar senha").fill("Senha123");
+  await dialog.getByRole("button", { name: "Criar conta" }).click();
+  await expect(dialog.getByText("Este nome de usuário já está em uso.")).toBeVisible();
+  await expect(dialog.getByLabel("Nome de usuário")).toHaveAttribute("aria-invalid", "true");
+
+  await dialog.getByLabel("Nome de usuário").fill("dani");
+  await dialog.getByRole("button", { name: "Criar conta" }).click();
+  await expect(page.getByRole("button", { name: "Sair" })).toBeVisible();
+});
+
+test("login com senha errada avisa sem entrar", async ({ page }) => {
+  await page.goto("/login");
+  const dialog = page.getByRole("dialog", { name: "Entrar" });
+  await dialog.getByLabel("E-mail").fill("ana@kurio.test");
+  await dialog.getByLabel("Senha").fill("Errada123");
+  await dialog.getByRole("button", { name: "Entrar" }).click();
+
+  await expect(dialog.getByText("E-mail ou senha incorretos.")).toBeVisible();
+  await expectNoA11yViolations(page);
+});
+
+test("rota privada sem sessão leva ao login e volta ao destino", async ({ page }) => {
+  await page.goto("/account/profile");
+  await expect(page).toHaveURL(/\/login\?redirect=%2Faccount%2Fprofile/);
+
+  const dialog = page.getByRole("dialog", { name: "Entrar" });
+  await dialog.getByLabel("E-mail").fill("ana@kurio.test");
+  await dialog.getByLabel("Senha").fill(PASSWORD);
+  await dialog.getByRole("button", { name: "Entrar" }).click();
+
+  await expect(page).toHaveURL(/\/account\/profile$/);
+  await expect(page.getByRole("heading", { name: "Perfil do colecionador" })).toBeVisible();
+});
+
+test("redirect para fora do site cai no início", async ({ page }) => {
+  await login(page, "ana@kurio.test", "/\\evil.com");
+
+  const url = new URL(page.url());
+  expect(url.pathname).toBe("/");
+  expect(url.host).toBe("localhost:4173");
+});
+
+test("expiração no meio do fluxo mostra o diálogo e o login de novo volta ao mesmo lugar", async ({ page }) => {
+  await login(page, "ana@kurio.test", "/account/profile");
+  await page.evaluate(() =>
+    (window as unknown as { __kurio: { sessions: { expire: (id: string) => void } } }).__kurio.sessions.expire(
+      "usr_ana",
+    ),
+  );
+
+  await page.getByRole("button", { name: "Salvar", exact: true }).click();
+  const expired = page.getByRole("dialog", { name: "Sua sessão expirou" });
+  await expect(expired).toBeVisible();
+  await expectNoA11yViolations(page);
+
+  await expired.getByRole("button", { name: "Entrar de novo" }).click();
+  const dialog = page.getByRole("dialog", { name: "Entrar" });
+  await dialog.getByLabel("E-mail").fill("ana@kurio.test");
+  await dialog.getByLabel("Senha").fill(PASSWORD);
+  await dialog.getByRole("button", { name: "Entrar" }).click();
+
+  await expect(page).toHaveURL(/\/account\/profile$/);
+  await expect(page.getByRole("dialog", { name: "Sua sessão expirou" })).toHaveCount(0);
+});
+
+test("troca de Ana para Bruno sem recarregar não deixa nenhum dado da Ana na tela", async ({ page }) => {
+  const nav = page.getByRole("navigation");
+  await login(page, "ana@kurio.test", "/account/profile");
+  await expect(page.getByLabel("Apelido da carteira")).toHaveValue("Principal");
+  await nav.getByRole("link", { name: "Carteiras" }).click();
+  await expect(page.getByRole("form", { name: "Carteira principal" }).getByLabel("Apelido da carteira")).toHaveValue(
+    "Principal",
+  );
+  await logout(page);
+
+  await nav.getByRole("link", { name: "Entrar" }).click();
+  const dialog = page.getByRole("dialog", { name: "Entrar" });
+  await dialog.getByLabel("E-mail").fill("bruno@kurio.test");
+  await dialog.getByLabel("Senha").fill(PASSWORD);
+  await dialog.getByRole("button", { name: "Entrar" }).click();
+
+  await nav.getByRole("link", { name: "Perfil" }).click();
+  await expect(page.getByLabel("E-mail")).toHaveValue("bruno@kurio.test");
+  await nav.getByRole("link", { name: "Carteiras" }).click();
+  await expect(page.getByText("Você ainda não adicionou uma carteira secundária.")).toBeVisible();
+
+  const visibleText = await page.locator("body").innerText();
+  const visibleValues = await page.locator("input").evaluateAll((inputs) =>
+    inputs.map((input) => (input as HTMLInputElement).value).join(" "),
+  );
+  for (const anaData of ["ana@kurio.test", "Ana Lima", "ana.eth", "Principal"]) {
+    expect(`${visibleText} ${visibleValues}`).not.toContain(anaData);
+  }
+});
