@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { loginBodySchema, type LoginBody } from "@/contracts/user";
 import { applyApiError } from "@/lib/forms";
+import { getDismissTarget } from "@/lib/session/guards";
 import { safeRedirect } from "@/lib/url/safeRedirect";
 import { useLoginMutation } from "../queries";
 
@@ -29,14 +30,14 @@ export function LoginDialog({ redirect }: { redirect?: string }): JSX.Element {
   async function handleSubmit(values: LoginBody): Promise<void> {
     try {
       await login.mutateAsync(values);
-      await navigate({ to: destination });
+      await navigate({ href: destination });
     } catch (error) {
       applyApiError(error, form.setError, ["email", "password"]);
     }
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && void navigate({ to: destination })}>
+    <Dialog open onOpenChange={(open) => !open && void navigate({ href: getDismissTarget(redirect) })}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Entrar</DialogTitle>

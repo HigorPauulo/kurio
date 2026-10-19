@@ -15,3 +15,12 @@ export function redirectIfAuthenticated(target: string | undefined): void {
     throw redirect({ href: safeRedirect(target) });
   }
 }
+
+const PRIVATE_PREFIXES = ["/account", "/checkout", "/orders"];
+
+export function getDismissTarget(target: string | undefined): string {
+  const destination = safeRedirect(target);
+  const pathname = destination.split(/[?#]/, 1)[0];
+  const isPrivate = PRIVATE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+  return isPrivate ? "/" : destination;
+}
