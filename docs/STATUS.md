@@ -16,12 +16,12 @@
 |---|---|
 | **Repositório** | github.com/HigorPauulo/kurio |
 | **`develop` / `main`** | Existem; `main` é a padrão e só recebe publicação |
-| **Deploy** | Preview por branch na Vercel, protegido por login; produção em `kurio-beta.vercel.app`, pública a partir da fatia 9 |
+| **Deploy** | Preview por branch, protegido por login; produção em `kurio-beta.vercel.app`, publicada a cada fatia fechada |
 | **Protótipo** | Figma do desafio; campos já mapeados em [API](API.md#campos-do-layout) |
 
 ## O que fazer agora, nesta ordem
 
-1. **Fechar a fatia 1:** merge do PR #1 (`feature/foundation` → `develop`), com CI verde.
+1. **Publicar a fatia 1:** PR de `develop` para `main`, merge com CI verde e smoke em `kurio-beta.vercel.app`.
 2. **Fatia 2:** contratos e mocks, em `feature/contracts-mocks`.
 
 ## O que trava
@@ -41,7 +41,7 @@ Nenhuma. O gate **G1** (GitHub e Vercel) foi resolvido.
 | Fatias | 1 de 9; a fatia 1 levou cerca de 2 h 20 min contra 2 h estimadas |
 | Requisitos | 45 funcionais e 7 não funcionais em [REQUIREMENTS](REQUIREMENTS.md) |
 | Verificação | 7 specs E2E, 4 arquivos de unidade e o roteiro manual em [QUALITY](QUALITY.md) |
-| Decisões | 30 em [DECISIONS](DECISIONS.md) |
+| Decisões | 31 em [DECISIONS](DECISIONS.md) |
 
 Contados em 2026-10-19. Mudou um documento, atualize esta tabela no mesmo commit.
 
