@@ -2,6 +2,16 @@ import { ws } from "msw";
 import { setupWorker } from "msw/browser";
 import { toSocketIo } from "@mswjs/socket.io-binding";
 import { isConnectPacket, readConnectToken } from "./handshake";
+import { createControl } from "./control";
+import { createMockDb } from "./db/mockDb";
+import { createSeed } from "./db/seed";
+import { createNetworkConditions } from "./network/conditions";
+import { buildScenario, type PresetName } from "./scenarios/presets";
+import {
+  resolveInitialScenario,
+  SCENARIO_STORAGE_KEY,
+  stripScenarioParams,
+} from "./scenarios/selection";
 
 const VALID_TOKEN = "spike-token";
 const PING_INTERVAL_MS = 25_000;
@@ -54,7 +64,39 @@ const handlers = [
   }),
 ];
 
+function setUpBackend(): void {
+  const initial = resolveInitialScenario({
+    search: location.search,
+    stored: localStorage.getItem(SCENARIO_STORAGE_KEY),
+    envDefault: import.meta.env.VITE_MOCK_DEFAULT_SCENARIO,
+  });
+  let scenarioNames: PresetName[] = initial.names;
+
+  function saveScenario(names: PresetName[]): void {
+    scenarioNames = names;
+    localStorage.setItem(SCENARIO_STORAGE_KEY, names.join("+"));
+  }
+
+  const db = createMockDb({ seed: createSeed, storage: localStorage });
+  if (initial.reset) db.reset();
+  saveScenario(scenarioNames);
+
+  const cleanSearch = stripScenarioParams(location.search);
+  if (cleanSearch !== location.search) {
+    history.replaceState(history.state, "", `${location.pathname}${cleanSearch}${location.hash}`);
+  }
+
+  window.__kurio = createControl({
+    db,
+    conditions: createNetworkConditions({ getScenario: () => buildScenario(scenarioNames) }),
+    getScenarioNames: () => scenarioNames,
+    setScenarioNames: saveScenario,
+    build: import.meta.env.VITE_BUILD_SHA,
+  });
+}
+
 export function start(): Promise<unknown> {
+  setUpBackend();
   return setupWorker(...handlers).start({
     onUnhandledRequest(request, print) {
       const url = new URL(request.url);
