@@ -19,7 +19,8 @@ const handlers = [
     let pendingAckId: number | null = null;
 
     connection.client.addEventListener("message", (event) => {
-      const packet = String(event.data);
+      if (typeof event.data !== "string") return;
+      const packet = event.data;
 
       if (packet.startsWith("40")) {
         const auth = JSON.parse(packet.slice(2) || "{}") as { token?: string };
@@ -43,18 +44,12 @@ const handlers = [
       io.client.emit("pong-spike", "olá do servidor simulado");
     });
 
-    io.client.on("nft.subscribe", (_event, ...args: unknown[]) => {
-      const ack = args.at(-1);
-      if (typeof ack === "function") {
-        ack({ ok: true, via: "binding" });
-        return;
-      }
-      if (pendingAckId !== null) {
-        connection.client.send(
-          `43${pendingAckId}${JSON.stringify([{ ok: true, via: "pacote cru" }])}`,
-        );
-        pendingAckId = null;
-      }
+    io.client.on("nft.subscribe", () => {
+      if (pendingAckId === null) return;
+      connection.client.send(
+        `43${pendingAckId}${JSON.stringify([{ ok: true }])}`,
+      );
+      pendingAckId = null;
     });
   }),
 ];
