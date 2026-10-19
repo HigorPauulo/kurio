@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
+import { Button } from "@/components/ui/button";
 
 const SOCKET_URL = "https://realtime.kurio.mock";
 
@@ -84,18 +85,16 @@ export default function App() {
   }
 
   return (
-    <main>
-      <h1>Spike Socket.IO</h1>
+    <main className="mx-auto flex max-w-2xl flex-col gap-4 p-6">
+      <h1 className="text-2xl font-semibold">Spike Socket.IO</h1>
       <p>Status: {status}</p>
-      <p>
-        <button type="button" onClick={handleSubscribe}>
-          Pergunta 2: assinar NFT (ack)
-        </button>{" "}
-        <button type="button" onClick={handleInvalidToken}>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={handleSubscribe}>Pergunta 2: assinar NFT (ack)</Button>
+        <Button variant="outline" onClick={handleInvalidToken}>
           Pergunta 3: conectar com token inválido
-        </button>
-      </p>
-      <ol>
+        </Button>
+      </div>
+      <ol className="list-decimal pl-6 text-sm">
         {log.map((line, index) => (
           <li key={index}>{line}</li>
         ))}
