@@ -84,7 +84,7 @@ validade, e só ela vira pedido; o **recibo** é snapshot imutável do pedido.
 | **Mocks** | | |
 | MOC-1 | Mocks só na camada de rede: nada de dado fictício em componente, hook ou Axios | lint (`no-restricted-imports`) |
 | MOC-2 | Estado consistente entre catálogo, favoritos, carrinho, perfil, carteiras e pedidos | `checkout`, `mockDb.test.ts` |
-| MOC-3 | Persistência local sustenta refresh; reset restaura integralmente o cenário conhecido | roteiro |
+| MOC-3 | Persistência local sustenta refresh; reset restaura integralmente o cenário conhecido | `mocks` |
 | MOC-4 | Lentidão, offline e HTTP 4xx/5xx configuráveis e reproduzíveis | roteiro (cenários do README) |
 | MOC-5 | Fixtures com variedade para filtros e paginação e pelo menos dois usuários | `mockDb.test.ts` |
 | MOC-6 | Cenários determinísticos para cada caso de falha do enunciado ([MOCKS](MOCKS.md)) | specs E2E e roteiro |

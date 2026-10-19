@@ -43,7 +43,9 @@ carrinho, cotação usada, desfecho do pedido), em `mocks/db/tables.ts`.
   `userId:key`, cotação marcada com `usedByOrderId`, reserva na criação, devolução na recusa, baixa e
   remoção do carrinho só na confirmação. `buyer` é montado no commit e nunca recalculado.
 - Senha: PBKDF2-SHA256 com salt e 600 000 iterações via WebCrypto; as fixtures trazem o hash pronto.
-- Coleta: todo commit remove cotação vencida há mais de 1 min sem pedido e sessão vencida.
+- Coleta: todo commit remove cotação vencida há mais de 1 min sem pedido e sessão vencida há mais de
+  1 h. A sessão vencida fica 1 h para o servidor ainda distinguir `SESSION_EXPIRED` (token que existiu)
+  de `UNAUTHENTICATED` (token desconhecido).
   `idempotency` e `orders` ficam, porque são o que recupera um pedido.
 
 **Persistência:** snapshot em `localStorage` (`kurio:mockdb:v<schemaVersion>`) após cada commit;
@@ -73,7 +75,7 @@ das edições, nunca escrito à mão. As imagens usam um placeholder até a fati
 |---|---|
 | Latência | `delay(ms)`, fixa ou sorteada numa faixa |
 | Fora de ordem | `delay = base − step × (n mod k)` pelo contador da rota: a requisição antiga chega por último |
-| Timeout | `delay(20_000)`, acima dos 10 s do Axios |
+| Timeout | o handler de pedido espera 20 s no `order-timeout`, acima dos 10 s do Axios |
 | Offline | `HttpResponse.error()` |
 | Falha HTTP | corpo de erro da API com o status, opcionalmente só nas `N` primeiras chamadas |
 
@@ -125,8 +127,8 @@ pacotes crus na conexão ([DECISIONS](DECISIONS.md)), todos cobertos pela spec E
 | `reset()` | restaura o seed |
 | `scenario.get()`, `scenario.set(presets)` | lê e troca o cenário |
 | `catalog.setPrice(nft, edição, preço)`, `catalog.setAvailable(nft, edição, n)` | muda o dado e emite `nft.updated` |
-| `orders.settle(id, 'confirmed' \| 'refused')` | resolve um pedido pendente |
-| `realtime.dropConnections({ reconnectAfterMs })`, `realtime.stats()` | derruba sockets; conta sockets e subscriptions |
+| `orders.settle(id, 'confirmed' \| 'refused')` | resolve um pedido pendente (chega com os pedidos, fatia 7) |
+| `realtime.dropConnections({ reconnectAfterMs })`, `realtime.stats()` | derruba sockets; conta sockets e subscriptions (chega com o tempo real, fatia 6) |
 | `sessions.expire(userId?)` | vence o token |
 | `inspect.orders()`, `inspect.cart(owner)`, `inspect.lastRequest(padrão)` | leitura do estado do servidor |
 | `build` | SHA do build, conferido no smoke de publicação |

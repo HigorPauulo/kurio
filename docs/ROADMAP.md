@@ -17,7 +17,7 @@ real funcionando no ambiente publicado. Critérios em [Entrega](#entrega).
 | Ordem | Fatia | Entrega | Requisitos | Depende de | Horas |
 |---|---|---|---|---|---|
 | 1 | ✅ **Fundação e spike** | Vite, TS strict, lint, Tailwind, shadcn, Router, Query, Axios, Vitest, Playwright, CI. Spike: `socket.io-client` no MSW com ack, evento, queda e reconexão | NF-6 | | 2 |
-| 2 | ⬜ **Contratos e mocks** | Schemas Zod, `MockDb`, fixtures, cenários, `window.__kurio` | MOC, AUT-4 | 1 | 3 |
+| 2 | ✅ **Contratos e mocks** | Schemas Zod, `MockDb`, fixtures, cenários, `window.__kurio` | MOC, AUT-4 | 1 | 3 |
 | 3 | ⬜ **Sessão e conta** | `configureHttp`, login, cadastro, expiração, `switchIdentity`, perfil e carteiras com os campos do layout | AUT-1..4, PER, WAL, NAV-2 | 2 | 2,5 |
 | 4 | ⬜ **Catálogo e detalhe** | Filtros, ordenação e página na URL; detalhe; favoritos otimistas | CAT, DET, NAV-1, NAV-3 | 2 | 2 |
 | 5 | ⬜ **Carrinho e cotação** | Visitante e usuário, merge, cupom, resumo pela cotação | CRT-1..4, NF-5 | 2 | 1,5 |
