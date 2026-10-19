@@ -16,7 +16,7 @@ real funcionando no ambiente publicado. Critérios em [Entrega](#entrega).
 
 | Ordem | Fatia | Entrega | Requisitos | Depende de | Horas |
 |---|---|---|---|---|---|
-| 1 | ⬜ **Fundação e spike** | Vite, TS strict, lint, Tailwind, shadcn, Router, Query, Axios, Vitest, Playwright, CI. Spike: `socket.io-client` no MSW com ack, evento, queda e reconexão | NF-6 | | 2 |
+| 1 | 🟡 **Fundação e spike** | Vite, TS strict, lint, Tailwind, shadcn, Router, Query, Axios, Vitest, Playwright, CI. Spike: `socket.io-client` no MSW com ack, evento, queda e reconexão | NF-6 | | 2 |
 | 2 | ⬜ **Contratos e mocks** | Schemas Zod, `MockDb`, fixtures, cenários, `window.__kurio` | MOC, AUT-4 | 1 | 3 |
 | 3 | ⬜ **Sessão e conta** | `configureHttp`, login, cadastro, expiração, `switchIdentity`, perfil e carteiras com os campos do layout | AUT-1..4, PER, WAL, NAV-2 | 2 | 2,5 |
 | 4 | ⬜ **Catálogo e detalhe** | Filtros, ordenação e página na URL; detalhe; favoritos otimistas | CAT, DET, NAV-1, NAV-3 | 2 | 2 |
@@ -41,11 +41,9 @@ prazo são margem; estouro de mais de 50% numa fatia antecipa o corte.
 
 | Risco | Prob. | Impacto | Mitigação | Se acontecer |
 |---|---|---|---|---|
-| Binding de Socket.IO não funcionar com `msw@2.15` | Média | Alto | Spike nas 2 primeiras horas | Tempo real por polling de 3 s, registrado como limitação |
-| `page.clock` derrubar o heartbeat do Engine.IO | Alta | Médio | Servidor simulado responde `ping` no mesmo relógio | `pingInterval` alto no handshake simulado |
 | Testes de tempo real instáveis | Média | Alto | Relógio, cenários determinísticos, `orders.settle()` explícito | Corrige a causa; nunca `retries` |
 | Fatias estourarem as 18 h | Média | Alto | Horas por fatia nesta fila | Corte nesta ordem: favoritos, avatar, 768, spec `account`; nunca eliminatório |
-| Performance mobile < 90 pela espera do Service Worker | Média | Médio | Táticas de [QUALITY](QUALITY.md#6-performance) | Justificativa com a causa medida |
+| Performance mobile < 90 pela espera do Service Worker e do MSW (161 KB gzip) antes do app | Alta | Médio | Táticas de [QUALITY](QUALITY.md#6-performance) | Justificativa com a causa medida |
 
 ## Definition of Done (por fatia)
 

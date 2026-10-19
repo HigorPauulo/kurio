@@ -69,7 +69,7 @@ Executado no build de produção antes da entrega, em 390, 768 e 1440:
 
 ## 6. Performance
 
-Metas de NF-4. Táticas: carga paralela do MSW e do app com casco estático no `index.html`
+Metas de NF-4. Táticas: casco estático no `index.html` enquanto o MSW sobe antes do app
 ([ARCHITECTURE](ARCHITECTURE.md#4-bootstrap)); `autoCodeSplitting` com checkout e conta fora do
 bundle inicial; imagens WebP com `srcset`, dimensões explícitas e `fetchpriority="high"` na LCP;
 fontes WOFF2 self-hosted com preload; `head` por rota e `lang="pt-BR"`. Nada é desligado só para a
