@@ -16,13 +16,12 @@
 |---|---|
 | **Repositório** | github.com/HigorPauulo/kurio |
 | **`develop` / `main`** | Existem; `main` é a padrão e só recebe publicação |
-| **Deploy** | Preview por branch, protegido por login; produção em `kurio-beta.vercel.app`, publicada a cada fatia fechada |
+| **Deploy** | Produção pública em `kurio-beta.vercel.app`, com a fatia 1 (`5fd30c2`); preview por branch, protegido por login |
 | **Protótipo** | Figma do desafio; campos já mapeados em [API](API.md#campos-do-layout) |
 
 ## O que fazer agora, nesta ordem
 
-1. **Publicar a fatia 1:** PR de `develop` para `main`, merge com CI verde e smoke em `kurio-beta.vercel.app`.
-2. **Fatia 2:** contratos e mocks, em `feature/contracts-mocks`.
+1. **Fatia 2:** contratos e mocks, em `feature/contracts-mocks`.
 
 ## O que trava
 

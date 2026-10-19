@@ -83,3 +83,4 @@ detalhe aberto; `__kurio.build` igual ao SHA da `main`.
 
 | Data | SHA | Smoke |
 |---|---|---|
+| 2026-10-19 | `5fd30c2` | ok: rotas, refresh em rota profunda, socket simulado, ack, cabeçalhos de segurança, console sem erro |
