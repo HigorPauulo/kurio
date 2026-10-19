@@ -248,16 +248,18 @@ describe("persistência", () => {
 });
 
 describe("coleta", () => {
-  it("remove cotação vencida sem pedido e sessão vencida, e mantém o resto", () => {
+  it("remove cotação vencida sem pedido e sessão vencida há mais de 1 h, e mantém o resto", () => {
     const db = createDb();
     const twoMinutesAgo = new Date(NOW - 120_000).toISOString();
+    const twoHoursAgo = new Date(NOW - 2 * 60 * 60_000).toISOString();
     const thirtySecondsAgo = new Date(NOW - 30_000).toISOString();
 
     db.commit((draft) => {
       draft.quotes.qte_old = makeQuote("qte_old", twoMinutesAgo, null);
       draft.quotes.qte_used = makeQuote("qte_used", twoMinutesAgo, "ord_1");
       draft.quotes.qte_grace = makeQuote("qte_grace", thirtySecondsAgo, null);
-      draft.sessions.expired = { token: "expired", userId: "usr_1", expiresAt: twoMinutesAgo };
+      draft.sessions.old = { token: "old", userId: "usr_1", expiresAt: twoHoursAgo };
+      draft.sessions.recent = { token: "recent", userId: "usr_1", expiresAt: twoMinutesAgo };
       draft.sessions.active = {
         token: "active",
         userId: "usr_1",
@@ -266,7 +268,7 @@ describe("coleta", () => {
     });
 
     expect(Object.keys(db.read((tables) => tables.quotes)).sort()).toEqual(["qte_grace", "qte_used"]);
-    expect(Object.keys(db.read((tables) => tables.sessions))).toEqual(["active"]);
+    expect(Object.keys(db.read((tables) => tables.sessions)).sort()).toEqual(["active", "recent"]);
   });
 });
 

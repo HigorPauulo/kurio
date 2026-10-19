@@ -6,6 +6,7 @@ export const STORAGE_KEY = `kurio:mockdb:v${SCHEMA_VERSION}`;
 
 const DEFAULT_SNAPSHOT_BUDGET = 1_000_000;
 const QUOTE_GRACE_MS = 60_000;
+const SESSION_GRACE_MS = 60 * 60_000;
 
 export type EventType = "nft.updated" | "order.updated";
 
@@ -79,7 +80,7 @@ function collectGarbage(draft: Tables, nowMs: number): void {
     }
   }
   for (const [token, session] of Object.entries(draft.sessions)) {
-    if (Date.parse(session.expiresAt) <= nowMs) delete draft.sessions[token];
+    if (Date.parse(session.expiresAt) + SESSION_GRACE_MS < nowMs) delete draft.sessions[token];
   }
 }
 
