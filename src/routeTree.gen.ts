@@ -10,11 +10,41 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as UnavailableRouteImport } from './routes/unavailable'
+import { Route as AccountProfileRouteImport } from './routes/account/profile'
+import { Route as AccountWalletsRouteImport } from './routes/account/wallets'
 import { Route as DevRealtimeRouteImport } from './routes/dev/realtime'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UnavailableRoute = UnavailableRouteImport.update({
+  id: '/unavailable',
+  path: '/unavailable',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountProfileRoute = AccountProfileRouteImport.update({
+  id: '/account/profile',
+  path: '/account/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountWalletsRoute = AccountWalletsRouteImport.update({
+  id: '/account/wallets',
+  path: '/account/wallets',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevRealtimeRoute = DevRealtimeRouteImport.update({
@@ -25,27 +55,69 @@ const DevRealtimeRoute = DevRealtimeRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/unavailable': typeof UnavailableRoute
+  '/account/profile': typeof AccountProfileRoute
+  '/account/wallets': typeof AccountWalletsRoute
   '/dev/realtime': typeof DevRealtimeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/unavailable': typeof UnavailableRoute
+  '/account/profile': typeof AccountProfileRoute
+  '/account/wallets': typeof AccountWalletsRoute
   '/dev/realtime': typeof DevRealtimeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/unavailable': typeof UnavailableRoute
+  '/account/profile': typeof AccountProfileRoute
+  '/account/wallets': typeof AccountWalletsRoute
   '/dev/realtime': typeof DevRealtimeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dev/realtime'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/unavailable'
+    | '/account/profile'
+    | '/account/wallets'
+    | '/dev/realtime'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dev/realtime'
-  id: '__root__' | '/' | '/dev/realtime'
+  to:
+    | '/'
+    | '/login'
+    | '/register'
+    | '/unavailable'
+    | '/account/profile'
+    | '/account/wallets'
+    | '/dev/realtime'
+  id:
+    | '__root__'
+    | '/'
+    | '/login'
+    | '/register'
+    | '/unavailable'
+    | '/account/profile'
+    | '/account/wallets'
+    | '/dev/realtime'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
+  UnavailableRoute: typeof UnavailableRoute
+  AccountProfileRoute: typeof AccountProfileRoute
+  AccountWalletsRoute: typeof AccountWalletsRoute
   DevRealtimeRoute: typeof DevRealtimeRoute
 }
 
@@ -56,6 +128,41 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/unavailable': {
+      id: '/unavailable'
+      path: '/unavailable'
+      fullPath: '/unavailable'
+      preLoaderRoute: typeof UnavailableRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/profile': {
+      id: '/account/profile'
+      path: '/account/profile'
+      fullPath: '/account/profile'
+      preLoaderRoute: typeof AccountProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account/wallets': {
+      id: '/account/wallets'
+      path: '/account/wallets'
+      fullPath: '/account/wallets'
+      preLoaderRoute: typeof AccountWalletsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dev/realtime': {
@@ -70,6 +177,11 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
+  UnavailableRoute: UnavailableRoute,
+  AccountProfileRoute: AccountProfileRoute,
+  AccountWalletsRoute: AccountWalletsRoute,
   DevRealtimeRoute: DevRealtimeRoute,
 }
 export const routeTree = rootRouteImport
