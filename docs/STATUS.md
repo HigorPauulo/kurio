@@ -7,10 +7,10 @@
 ## Onde estou
 
 > **Fatia 1 de 9, em andamento.** Existem o esqueleto (Vite, React, TypeScript strict), o MSW com o
-> Socket.IO simulado e o Playwright. O spike aprovou o binding com três contornos
+> Socket.IO simulado, o Playwright e o ESLint com as regras de fronteira. O spike aprovou o binding com três contornos
 > ([DECISIONS](DECISIONS.md)), provados por 4 testes E2E em desktop e mobile. Falta o resto da
-> fundação: lint, Tailwind, shadcn, Router, Query, Axios, Vitest, CI e `vercel.json`. Os comandos
-> `lint`, `test:unit` e `verify` do README ainda não existem.
+> fundação: Tailwind, shadcn, Router, Query, Axios, Vitest, CI e `vercel.json`. Os comandos
+> `test:unit` e `verify` do README ainda não existem.
 
 | | |
 |---|---|
@@ -21,8 +21,8 @@
 
 ## O que fazer agora, nesta ordem
 
-1. **Fatia 1, restante da fundação:** ESLint com as regras de fronteira, Tailwind, shadcn, Router,
-   Query, Axios, Vitest, script `verify`, CI e `vercel.json`, em `feature/foundation`.
+1. **Fatia 1, restante da fundação:** Tailwind, shadcn, Router, Query, Axios, Vitest, script
+   `verify`, CI e `vercel.json`, em `feature/foundation`.
 2. **Fechar a fatia 1:** conectar a Vercel, PR para `develop` com CI verde.
 3. **Fatia 2:** contratos e mocks.
 
