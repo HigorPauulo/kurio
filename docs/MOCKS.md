@@ -99,11 +99,18 @@ restauram as fixtures antes. O app tira `scenario` e `reset` da URL depois de ap
 
 ## 7. Socket.IO simulado
 
-- `ws.link('wss://realtime.kurio.mock/socket.io/*')` com o `toSocketIo` do binding.
-- Handshake valida `auth.token` contra `sessions`; inválido recusa com `{ code: 'SESSION_EXPIRED' }`.
+- `ws.link('wss://realtime.kurio.mock/*')` com o `toSocketIo` do binding.
 - Subscriptions por conexão; `order.subscribe` valida o dono.
 - `nft.updated` vai a quem assinou o NFT; `order.updated`, ao dono que assinou o pedido.
-- O servidor responde `ping` pelo relógio da página, para não romper sob `page.clock`.
+
+O binding 0.2.0 cobre eventos, mas não ack, recusa nem heartbeat. O mock completa o protocolo com
+pacotes crus na conexão ([DECISIONS](DECISIONS.md)), todos cobertos pela spec E2E de tempo real:
+
+| Caso | Contorno |
+|---|---|
+| Handshake | o binding aceita sozinho; o mock lê `auth.token` do pacote `40{...}` do cliente e, se inválido, envia `44{"message":"SESSION_EXPIRED","data":{"code":"SESSION_EXPIRED"}}` sem fechar a conexão (fechar descarta o `44` e o cliente reconecta em loop) |
+| Ack | o mock lê o id do pacote `42<id>[...]` e responde `43<id>[resposta]` |
+| Heartbeat | o mock envia `2` (ping do Engine.IO) a cada 25 s pelo relógio da página; sem isso o cliente derruba a conexão a cada 30 s |
 
 ## 8. `window.__kurio`
 
