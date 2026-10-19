@@ -108,7 +108,7 @@ pacotes crus na conexão ([DECISIONS](DECISIONS.md)), todos cobertos pela spec E
 
 | Caso | Contorno |
 |---|---|
-| Handshake | o binding aceita sozinho; o mock lê `auth.token` do pacote `40{...}` do cliente e, se inválido, envia `44{"message":"SESSION_EXPIRED","data":{"code":"SESSION_EXPIRED"}}` sem fechar a conexão (fechar descarta o `44` e o cliente reconecta em loop) |
+| Handshake | o binding aceita sozinho; o mock lê `auth.token` do pacote `40{...}` do cliente (com ou sem namespace); token ausente, que não é texto ou JSON ilegível contam como inválido, e o mock envia `44{"message":"SESSION_EXPIRED","data":{"code":"SESSION_EXPIRED"}}` sem fechar a conexão (fechar descarta o `44` e o cliente reconecta em loop) |
 | Ack | o mock lê o id do pacote `42<id>[...]` e responde `43<id>[resposta]` |
 | Heartbeat | o mock envia `2` (ping do Engine.IO) a cada 25 s pelo relógio da página; sem isso o cliente derruba a conexão a cada 30 s |
 
