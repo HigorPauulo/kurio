@@ -8,9 +8,10 @@
 
 > **Fatia 1 de 9, em andamento.** Existem o esqueleto (Vite, React, TypeScript strict), o MSW com o
 > Socket.IO simulado, o Playwright, o ESLint com as regras de fronteira, o Tailwind v4, o shadcn/ui, o Router (com a
-> tela de não encontrado), o Query, o transporte HTTP com `configureHttp` e o Vitest. O spike aprovou o binding com três contornos
-> ([DECISIONS](DECISIONS.md)), provados por 4 testes E2E em desktop e mobile. Falta o resto da
-> fundação: CI e `vercel.json`. `pnpm verify` roda o gate completo.
+> tela de não encontrado), o Query, o transporte HTTP com `configureHttp`, o Vitest e o
+> CI no GitHub Actions (verde). O spike aprovou o binding com três contornos
+> ([DECISIONS](DECISIONS.md)), provados por 4 testes E2E em desktop e mobile. Falta o `vercel.json`
+> e a publicação. `pnpm verify` roda o gate completo.
 
 | | |
 |---|---|
@@ -21,8 +22,8 @@
 
 ## O que fazer agora, nesta ordem
 
-1. **Fatia 1, restante da fundação:** CI e `vercel.json`, em `feature/foundation`.
-2. **Fechar a fatia 1:** conectar a Vercel, PR para `develop` com CI verde.
+1. **Fatia 1, restante:** `vercel.json` e conexão do repositório com a Vercel.
+2. **Fechar a fatia 1:** PR de `feature/foundation` para `develop`, com CI verde.
 3. **Fatia 2:** contratos e mocks.
 
 ## O que trava
