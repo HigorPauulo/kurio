@@ -1,6 +1,7 @@
 import { ws } from "msw";
 import { setupWorker } from "msw/browser";
 import { toSocketIo } from "@mswjs/socket.io-binding";
+import { isConnectPacket, readConnectToken } from "./handshake";
 
 const VALID_TOKEN = "spike-token";
 const PING_INTERVAL_MS = 25_000;
@@ -22,9 +23,8 @@ const handlers = [
       if (typeof event.data !== "string") return;
       const packet = event.data;
 
-      if (packet.startsWith("40")) {
-        const auth = JSON.parse(packet.slice(2) || "{}") as { token?: string };
-        if (auth.token !== VALID_TOKEN) {
+      if (isConnectPacket(packet)) {
+        if (readConnectToken(packet) !== VALID_TOKEN) {
           const refusal = {
             message: "SESSION_EXPIRED",
             data: { code: "SESSION_EXPIRED" },
