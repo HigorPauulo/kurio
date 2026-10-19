@@ -39,6 +39,7 @@ export default defineConfig([
     "playwright-report",
     "test-results",
     "public/mockServiceWorker.js",
+    "src/routeTree.gen.ts",
   ]),
   {
     files: ["**/*.{ts,tsx}"],
@@ -66,7 +67,7 @@ export default defineConfig([
     extends: [reactHooks.configs.flat.recommended, reactRefresh.configs.vite],
   },
   {
-    files: ["src/components/ui/**/*.tsx"],
+    files: ["src/routes/**/*.tsx", "src/components/ui/**/*.tsx"],
     rules: {
       "react-refresh/only-export-components": "off",
     },

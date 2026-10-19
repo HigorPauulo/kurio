@@ -4,7 +4,7 @@ test.describe("spike: Socket.IO sobre MSW", () => {
   test("pergunta 1: conecta e o servidor simulado responde", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto("/dev/realtime");
 
     await expect(page.getByText("Status: conectado")).toBeVisible();
     await expect(
@@ -13,7 +13,7 @@ test.describe("spike: Socket.IO sobre MSW", () => {
   });
 
   test("pergunta 2: ack chega ao cliente", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/dev/realtime");
     await expect(page.getByText("Status: conectado")).toBeVisible();
 
     await page.getByRole("button", { name: /Pergunta 2/ }).click();
@@ -24,7 +24,7 @@ test.describe("spike: Socket.IO sobre MSW", () => {
   test("pergunta 3: token inválido recebe connect_error e não reconecta", async ({
     page,
   }) => {
-    await page.goto("/");
+    await page.goto("/dev/realtime");
     await expect(page.getByText("Status: conectado")).toBeVisible();
 
     await page.getByRole("button", { name: /Pergunta 3/ }).click();
@@ -42,7 +42,7 @@ test.describe("spike: Socket.IO sobre MSW", () => {
     page,
   }) => {
     await page.clock.install();
-    await page.goto("/");
+    await page.goto("/dev/realtime");
     await expect(page.getByText("Status: conectado")).toBeVisible();
 
     await page.clock.runFor(120_000);
