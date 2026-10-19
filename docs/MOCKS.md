@@ -10,7 +10,8 @@ Especificação do backend simulado. Contratos que ele implementa em [API](API.m
    eventos a emitir; não existe emissão fora de um commit.
 3. Determinismo: mesmo cenário, mesma sequência de respostas e de IDs (sorteio por `mulberry32` com
    semente fixa).
-4. `reset()` restaura fixtures, cenário e relógio, e apaga a persistência.
+4. `reset()` restaura as fixtures e o cenário padrão e apaga a persistência. A sequência de eventos e as
+   versões continuam a partir das anteriores, para o cliente não descartar o que vem depois como antigo.
 
 ## 2. Estrutura
 
@@ -49,7 +50,9 @@ carrinho, cotação usada, desfecho do pedido), em `mocks/db/tables.ts`.
   `idempotency` e `orders` ficam, porque são o que recupera um pedido.
 
 **Persistência:** snapshot em `localStorage` (`kurio:mockdb:v<schemaVersion>`) após cada commit;
-`schemaVersion` diferente descarta o snapshot e reaplica o seed. Pedido `pending` guarda `settleAt`
+`schemaVersion` diferente, JSON ilegível ou falta de alguma tabela descarta o snapshot e reaplica o
+seed. Armazenamento bloqueado ou cheio deixa o banco só em memória. A falha de um inscrito no
+`subscribe` não desfaz o commit nem impede os outros inscritos. Pedido `pending` guarda `settleAt`
 absoluto; no boot, o agendador reagenda pelo tempo restante ou resolve na hora.
 
 **Orçamento:** snapshot até 1 MB (o `localStorage` tem cerca de 5 MB). Commit que estoure é recusado

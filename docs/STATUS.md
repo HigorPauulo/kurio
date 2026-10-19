@@ -40,7 +40,7 @@ Nenhuma. O gate **G1** (GitHub e Vercel) foi resolvido.
 |---|---|
 | Fatias | 2 de 9; a fatia 2 levou cerca de 1 h 40 min contra 3 h estimadas |
 | Requisitos | 45 funcionais e 7 não funcionais em [REQUIREMENTS](REQUIREMENTS.md) |
-| Verificação | 9 specs E2E, 9 arquivos de unidade e o roteiro manual em [QUALITY](QUALITY.md) |
+| Verificação | 9 specs E2E, 10 arquivos de unidade e o roteiro manual em [QUALITY](QUALITY.md) |
 | Decisões | 31 em [DECISIONS](DECISIONS.md) |
 
 Contados em 2026-10-19. Mudou um documento, atualize esta tabela no mesmo commit.
