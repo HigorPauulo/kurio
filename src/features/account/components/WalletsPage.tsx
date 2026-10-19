@@ -51,6 +51,7 @@ type WalletFormProps = {
 function WalletForm({ role, title, wallet, user }: WalletFormProps): JSX.Element {
   const save = useSaveWalletMutation(user.id);
   const [saved, setSaved] = useState(false);
+  const [createdId, setCreatedId] = useState<string>();
   const form = useForm<WalletFormInput, unknown, WalletFormOutput>({
     resolver: zodResolver(walletFormSchema),
     defaultValues: {
@@ -68,7 +69,8 @@ function WalletForm({ role, title, wallet, user }: WalletFormProps): JSX.Element
   async function handleSubmit(values: WalletFormOutput): Promise<void> {
     setSaved(false);
     try {
-      await save.mutateAsync({ walletId: wallet?.id, body: { ...values, role } });
+      const result = await save.mutateAsync({ walletId: wallet?.id ?? createdId, body: { ...values, role } });
+      setCreatedId(result.id);
       setSaved(true);
     } catch (error) {
       applyApiError(error, form.setError, WALLET_FIELDS);

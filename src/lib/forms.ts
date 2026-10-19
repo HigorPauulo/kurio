@@ -3,6 +3,11 @@ import { ApiError } from "@/lib/http/apiError";
 
 const GENERIC_MESSAGE = "Não foi possível concluir agora. Tente de novo.";
 
+export function getApiFieldError(error: unknown, field: string): string | undefined {
+  if (!(error instanceof ApiError) || error.info.kind !== "http") return undefined;
+  return error.info.fieldErrors?.[field]?.[0];
+}
+
 export function applyApiError<Values extends FieldValues>(
   error: unknown,
   setError: UseFormSetError<Values>,

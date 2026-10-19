@@ -14,7 +14,7 @@ import {
   usernameSchema,
   type User,
 } from "@/contracts/user";
-import { applyApiError } from "@/lib/forms";
+import { applyApiError, getApiFieldError } from "@/lib/forms";
 import {
   meQuery,
   useAvatarMutation,
@@ -24,7 +24,7 @@ import {
 } from "../queries";
 
 const AVATAR_TYPES = ["image/png", "image/jpeg", "image/webp"];
-const AVATAR_MAX_BYTES = 100_000;
+const AVATAR_MAX_BYTES = 32_000;
 
 const profileFormSchema = z.object({
   name: displayNameSchema,
@@ -44,7 +44,9 @@ const passwordFormSchema = z
     path: ["confirmNewPassword"],
   });
 
-function ProfileForm({ user, primaryWalletLabel }: { user: User; primaryWalletLabel: string }): JSX.Element {
+type PrimaryWalletState = { label: string; isError: boolean; onRetry: () => void };
+
+function ProfileForm({ user, primaryWallet }: { user: User; primaryWallet: PrimaryWalletState }): JSX.Element {
   const update = useUpdateMeMutation(user.id);
   const [saved, setSaved] = useState(false);
   const form = useForm<z.input<typeof profileFormSchema>, unknown, z.output<typeof profileFormSchema>>({
@@ -77,10 +79,18 @@ function ProfileForm({ user, primaryWalletLabel }: { user: User; primaryWalletLa
       <TextField label="Nome ENS" suffix=".eth" error={errors.ensName?.message} {...form.register("ensName")} />
       <TextField
         label="Apelido da carteira"
-        value={primaryWalletLabel}
+        value={primaryWallet.label}
         readOnly
         editIn={{ to: "/account/wallets", label: "Editar em Carteiras" }}
       />
+      {primaryWallet.isError && (
+        <div className="flex items-center gap-2 text-sm" role="alert">
+          <span>Não foi possível carregar a carteira principal.</span>
+          <Button type="button" variant="outline" size="sm" onClick={primaryWallet.onRetry}>
+            Tentar de novo
+          </Button>
+        </div>
+      )}
       <FormError message={errors.root?.server?.message} />
       {saved && <p role="status">Perfil salvo.</p>}
       <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
@@ -99,9 +109,13 @@ function AvatarField({ user }: { user: User }): JSX.Element {
     event.target.value = "";
     if (!file) return;
     if (!AVATAR_TYPES.includes(file.type)) return setError("Envie uma imagem PNG, JPEG ou WebP.");
-    if (file.size > AVATAR_MAX_BYTES) return setError("A imagem deve ter até 100 KB.");
+    if (file.size > AVATAR_MAX_BYTES) return setError("A imagem deve ter até 32 KB.");
+    await saveAvatar(file, "Não foi possível enviar o avatar.");
+  }
+
+  async function saveAvatar(file: File | null, fallback: string): Promise<void> {
     setError(undefined);
-    await avatar.mutateAsync(file).catch(() => setError("Não foi possível enviar o avatar."));
+    await avatar.mutateAsync(file).catch((cause: unknown) => setError(getApiFieldError(cause, "file") ?? fallback));
   }
 
   return (
@@ -119,7 +133,7 @@ function AvatarField({ user }: { user: User }): JSX.Element {
       </label>
       <input id="avatar-file" type="file" accept={AVATAR_TYPES.join(",")} onChange={(event) => void handleFile(event)} />
       {user.avatarUrl && (
-        <Button type="button" variant="outline" onClick={() => void avatar.mutateAsync(null)}>
+        <Button type="button" variant="outline" onClick={() => void saveAvatar(null, "Não foi possível remover o avatar.")}>
           Remover avatar
         </Button>
       )}
@@ -177,12 +191,16 @@ export function ProfilePage({ userId }: { userId: string }): JSX.Element {
     );
   }
 
-  const primaryWalletLabel = wallets.data?.find((wallet) => wallet.role === "primary")?.label ?? "";
+  const primaryWallet: PrimaryWalletState = {
+    label: wallets.data?.find((wallet) => wallet.role === "primary")?.label ?? "",
+    isError: wallets.isError,
+    onRetry: () => void wallets.refetch(),
+  };
 
   return (
     <main className="mx-auto flex max-w-2xl flex-col gap-10 p-6">
       <h1 className="text-2xl font-semibold">Perfil do colecionador</h1>
-      <ProfileForm key={me.data.id} user={me.data} primaryWalletLabel={primaryWalletLabel} />
+      <ProfileForm key={me.data.id} user={me.data} primaryWallet={primaryWallet} />
       <AvatarField user={me.data} />
       <PasswordForm />
     </main>
