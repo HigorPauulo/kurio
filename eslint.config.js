@@ -52,6 +52,15 @@ export default defineConfig([
     },
     rules: {
       "no-console": "error",
+      "@typescript-eslint/only-throw-error": [
+        "error",
+        {
+          allow: [
+            { from: "package", package: "@tanstack/router-core", name: "Redirect" },
+            { from: "package", package: "@tanstack/router-core", name: "NotFoundError" },
+          ],
+        },
+      ],
     },
   },
   {

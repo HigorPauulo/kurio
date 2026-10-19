@@ -9,7 +9,7 @@ erro não aparece na tela, e o resto é roteiro manual executado antes da entreg
 | Nível | Ferramenta | Alvo | Reprova |
 |---|---|---|---|
 | Estático | `tsc --noEmit`, ESLint `--max-warnings=0` | `src/`, `mocks/`, `e2e/` | qualquer erro ou warning |
-| Unidade | Vitest | contratos, `lib/eth`, `lib/http`, `eventStore`, `MockDb`, handshake do mock | qualquer falha |
+| Unidade | Vitest | contratos, `lib/eth`, `lib/http`, `lib/session`, `safeRedirect`, `eventStore`, `MockDb`, handlers e handshake do mock | qualquer falha |
 | E2E | Playwright 1.64.1, Chromium, desktop (1440) e mobile (390) | fluxos pela UI, com MSW e Socket.IO reais | qualquer falha; flake não se resolve com `retries` |
 | Acessibilidade | `@axe-core/playwright` em toda spec | telas visitadas | violação `serious` ou `critical` (WCAG 2.2 AA) |
 | Roteiro | navegador, 390, 768 e 1440 | §4 | item não conferido |
@@ -22,12 +22,15 @@ erro não aparece na tela, e o resto é roteiro manual executado antes da entreg
 | `eth.test.ts` | 18 casas; `0.1 + 0.2`; acima de `2^53` wei; `floor` do desconto; formato inválido; `formatEth` exato com vírgula; `parseEthInput` com vírgula e ponto; `formatEthInput` volta igual pelo `parseEthInput`, inclusive acima de 1000 |
 | `eventStore.test.ts` | duplicata por `id`; versão menor e igual; audiência de outro usuário; pedido terminal; semeadura por REST |
 | `apiError.test.ts` | timeout e falha de rede recuperáveis; corpo de erro da API com mensagem, `details` e `fieldErrors`; fora do formato, código derivado do status (400, 401, 404, 500, 503) e 408, 429 e 5xx recuperáveis; código desconhecido preserva mensagem e `requestId` |
-| `client.test.ts` | expiração dispara uma vez por token enviado, inclusive com requisições simultâneas e novo login antes da resposta antiga; requisição sem token não dispara; erro fora do Axios chega intacto |
+| `client.test.ts` | `UNAUTHENTICATED` com token enviado também expira; expiração dispara uma vez por token enviado, inclusive com requisições simultâneas e novo login antes da resposta antiga; requisição sem token não dispara; erro fora do Axios chega intacto |
 | `handshake.test.ts` | token do CONNECT com e sem namespace; JSON ilegível, token que não é texto e auth ausente viram `null` |
 | `contracts.test.ts` | ETH com até 18 casas e formatos recusados; Nome ENS gravado com `.eth`; e-mail normalizado; senha com letra e número; código de indicação em maiúsculas; carteira secundária 0x ou `.eth`; filtros do catálogo vindos da URL; observação até 500; eventos separados pelo tipo; preço mínimo até o máximo com comparação exata; campo opcional vazio vira `null` |
 | `storage.test.ts` | armazenamento que funciona é devolvido sem resto da sonda; acesso bloqueado e gravação recusada devolvem `null` |
 | `scenarios.test.ts` | prioridade URL, salvo e padrão; presets combinados e o posterior vencendo; latência determinística na faixa; `slow` só em leitura; `flaky` nas 2 primeiras de cada rota; fora de ordem; offline; registro e reset das requisições |
 | `control.test.ts` | `setPrice` e `setAvailable` recalculam o NFT e emitem `nft.updated` com versão nova; entrada inválida recusada sem evento; troca de cenário; expiração por usuário; `inspect` no formato do contrato; reset volta ao seed e ao cenário padrão |
+| `safeRedirect.test.ts` | caminho interno com busca e âncora; origem externa, `//`, `\`, esquema perigoso, caractere de controle e valor que não é texto caem em `/` |
+| `session.test.ts` | sessão persistida expira sozinha no `expiresAt`; restaurada válida, vencida ou corrompida; `clear` cancela o timer; armazenamento que recusa gravação não impede a troca de estado; `switchIdentity` não cancela busca pública e apaga o cache privado anterior; `completeLogin` do mesmo usuário mantém o cache, de outro limpa |
+| `handlers.test.ts` | cadastro sem senha em claro; conflito e 422 por campo; login; token desconhecido, vencido e encerrado; TTL do `session-short`; perfil com `.eth`; troca de senha; avatar por tipo e tamanho; cota total de avatares sem travar o banco; carteira com papel ocupado, endereço repetido, troca de papéis, rede não suportada, `wallet-reject` e carteira alheia |
 | `mockDb.test.ts` | infraestrutura: commit atômico com rollback; invariantes de estoque; versão só no registro alterado; evento com versão e ID determinístico; persistência, snapshot de outra versão ou ilegível; orçamento de 1 MB; coleta de cotação e sessão vencidas; reset que continua a sequência de eventos e sobe as versões; snapshot sem alguma tabela descartado; inscrito com falha isolado. IDs de coleção sem acento; status e `priceFrom` do seed iguais aos de `refreshNft`. Domínio, com os handlers de cada fatia: idempotência, cotação de uso único, reserva e liberação, remoção parcial do carrinho, hash PBKDF2, fixtures |
 
 ## 3. E2E
@@ -45,10 +48,10 @@ declara o cenário. Regras:
 | Spec | Cenário | Asserção central | Requisitos |
 |---|---|---|---|
 | `catalog` | `fast`, `out-of-order` | filtros, ordenação e página na URL; refresh, voltar e avançar; resposta antiga descartada; detalhe por acesso direto; NFT inexistente; edição esgotada; limite de quantidade | CAT, DET-1, DET-2, NAV-1 |
-| `auth` | `fast`, `session-short` | conflito por campo; `redirect` (e `/\evil.com` cai em `/`); expiração; troca Ana → Bruno sem resíduo; Bruno na URL de um pedido da Ana vê "não encontrado" | AUT-1..3, AUT-5, NAV-2 |
-| `account` | `fast` | campos do layout em perfil e carteiras, os de outro dono somente leitura; erro da API por campo; persistência após reload | PER-1, WAL-1 |
+| `auth` | `fast` | confirmação de senha e conflito por campo; senha errada; `redirect` (e `/\evil.com` cai em `/`); fechar o login de rota privada não prende; sessão esquecida pelo servidor leva ao aviso; expiração no meio do fluxo e retorno ao mesmo lugar; troca Ana → Bruno sem recarregar e sem resíduo | AUT-1..3, NAV-2 |
+| `account` | `fast` | campos do layout em perfil e carteiras, os de outra tela somente leitura com link; erro da API por campo; senha atual errada; avatar; carteira nova validada campo a campo; persistência após reload | PER, WAL |
 | `cart` | `fast` | limites; cupons inválido, expirado e abaixo do mínimo com mensagens distintas; refresh; merge no login | CRT-1..4 |
-| `checkout` | `fast` | catálogo até o recibo; Carla bloqueada sem Nome ENS; `setPrice` depois não altera o recibo; carrinho perde só o comprado | PAG-4, PED-2..4, MOC-2 |
+| `checkout` | `fast` | catálogo até o recibo; Carla bloqueada sem Nome ENS; `setPrice` depois não altera o recibo; carrinho perde só o comprado; Bruno na URL de um pedido da Ana vê "não encontrado" | PAG-4, PED-2..4, MOC-2, AUT-5 |
 | `checkout-failures` | `payment-refused`, `order-timeout`, `wallet-reject` | duplo clique e retry geram um pedido só; reload no timeout recupera o mesmo pedido; recusa preserva o carrinho | PAG-1, PAG-3, PED-3 |
 | `realtime` | `price-change-on-review`, `socket-duplicates`, `socket-drop` | anúncio e resumo novo; "Confirmar" bloqueado até aceite; valor não regride; anúncio único; reload no pendente mantém o pedido; `stats()` zera após sair | CRT-5, PAG-2, PED-1, RT, MOC-7 |
 | `bootstrap` | Service Worker ou `localStorage` bloqueado | aviso no lugar da tela em branco, sem loop de recarga | NF-6 |

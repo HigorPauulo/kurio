@@ -3,6 +3,10 @@ import { setupWorker } from "msw/browser";
 import { toSocketIo } from "@mswjs/socket.io-binding";
 import { isConnectPacket, readConnectToken } from "./handshake";
 import { createControl } from "./control";
+import { authHandlers } from "./handlers/auth";
+import { meHandlers } from "./handlers/me";
+import type { HandlerDeps } from "./handlers/shared";
+import { walletHandlers } from "./handlers/wallets";
 import { createMockDb } from "./db/mockDb";
 import { createSeed } from "./db/seed";
 import { openStorage } from "./db/storage";
@@ -67,7 +71,7 @@ const handlers = [
   }),
 ];
 
-function setUpBackend(): void {
+function setUpBackend(): HandlerDeps {
   const storage = openStorage(() => localStorage);
   const initial = resolveInitialScenario({
     search: location.search,
@@ -90,19 +94,29 @@ function setUpBackend(): void {
     history.replaceState(history.state, "", `${location.pathname}${cleanSearch}${location.hash}`);
   }
 
+  const getScenario = () => buildScenario(scenarioNames);
+  const conditions = createNetworkConditions({ getScenario });
+
   window.__kurio = createControl({
     db,
-    conditions: createNetworkConditions({ getScenario: () => buildScenario(scenarioNames) }),
+    conditions,
     getScenarioNames: () => scenarioNames,
     setScenarioNames: saveScenario,
     defaultScenarioNames: parseScenario(import.meta.env.VITE_MOCK_DEFAULT_SCENARIO) ?? [DEFAULT_SCENARIO],
     build: import.meta.env.VITE_BUILD_SHA,
   });
+
+  return { db, conditions, getScenario, now: () => Date.now() };
 }
 
 export function start(): Promise<unknown> {
-  setUpBackend();
-  return setupWorker(...handlers).start({
+  const deps = setUpBackend();
+  return setupWorker(
+    ...authHandlers(deps),
+    ...meHandlers(deps),
+    ...walletHandlers(deps),
+    ...handlers,
+  ).start({
     onUnhandledRequest(request, print) {
       const url = new URL(request.url);
       if (url.protocol !== "http:" && url.protocol !== "https:") return;
