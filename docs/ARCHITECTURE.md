@@ -37,9 +37,9 @@ flowchart LR
 
 | Módulo | Responsabilidade | Pode importar |
 |---|---|---|
-| `src/contracts` | Schemas Zod e tipos inferidos | `zod` |
+| `src/contracts` | Schemas Zod e tipos inferidos | `zod`, `lib/eth` |
 | `src/lib/http` | Axios, interceptors, `normalizeError`, `configureHttp` | `contracts` |
-| `src/lib/eth` | Aritmética de wei, `formatEth`, `parseEthInput` | nada |
+| `src/lib/eth` | Aritmética de wei, padrão do `EthAmount`, `formatEth`, `formatEthInput`, `parseEthInput` | só tipos de `contracts` |
 | `src/lib/url` | `safeRedirect` | nada |
 | `src/lib/query` | `queryClient`, `keys.ts`, política de retry, wrapper de `queryFn` que semeia versões | `contracts`, `lib/realtime/eventStore` (módulo puro: não há ciclo) |
 | `src/lib/realtime` | `socketManager`, `eventStore`, `useNftSubscription`, ponte com o cache | `contracts`, `lib/query` |
@@ -74,9 +74,12 @@ antes do MSW ele usa o original e escapa da interceptação. Requisição `http(
 exceto os arquivos do próprio app (mesma origem, fora de `/api`); esquema que não é `http(s)`, como
 o de extensões do navegador, é ignorado. O app chama `configureHttp` antes do primeiro render.
 
-Se o MSW não sobe (Service Worker bloqueado, como em janela privada), a página mostra um aviso no
-lugar da tela em branco. Chunk antigo que não existe mais depois de um deploy (aba aberta antes da
-publicação) dispara `vite:preloadError`, e a página recarrega com a versão nova. `index.html` traz o
+Se o MSW não sobe (Service Worker bloqueado, como em janela privada, ou dados do site bloqueados,
+porque o próprio MSW usa o `localStorage`), a página mostra um aviso no lugar da tela em branco. Com o
+MSW de pé mas o armazenamento indisponível ou cheio, o `MockDb` roda só em memória. Chunk antigo que
+não existe mais depois de um deploy (aba aberta antes da publicação) dispara `vite:preloadError`, e a
+página recarrega com a versão nova, no máximo uma vez a cada 10 s, para uma falha repetida não virar
+loop de recarga. `index.html` traz o
 casco estático (header e hero com dimensões finais), para que LCP e CLS não dependam do bootstrap.
 
 ## 5. Transporte HTTP
@@ -316,8 +319,10 @@ Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lan�
 - Mudança de cotação mostra o diff por linha e exige aceite.
 - Ação fora do escopo vai a `/unavailable` ou fica desabilitada com o motivo.
 - ETH na tela: valor exato, sem arredondar nem zeros à direita, vírgula decimal e ponto de milhar
-  (`1.234,5 ETH`). ETH digitado: aceita vírgula ou ponto decimal, recusa separador de milhar e mais de
-  18 casas, e vira `EthAmount` com ponto.
+  (`1.234,5 ETH`), pelo `formatEth`. ETH digitado: aceita vírgula ou ponto decimal, recusa separador de
+  milhar e mais de 18 casas, e vira `EthAmount` com ponto. Campo preenchido com valor existente usa o
+  `formatEthInput` (`1234,5`, sem milhar), que volta igual pelo `parseEthInput`; o `formatEth` é só para
+  exibição.
 - Campos do layout: todos renderizados; campo de outro dono aparece `readOnly` (focável e lido pelo
   leitor de tela, ao contrário de `disabled`) com link "Editar em ..." ([mapa](API.md#campos-do-layout)).
   No pagamento, só Rede, "Usar outra carteira?", conexão e Observação são editáveis.

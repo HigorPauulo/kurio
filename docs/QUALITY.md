@@ -9,7 +9,7 @@ erro não aparece na tela, e o resto é roteiro manual executado antes da entreg
 | Nível | Ferramenta | Alvo | Reprova |
 |---|---|---|---|
 | Estático | `tsc --noEmit`, ESLint `--max-warnings=0` | `src/`, `mocks/`, `e2e/` | qualquer erro ou warning |
-| Unidade | Vitest | `lib/eth`, `lib/http`, `eventStore`, `MockDb`, handshake do mock | qualquer falha |
+| Unidade | Vitest | contratos, `lib/eth`, `lib/http`, `eventStore`, `MockDb`, handshake do mock | qualquer falha |
 | E2E | Playwright 1.64.1, Chromium, desktop (1440) e mobile (390) | fluxos pela UI, com MSW e Socket.IO reais | qualquer falha; flake não se resolve com `retries` |
 | Acessibilidade | `@axe-core/playwright` em toda spec | telas visitadas | violação `serious` ou `critical` (WCAG 2.2 AA) |
 | Roteiro | navegador, 390, 768 e 1440 | §4 | item não conferido |
@@ -19,12 +19,16 @@ erro não aparece na tela, e o resto é roteiro manual executado antes da entreg
 
 | Arquivo | Casos |
 |---|---|
-| `eth.test.ts` | 18 casas; `0.1 + 0.2`; acima de `2^53` wei; `floor` do desconto; formato inválido; `formatEth` exato com vírgula; `parseEthInput` com vírgula e ponto |
+| `eth.test.ts` | 18 casas; `0.1 + 0.2`; acima de `2^53` wei; `floor` do desconto; formato inválido; `formatEth` exato com vírgula; `parseEthInput` com vírgula e ponto; `formatEthInput` volta igual pelo `parseEthInput`, inclusive acima de 1000 |
 | `eventStore.test.ts` | duplicata por `id`; versão menor e igual; audiência de outro usuário; pedido terminal; semeadura por REST |
 | `apiError.test.ts` | timeout e falha de rede recuperáveis; corpo de erro da API com mensagem, `details` e `fieldErrors`; fora do formato, código derivado do status (400, 401, 404, 500, 503) e 408, 429 e 5xx recuperáveis; código desconhecido preserva mensagem e `requestId` |
 | `client.test.ts` | expiração dispara uma vez por token enviado, inclusive com requisições simultâneas e novo login antes da resposta antiga; requisição sem token não dispara; erro fora do Axios chega intacto |
 | `handshake.test.ts` | token do CONNECT com e sem namespace; JSON ilegível, token que não é texto e auth ausente viram `null` |
-| `mockDb.test.ts` | idempotência (mesmo hash, hash diferente); cotação de uso único; reserva e liberação; remoção parcial do carrinho; hash PBKDF2 sem senha em claro; rollback de commit; fixtures com ≥ 2 usuários e variedade para filtros |
+| `contracts.test.ts` | ETH com até 18 casas e formatos recusados; Nome ENS gravado com `.eth`; e-mail normalizado; senha com letra e número; código de indicação em maiúsculas; carteira secundária 0x ou `.eth`; filtros do catálogo vindos da URL; observação até 500; eventos separados pelo tipo; preço mínimo até o máximo com comparação exata; campo opcional vazio vira `null` |
+| `storage.test.ts` | armazenamento que funciona é devolvido sem resto da sonda; acesso bloqueado e gravação recusada devolvem `null` |
+| `scenarios.test.ts` | prioridade URL, salvo e padrão; presets combinados e o posterior vencendo; latência determinística na faixa; `slow` só em leitura; `flaky` nas 2 primeiras de cada rota; fora de ordem; offline; registro e reset das requisições |
+| `control.test.ts` | `setPrice` e `setAvailable` recalculam o NFT e emitem `nft.updated` com versão nova; entrada inválida recusada sem evento; troca de cenário; expiração por usuário; `inspect` no formato do contrato; reset volta ao seed e ao cenário padrão |
+| `mockDb.test.ts` | infraestrutura: commit atômico com rollback; invariantes de estoque; versão só no registro alterado; evento com versão e ID determinístico; persistência, snapshot de outra versão ou ilegível; orçamento de 1 MB; coleta de cotação e sessão vencidas; reset que continua a sequência de eventos e sobe as versões; snapshot sem alguma tabela descartado; inscrito com falha isolado. IDs de coleção sem acento; status e `priceFrom` do seed iguais aos de `refreshNft`. Domínio, com os handlers de cada fatia: idempotência, cotação de uso único, reserva e liberação, remoção parcial do carrinho, hash PBKDF2, fixtures |
 
 ## 3. E2E
 
@@ -47,7 +51,8 @@ declara o cenário. Regras:
 | `checkout` | `fast` | catálogo até o recibo; Carla bloqueada sem Nome ENS; `setPrice` depois não altera o recibo; carrinho perde só o comprado | PAG-4, PED-2..4, MOC-2 |
 | `checkout-failures` | `payment-refused`, `order-timeout`, `wallet-reject` | duplo clique e retry geram um pedido só; reload no timeout recupera o mesmo pedido; recusa preserva o carrinho | PAG-1, PAG-3, PED-3 |
 | `realtime` | `price-change-on-review`, `socket-duplicates`, `socket-drop` | anúncio e resumo novo; "Confirmar" bloqueado até aceite; valor não regride; anúncio único; reload no pendente mantém o pedido; `stats()` zera após sair | CRT-5, PAG-2, PED-1, RT, MOC-7 |
-| `bootstrap` | Service Worker bloqueado | aviso no lugar da tela em branco | NF-6 |
+| `bootstrap` | Service Worker ou `localStorage` bloqueado | aviso no lugar da tela em branco, sem loop de recarga | NF-6 |
+| `mocks` | `fast` | cenário da URL aplicado e URL limpa; SHA do build exposto; cenário e banco persistem no reload; `reset()` apaga o snapshot e volta ao cenário padrão | MOC-3, MOC-8 |
 
 ## 4. Roteiro manual
 
@@ -61,7 +66,7 @@ Executado no build de produção antes da entrega, em 390, 768 e 1440:
 - **Estados:** skeleton sem deslocar layout (`slow`), erro e nova tentativa (`flaky`), vazio
   (`empty-catalog`), offline (`offline`), movimento reduzido.
 - **Favoritos:** otimista, rollback com falha, persistência por usuário.
-- **Mocks:** `reset()` restaura o seed; cenário sobrevive a reload; link fora de escopo leva a `/unavailable`.
+- **Fora de escopo:** link para seção que não existe leva a `/unavailable`.
 
 ## 5. Acessibilidade
 

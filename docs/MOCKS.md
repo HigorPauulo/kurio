@@ -10,15 +10,16 @@ Especificação do backend simulado. Contratos que ele implementa em [API](API.m
    eventos a emitir; não existe emissão fora de um commit.
 3. Determinismo: mesmo cenário, mesma sequência de respostas e de IDs (sorteio por `mulberry32` com
    semente fixa).
-4. `reset()` restaura fixtures, cenário e relógio, e apaga a persistência.
+4. `reset()` restaura as fixtures e o cenário padrão e apaga a persistência. A sequência de eventos e as
+   versões continuam a partir das anteriores, para o cliente não descartar o que vem depois como antigo.
 
 ## 2. Estrutura
 
 | Pasta | Conteúdo |
 |---|---|
 | `mocks/browser.ts` | `setupWorker` com os handlers, liga o Socket.IO simulado; exporta `start()` ao bootstrap |
-| `mocks/db/` | `MockDb`, schema do snapshot, persistência, seed |
-| `mocks/fixtures/` | JSON versionado |
+| `mocks/db/` | `MockDb`, tabelas, seed, hash de senha (PBKDF2 via WebCrypto) |
+| `mocks/fixtures/` | dados versionados em TypeScript (catálogo, usuários, cupons, taxas), validados pelos contratos no teste |
 | `mocks/handlers/` | auth, nfts, favorites, cart, quotes, orders, me, wallets |
 | `mocks/realtime/` | `ws.link` + `@mswjs/socket.io-binding`, subscriptions, handshake |
 | `mocks/network/` | `withConditions()`: latência, falha e timeout em todo handler |
@@ -28,21 +29,30 @@ Especificação do backend simulado. Contratos que ele implementa em [API](API.m
 ## 3. `MockDb`
 
 Tabelas: `users`, `sessions`, `nfts`, `carts`, `quotes`, `orders`, `idempotency`, `favorites`,
-`wallets`. Leitura por `read(fn)`; escrita só por `commit(fn)`.
+`wallets`, mais `meta.sequence` (contador dos IDs). Leitura por `read(fn)`; escrita só por
+`commit(fn)`, que recebe o rascunho e um contexto com `emit` (evento a publicar), `nextId(prefixo)` e
+`now()`; `subscribe(listener)` entrega os eventos de cada commit ao servidor de tempo real. Os
+registros são os modelos dos contratos mais os campos só do servidor (hash da senha, dono do
+carrinho, cotação usada, desfecho do pedido), em `mocks/db/tables.ts`.
 
 - `commit` roda sobre uma cópia (`structuredClone`), valida invariantes e só então troca o estado:
   falha no meio não deixa estado parcial.
-- Toda escrita em `nfts`, `carts` ou `orders` incrementa a `version` do registro, e o evento leva essa
-  versão.
+- Toda escrita em `nfts`, `carts` ou `orders` incrementa a `version` do registro, detectada pelo próprio
+  commit (handler nunca mexe em `version`), e o evento leva essa versão. Evento e ID seguem
+  `meta.sequence`, então a mesma sequência de commits gera os mesmos IDs.
 - Pedido segue a ordem de avaliação da [API](API.md#pedidos-privado): `idempotency` indexada por
   `userId:key`, cotação marcada com `usedByOrderId`, reserva na criação, devolução na recusa, baixa e
   remoção do carrinho só na confirmação. `buyer` é montado no commit e nunca recalculado.
 - Senha: PBKDF2-SHA256 com salt e 600 000 iterações via WebCrypto; as fixtures trazem o hash pronto.
-- Coleta: todo commit remove cotação vencida há mais de 1 min sem pedido e sessão vencida.
+- Coleta: todo commit remove cotação vencida há mais de 1 min sem pedido e sessão vencida há mais de
+  1 h. A sessão vencida fica 1 h para o servidor ainda distinguir `SESSION_EXPIRED` (token que existiu)
+  de `UNAUTHENTICATED` (token desconhecido).
   `idempotency` e `orders` ficam, porque são o que recupera um pedido.
 
 **Persistência:** snapshot em `localStorage` (`kurio:mockdb:v<schemaVersion>`) após cada commit;
-`schemaVersion` diferente descarta o snapshot e reaplica o seed. Pedido `pending` guarda `settleAt`
+`schemaVersion` diferente, JSON ilegível ou falta de alguma tabela descarta o snapshot e reaplica o
+seed. Armazenamento bloqueado ou cheio deixa o banco só em memória. A falha de um inscrito no
+`subscribe` não desfaz o commit nem impede os outros inscritos. Pedido `pending` guarda `settleAt`
 absoluto; no boot, o agendador reagenda pelo tempo restante ou resolve na hora.
 
 **Orçamento:** snapshot até 1 MB (o `localStorage` tem cerca de 5 MB). Commit que estoure é recusado
@@ -57,7 +67,8 @@ com `VALIDATION_FAILED`; `QuotaExceededError` vai ao console como erro, nunca é
 | Usuários e cupons | os do [README](../README.md#credenciais-fictícias); toda carteira com os campos obrigatórios do layout |
 | Taxas | por rede, na [API](API.md#cotação-privado-no-checkout-público-no-carrinho) |
 
-`nft_001` não muda: é a página de detalhe auditada pelo Lighthouse.
+`nft_001` não muda: é a página de detalhe auditada pelo Lighthouse. O `priceFrom` é calculado a partir
+das edições, nunca escrito à mão. As imagens usam um placeholder até a fatia 8.
 
 ## 5. Condições de rede
 
@@ -67,7 +78,7 @@ com `VALIDATION_FAILED`; `QuotaExceededError` vai ao console como erro, nunca é
 |---|---|
 | Latência | `delay(ms)`, fixa ou sorteada numa faixa |
 | Fora de ordem | `delay = base − step × (n mod k)` pelo contador da rota: a requisição antiga chega por último |
-| Timeout | `delay(20_000)`, acima dos 10 s do Axios |
+| Timeout | o handler de pedido espera 20 s no `order-timeout`, acima dos 10 s do Axios |
 | Offline | `HttpResponse.error()` |
 | Falha HTTP | corpo de erro da API com o status, opcionalmente só nas `N` primeiras chamadas |
 
@@ -119,8 +130,8 @@ pacotes crus na conexão ([DECISIONS](DECISIONS.md)), todos cobertos pela spec E
 | `reset()` | restaura o seed |
 | `scenario.get()`, `scenario.set(presets)` | lê e troca o cenário |
 | `catalog.setPrice(nft, edição, preço)`, `catalog.setAvailable(nft, edição, n)` | muda o dado e emite `nft.updated` |
-| `orders.settle(id, 'confirmed' \| 'refused')` | resolve um pedido pendente |
-| `realtime.dropConnections({ reconnectAfterMs })`, `realtime.stats()` | derruba sockets; conta sockets e subscriptions |
+| `orders.settle(id, 'confirmed' \| 'refused')` | resolve um pedido pendente (chega com os pedidos, fatia 7) |
+| `realtime.dropConnections({ reconnectAfterMs })`, `realtime.stats()` | derruba sockets; conta sockets e subscriptions (chega com o tempo real, fatia 6) |
 | `sessions.expire(userId?)` | vence o token |
 | `inspect.orders()`, `inspect.cart(owner)`, `inspect.lastRequest(padrão)` | leitura do estado do servidor |
 | `build` | SHA do build, conferido no smoke de publicação |
