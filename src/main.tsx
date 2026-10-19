@@ -1,6 +1,11 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { MocksUnavailable } from "@/components/MocksUnavailable";
 import "./index.css";
+
+window.addEventListener("vite:preloadError", () => {
+  window.location.reload();
+});
 
 async function enableMocks(): Promise<void> {
   if (import.meta.env.VITE_ENABLE_MOCKS === "false") return;
@@ -8,12 +13,23 @@ async function enableMocks(): Promise<void> {
   await start();
 }
 
-await enableMocks();
+async function bootstrap(): Promise<void> {
+  const root = createRoot(document.getElementById("root")!);
 
-const { default: App } = await import("./App.tsx");
+  try {
+    await enableMocks();
+  } catch (error) {
+    reportError(error);
+    root.render(<MocksUnavailable />);
+    return;
+  }
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+  const { default: App } = await import("./App.tsx");
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}
+
+void bootstrap();
