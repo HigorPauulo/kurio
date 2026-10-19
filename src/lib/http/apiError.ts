@@ -1,4 +1,5 @@
 import type { AxiosError } from "axios";
+import { z } from "zod";
 import { errorBodySchema, type ErrorCode } from "@/contracts/error";
 
 export type ApiErrorInfo =
@@ -32,6 +33,28 @@ export class ApiError extends Error {
 
 const TIMEOUT_CODES = new Set(["ECONNABORTED", "ETIMEDOUT"]);
 
+const CODE_BY_STATUS: Partial<Record<number, ErrorCode>> = {
+  400: "BAD_REQUEST",
+  401: "UNAUTHENTICATED",
+  403: "FORBIDDEN",
+  404: "NOT_FOUND",
+  422: "VALIDATION_FAILED",
+  503: "UNAVAILABLE",
+};
+
+const RETRYABLE_STATUSES = new Set([408, 429]);
+
+const looseErrorBodySchema = z.object({
+  error: z.object({
+    message: z.string().optional(),
+    requestId: z.string().optional(),
+  }),
+});
+
+function codeForStatus(status: number): ErrorCode {
+  return CODE_BY_STATUS[status] ?? (status >= 500 ? "INTERNAL" : "BAD_REQUEST");
+}
+
 export function normalizeError(error: AxiosError): ApiError {
   if (error.code && TIMEOUT_CODES.has(error.code)) {
     return new ApiError(
@@ -54,14 +77,18 @@ export function normalizeError(error: AxiosError): ApiError {
     return new ApiError({ kind: "http", status, ...info }, message);
   }
 
+  const loose = looseErrorBodySchema.safeParse(data);
+  const serverError = loose.success ? loose.data.error : undefined;
+
   return new ApiError(
     {
       kind: "http",
       status,
-      code: status >= 500 ? "INTERNAL" : "BAD_REQUEST",
-      retryable: status >= 500,
-      requestId: String(headers["x-request-id"] ?? ""),
+      code: codeForStatus(status),
+      retryable: status >= 500 || RETRYABLE_STATUSES.has(status),
+      requestId:
+        serverError?.requestId ?? String(headers["x-request-id"] ?? ""),
     },
-    error.message,
+    serverError?.message ?? error.message,
   );
 }

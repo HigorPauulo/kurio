@@ -69,7 +69,7 @@ prazo são margem; estouro de mais de 50% numa fatia antecipa o corte.
 
 Vercel estática: `pnpm build` com `VITE_ENABLE_MOCKS=true` e `VITE_SITE_URL` igual à URL pública (sem
 ela, canonical e Open Graph apontam para `localhost`), saída `dist`. `vite.config.ts` injeta o SHA de
-`VERCEL_GIT_COMMIT_SHA` em `window.__kurio.build`. O `vercel.json` faz rewrite SPA para `index.html`,
+`VERCEL_GIT_COMMIT_SHA` em `window.__kurio.build`. O `vercel.json` faz rewrite SPA para `index.html` (exceto `/assets/`, para chunk ausente ser 404 e não HTML com cache de um ano),
 serve `mockServiceWorker.js` sem cache e aplica os cabeçalhos de segurança. `main` publica a cada fatia
 fechada ([DECISIONS](DECISIONS.md)); rollback é "Promote" do deploy anterior. A fatia 9 faz a conferência
 final da entrega, não a primeira publicação.
@@ -83,3 +83,4 @@ detalhe aberto; `__kurio.build` igual ao SHA da `main`.
 
 | Data | SHA | Smoke |
 |---|---|---|
+| 2026-10-19 | `5fd30c2` | ok: rotas, refresh em rota profunda, socket simulado, ack, cabeçalhos de segurança, console sem erro |

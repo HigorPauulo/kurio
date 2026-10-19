@@ -72,8 +72,12 @@ Imposição por lint:
 ordem é obrigatória: o `socket.io-client` guarda o construtor `WebSocket` ao carregar, e carregado
 antes do MSW ele usa o original e escapa da interceptação. Requisição `http(s)` sem handler é erro,
 exceto os arquivos do próprio app (mesma origem, fora de `/api`); esquema que não é `http(s)`, como
-o de extensões do navegador, é ignorado. O app chama `configureHttp` antes do primeiro render. `index.html` traz o casco estático (header e hero com dimensões finais), para que LCP
-e CLS não dependam do bootstrap.
+o de extensões do navegador, é ignorado. O app chama `configureHttp` antes do primeiro render.
+
+Se o MSW não sobe (Service Worker bloqueado, como em janela privada), a página mostra um aviso no
+lugar da tela em branco. Chunk antigo que não existe mais depois de um deploy (aba aberta antes da
+publicação) dispara `vite:preloadError`, e a página recarrega com a versão nova. `index.html` traz o
+casco estático (header e hero com dimensões finais), para que LCP e CLS não dependam do bootstrap.
 
 ## 5. Transporte HTTP
 
@@ -85,10 +89,13 @@ Axios com `baseURL` de `VITE_API_BASE_URL` e timeout de 10 s.
 | request 2 | `withAuth` | `Authorization: Bearer <token>` se houver token |
 | request 3 | `withGuestCart` | `X-Guest-Cart-Id` se não houver token |
 | response 1 | `normalizeError` | Toda falha vira `ApiError` |
-| response 2 | `onSessionExpired` | `SESSION_EXPIRED` avisa a sessão, uma vez por token |
+| response 2 | `onSessionExpired` | `SESSION_EXPIRED` avisa a sessão uma vez por token enviado (o do cabeçalho da requisição que falhou, não o token atual) |
 
 `ApiError` tem quatro tipos: `http` (corpo de erro da [API](API.md#erros) mais `status`), `network`
 e `timeout` (ambos retryable) e `contract` (falha de `schema.parse`, com o `path`, nunca retryable).
+Resposta fora do formato da API tem o código derivado do status (401 `UNAUTHENTICATED`, 404
+`NOT_FOUND`, 503 `UNAVAILABLE`), e 408, 429 e 5xx são retryable. Só erro do Axios vira `ApiError`;
+cancelamento e erro do próprio código seguem intactos.
 Toda `queryFn` repassa `signal`: key que deixa de ser observada aborta a requisição.
 
 ## 6. Estado remoto

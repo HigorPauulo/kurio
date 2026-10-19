@@ -27,8 +27,10 @@ test.describe("spike: Socket.IO sobre MSW", () => {
     await page.goto("/dev/realtime");
     await expect(page.getByText("Status: conectado")).toBeVisible();
 
-    await page.getByRole("button", { name: /Pergunta 3/ }).click();
+    const probeButton = page.getByRole("button", { name: /Pergunta 3/ });
+    await probeButton.click();
 
+    await expect(probeButton).toBeDisabled();
     await expect(
       page.getByText(/connect_error "SESSION_EXPIRED", code=SESSION_EXPIRED/),
     ).toBeVisible();
@@ -36,6 +38,7 @@ test.describe("spike: Socket.IO sobre MSW", () => {
       timeout: 10_000,
     });
     await expect(page.getByText(/tentativa de reconexão/)).toHaveCount(0);
+    await expect(probeButton).toBeEnabled();
   });
 
   test("pergunta 5: a conexão sobrevive a 2 minutos de relógio falso", async ({
