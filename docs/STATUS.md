@@ -7,9 +7,10 @@
 ## Onde estou
 
 > **Fatia 1 de 9, em andamento.** Existem o esqueleto (Vite, React, TypeScript strict), o MSW com o
-> Socket.IO simulado, o Playwright, o ESLint com as regras de fronteira, o Tailwind v4 e o shadcn/ui. O spike aprovou o binding com três contornos
+> Socket.IO simulado, o Playwright, o ESLint com as regras de fronteira, o Tailwind v4, o shadcn/ui, o Router (com a
+> tela de não encontrado), o Query e o transporte HTTP com `configureHttp`. O spike aprovou o binding com três contornos
 > ([DECISIONS](DECISIONS.md)), provados por 4 testes E2E em desktop e mobile. Falta o resto da
-> fundação: Router, Query, Axios, Vitest, CI e `vercel.json`. Os comandos
+> fundação: Vitest, CI e `vercel.json`. Os comandos
 > `test:unit` e `verify` do README ainda não existem.
 
 | | |
@@ -21,8 +22,8 @@
 
 ## O que fazer agora, nesta ordem
 
-1. **Fatia 1, restante da fundação:** Router, Query, Axios, Vitest, script `verify`, CI e
-   `vercel.json`, em `feature/foundation`.
+1. **Fatia 1, restante da fundação:** Vitest, script `verify`, CI e `vercel.json`, em
+   `feature/foundation`.
 2. **Fechar a fatia 1:** conectar a Vercel, PR para `develop` com CI verde.
 3. **Fatia 2:** contratos e mocks.
 
@@ -34,7 +35,9 @@
 
 ## Dívida aberta
 
-Nenhuma.
+| Dívida | Sai em |
+|---|---|
+| Rota `/dev/realtime` (página do spike) vai para produção | Fatia 6, quando a spec `realtime` cobrir o tempo real nas telas reais |
 
 ## Os números de hoje
 
