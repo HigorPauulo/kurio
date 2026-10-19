@@ -25,7 +25,7 @@ erro não aparece na tela, e o resto é roteiro manual executado antes da entreg
 | `client.test.ts` | expiração dispara uma vez por token enviado, inclusive com requisições simultâneas e novo login antes da resposta antiga; requisição sem token não dispara; erro fora do Axios chega intacto |
 | `handshake.test.ts` | token do CONNECT com e sem namespace; JSON ilegível, token que não é texto e auth ausente viram `null` |
 | `contracts.test.ts` | ETH com até 18 casas e formatos recusados; Nome ENS gravado com `.eth`; e-mail normalizado; senha com letra e número; código de indicação em maiúsculas; carteira secundária 0x ou `.eth`; filtros do catálogo vindos da URL; observação até 500; eventos separados pelo tipo |
-| `mockDb.test.ts` | idempotência (mesmo hash, hash diferente); cotação de uso único; reserva e liberação; remoção parcial do carrinho; hash PBKDF2 sem senha em claro; rollback de commit; fixtures com ≥ 2 usuários e variedade para filtros |
+| `mockDb.test.ts` | infraestrutura: commit atômico com rollback; invariantes de estoque; versão só no registro alterado; evento com versão e ID determinístico; persistência, snapshot de outra versão ou ilegível; orçamento de 1 MB; coleta de cotação e sessão vencidas; reset. Domínio, com os handlers de cada fatia: idempotência, cotação de uso único, reserva e liberação, remoção parcial do carrinho, hash PBKDF2, fixtures |
 
 ## 3. E2E
 

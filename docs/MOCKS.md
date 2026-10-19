@@ -28,12 +28,17 @@ Especificação do backend simulado. Contratos que ele implementa em [API](API.m
 ## 3. `MockDb`
 
 Tabelas: `users`, `sessions`, `nfts`, `carts`, `quotes`, `orders`, `idempotency`, `favorites`,
-`wallets`. Leitura por `read(fn)`; escrita só por `commit(fn)`.
+`wallets`, mais `meta.sequence` (contador dos IDs). Leitura por `read(fn)`; escrita só por
+`commit(fn)`, que recebe o rascunho e um contexto com `emit` (evento a publicar), `nextId(prefixo)` e
+`now()`; `subscribe(listener)` entrega os eventos de cada commit ao servidor de tempo real. Os
+registros são os modelos dos contratos mais os campos só do servidor (hash da senha, dono do
+carrinho, cotação usada, desfecho do pedido), em `mocks/db/tables.ts`.
 
 - `commit` roda sobre uma cópia (`structuredClone`), valida invariantes e só então troca o estado:
   falha no meio não deixa estado parcial.
-- Toda escrita em `nfts`, `carts` ou `orders` incrementa a `version` do registro, e o evento leva essa
-  versão.
+- Toda escrita em `nfts`, `carts` ou `orders` incrementa a `version` do registro, detectada pelo próprio
+  commit (handler nunca mexe em `version`), e o evento leva essa versão. Evento e ID seguem
+  `meta.sequence`, então a mesma sequência de commits gera os mesmos IDs.
 - Pedido segue a ordem de avaliação da [API](API.md#pedidos-privado): `idempotency` indexada por
   `userId:key`, cotação marcada com `usedByOrderId`, reserva na criação, devolução na recusa, baixa e
   remoção do carrinho só na confirmação. `buyer` é montado no commit e nunca recalculado.
