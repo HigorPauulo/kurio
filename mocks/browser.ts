@@ -8,6 +8,8 @@ import { createSeed } from "./db/seed";
 import { createNetworkConditions } from "./network/conditions";
 import { buildScenario, type PresetName } from "./scenarios/presets";
 import {
+  DEFAULT_SCENARIO,
+  parseScenario,
   resolveInitialScenario,
   SCENARIO_STORAGE_KEY,
   stripScenarioParams,
@@ -91,6 +93,7 @@ function setUpBackend(): void {
     conditions: createNetworkConditions({ getScenario: () => buildScenario(scenarioNames) }),
     getScenarioNames: () => scenarioNames,
     setScenarioNames: saveScenario,
+    defaultScenarioNames: parseScenario(import.meta.env.VITE_MOCK_DEFAULT_SCENARIO) ?? [DEFAULT_SCENARIO],
     build: import.meta.env.VITE_BUILD_SHA,
   });
 }

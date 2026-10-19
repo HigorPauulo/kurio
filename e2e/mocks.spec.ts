@@ -34,7 +34,7 @@ test.describe("mocks", () => {
     expect(build).toMatch(/^[0-9a-f]{40}$|^local$/);
   });
 
-  test("mantém o cenário e o banco depois do reload, e o reset volta ao seed", async ({ page }) => {
+  test("mantém o cenário e o banco depois do reload, e o reset volta ao seed e ao cenário padrão", async ({ page }) => {
     await page.goto("/?scenario=fast&reset=1");
     await waitForMocks(page);
     await expect.poll(() => readScenario(page)).toBe("fast");
@@ -50,5 +50,6 @@ test.describe("mocks", () => {
 
     await page.evaluate(() => (window as unknown as KurioWindow).__kurio.reset());
     expect(await readSnapshot(page)).toBeNull();
+    expect(await readScenario(page)).toBe("default");
   });
 });

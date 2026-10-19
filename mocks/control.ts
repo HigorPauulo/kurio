@@ -35,6 +35,7 @@ export type KurioControlDeps = {
   conditions: NetworkConditions;
   getScenarioNames: () => PresetName[];
   setScenarioNames: (names: PresetName[]) => void;
+  defaultScenarioNames: PresetName[];
   build: string;
 };
 
@@ -50,6 +51,7 @@ export function createControl({
   conditions,
   getScenarioNames,
   setScenarioNames,
+  defaultScenarioNames,
   build,
 }: KurioControlDeps): KurioControl {
   function updateEdition(nftId: string, editionId: string, apply: (edition: ReturnType<typeof findEdition>["edition"]) => void): void {
@@ -64,6 +66,7 @@ export function createControl({
   return {
     reset() {
       db.reset();
+      setScenarioNames(defaultScenarioNames);
       conditions.reset();
     },
 
