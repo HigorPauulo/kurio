@@ -1,122 +1,105 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useRef, useState } from "react";
+import { io, type Socket } from "socket.io-client";
 
-function App() {
-  const [count, setCount] = useState(0)
+const SOCKET_URL = "https://realtime.kurio.mock";
+
+type ConnectError = Error & { data?: { code?: string } };
+
+export default function App() {
+  const socketRef = useRef<Socket | null>(null);
+  const [status, setStatus] = useState("desconectado");
+  const [log, setLog] = useState<string[]>([]);
+
+  function addLog(line: string): void {
+    const time = new Date().toLocaleTimeString("pt-BR");
+    setLog((current) => [...current, `${time} ${line}`]);
+  }
+
+  useEffect(() => {
+    const socket = io(SOCKET_URL, {
+      transports: ["websocket"],
+      auth: { token: "spike-token" },
+    });
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      setStatus(`conectado (${socket.id})`);
+      socket.emit("ping-spike");
+    });
+    socket.on("pong-spike", (text: string) => addLog(`pergunta 1: ${text}`));
+    socket.on("disconnect", (reason) => {
+      setStatus(`desconectado: ${reason}`);
+      addLog(`queda da conexão principal: ${reason}`);
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, []);
+
+  function handleSubscribe(): void {
+    socketRef.current
+      ?.timeout(2000)
+      .emit(
+        "nft.subscribe",
+        { nftIds: ["nft_001"] },
+        (error: Error | null, response: unknown) => {
+          addLog(
+            error
+              ? "pergunta 2: sem ack em 2 s"
+              : `pergunta 2: ack ${JSON.stringify(response)}`,
+          );
+        },
+      );
+  }
+
+  function handleInvalidToken(): void {
+    const socket = io(SOCKET_URL, {
+      transports: ["websocket"],
+      auth: { token: "token-vencido" },
+      forceNew: true,
+    });
+    let attempts = 0;
+
+    socket.on("connect", () =>
+      addLog("pergunta 3: conectou (o binding aceita antes de ler o token)"),
+    );
+    socket.on("connect_error", (error: ConnectError) =>
+      addLog(
+        `pergunta 3: connect_error "${error.message}", code=${error.data?.code ?? "nenhum"}`,
+      ),
+    );
+    socket.io.on("reconnect_attempt", () => {
+      attempts += 1;
+      addLog(`pergunta 3: tentativa de reconexão ${attempts}`);
+    });
+
+    window.setTimeout(() => {
+      addLog(
+        `pergunta 3: após 5 s, conectado=${socket.connected}, tentativas=${attempts}`,
+      );
+      socket.disconnect();
+    }, 5000);
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
+    <main>
+      <h1>Spike Socket.IO</h1>
+      <p>Status: {status}</p>
+      <p>
+        <button type="button" onClick={handleSubscribe}>
+          Pergunta 2: assinar NFT (ack)
+        </button>{" "}
+        <button type="button" onClick={handleInvalidToken}>
+          Pergunta 3: conectar com token inválido
         </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      </p>
+      <ol>
+        {log.map((line, index) => (
+          <li key={index}>{line}</li>
+        ))}
+      </ol>
+    </main>
+  );
 }
-
-export default App
