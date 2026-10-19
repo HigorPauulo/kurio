@@ -68,10 +68,11 @@ Imposição por lint:
 
 ## 4. Bootstrap
 
-`main.tsx` carrega em paralelo o chunk do MSW (só com `VITE_ENABLE_MOCKS=true`) e o do app, e
-renderiza depois dos dois; sem isso, a primeira requisição escaparia do Service Worker. O worker sobe
-com `onUnhandledRequest: 'error'`: requisição sem handler é bug. O app chama `configureHttp` antes do
-primeiro render. `index.html` traz o casco estático (header e hero com dimensões finais), para que LCP
+`main.tsx` sobe o MSW primeiro (exceto com `VITE_ENABLE_MOCKS=false`) e só então importa o app. A
+ordem é obrigatória: o `socket.io-client` guarda o construtor `WebSocket` ao carregar, e carregado
+antes do MSW ele usa o original e escapa da interceptação. Requisição `http(s)` sem handler é erro,
+exceto os arquivos do próprio app (mesma origem, fora de `/api`); esquema que não é `http(s)`, como
+o de extensões do navegador, é ignorado. O app chama `configureHttp` antes do primeiro render. `index.html` traz o casco estático (header e hero com dimensões finais), para que LCP
 e CLS não dependam do bootstrap.
 
 ## 5. Transporte HTTP
@@ -234,6 +235,10 @@ preserva `redirect=/checkout?step=...`; o rascunho só volta para o mesmo `userI
 
 - Um socket por sessão, criado no `switchIdentity`, só transporte WebSocket, `autoConnect: false`,
   token em `auth`. `connect_error` com `SESSION_EXPIRED` expira a sessão e não reconecta.
+- `connect_error` é terminal: depois dele o app não consulta `socket.connected`, que fica `true`
+  porque o cliente se destrói antes de atualizar a flag. Com token inválido, `connect` dispara antes
+  do `connect_error` (o binding aceita antes de ler o token), então o app só assina NFTs com sessão
+  válida, nunca no `connect` puro.
 - `useNftSubscription(ids)` conta referências por id: assina na transição 0 → 1, cancela na 1 → 0, e o
   cleanup remove os listeners que registrou.
 - `eventStore.accept(evento)` descarta, nesta ordem: `id` já aplicado (LRU de 500), versão menor ou
@@ -294,7 +299,7 @@ Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lan�
 
   `worker-src` registra o Service Worker; `connect-src 'self'` basta porque `ws.link` substitui o
   `WebSocket` e nenhuma conexão real abre; `img-src data:` serve o avatar; `style-src 'unsafe-inline'`
-  cobre os atributos `style` do Radix. Não há script inline.
+  cobre os atributos `style` de posicionamento do Base UI. Não há script inline.
 
 ## 14. Comportamento de interface
 
@@ -322,7 +327,7 @@ mantido durante a implementação.
 ## 16. Limitações
 
 - Estado do backend vive no navegador; abas não compartilham servidor nem eventos.
-- Socket.IO simulado só aceita transporte WebSocket.
+- Socket.IO simulado só aceita transporte WebSocket, e todo socket recebe o mesmo `sid` (`test`) do binding.
 - Token em `localStorage` é legível por script da página (aceito: dado fictício, sem terceiros).
 - O primeiro render espera o Service Worker ativar.
 - Hash de transação e link de exploração são simulados.
