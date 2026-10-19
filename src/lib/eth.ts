@@ -3,11 +3,11 @@ import type { EthAmount } from "@/contracts/common";
 const DECIMALS = 18;
 const WEI_PER_ETH = 10n ** BigInt(DECIMALS);
 const BPS_PER_UNIT = 10_000n;
-const ETH_AMOUNT = /^(0|[1-9]\d*)(?:\.(\d{1,18}))?$/;
+export const ETH_AMOUNT_PATTERN = /^(0|[1-9]\d*)(?:\.(\d{1,18}))?$/;
 const THOUSANDS = /\B(?=(\d{3})+(?!\d))/g;
 
 export function toWei(amount: EthAmount): bigint {
-  const match = ETH_AMOUNT.exec(amount);
+  const match = ETH_AMOUNT_PATTERN.exec(amount);
   if (!match) throw new RangeError(`Valor em ETH inválido: ${amount}`);
   const [, integer, fraction = ""] = match;
   return BigInt(integer) * WEI_PER_ETH + BigInt(fraction.padEnd(DECIMALS, "0"));
@@ -55,6 +55,10 @@ export function formatEth(amount: EthAmount): string {
   return fraction ? `${grouped},${fraction}` : grouped;
 }
 
+export function formatEthInput(amount: EthAmount): string {
+  return fromWei(toWei(amount)).replace(".", ",");
+}
+
 export function parseEthInput(input: string): EthAmount | null {
   const trimmed = input.trim();
   const separators = trimmed.match(/[.,]/g) ?? [];
@@ -63,7 +67,7 @@ export function parseEthInput(input: string): EthAmount | null {
   const normalized = trimmed.replace(",", ".");
   const withLeadingZero = normalized.startsWith(".") ? `0${normalized}` : normalized;
   const canonical = withLeadingZero.replace(/^0+(?=\d)/, "");
-  if (!ETH_AMOUNT.test(canonical)) return null;
+  if (!ETH_AMOUNT_PATTERN.test(canonical)) return null;
 
   return fromWei(toWei(canonical as EthAmount));
 }

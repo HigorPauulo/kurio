@@ -9,6 +9,7 @@ import {
   nftIdSchema,
   pageSchema,
 } from "./common";
+import { compareEth } from "@/lib/eth";
 
 export const editionStatusSchema = z.enum(["available", "sold_out", "unavailable"]);
 export const catalogStatusSchema = z.enum(["available", "sold_out"]);
@@ -65,17 +66,23 @@ function commaList<Item extends z.ZodType<unknown, string>>(
     .pipe(z.array(item).min(1).optional());
 }
 
-export const nftListQuerySchema = z.object({
-  q: z.string().trim().min(1).max(80).optional(),
-  category: commaList(categorySchema),
-  chain: commaList(chainSchema),
-  status: catalogStatusSchema.optional(),
-  priceMin: ethAmountSchema.optional(),
-  priceMax: ethAmountSchema.optional(),
-  sort: catalogSortSchema.default("recent"),
-  page: z.coerce.number().int().min(1).default(1),
-  pageSize: z.coerce.number().int().min(1).max(48).default(12),
-});
+export const nftListQuerySchema = z
+  .object({
+    q: z.string().trim().min(1).max(80).optional(),
+    category: commaList(categorySchema),
+    chain: commaList(chainSchema),
+    status: catalogStatusSchema.optional(),
+    priceMin: ethAmountSchema.optional(),
+    priceMax: ethAmountSchema.optional(),
+    sort: catalogSortSchema.default("recent"),
+    page: z.coerce.number().int().min(1).default(1),
+    pageSize: z.coerce.number().int().min(1).max(48).default(12),
+  })
+  .refine(
+    ({ priceMin, priceMax }) =>
+      priceMin === undefined || priceMax === undefined || compareEth(priceMin, priceMax) <= 0,
+    { message: "O preço mínimo não pode passar do máximo.", path: ["priceMax"] },
+  );
 
 export const nftListResponseSchema = pageSchema(nftSummarySchema).extend({
   appliedQuery: z.record(z.string(), z.unknown()),

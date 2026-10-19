@@ -70,6 +70,17 @@ describe("nftListQuerySchema", () => {
     });
   });
 
+  it("exige preço mínimo menor ou igual ao máximo, com comparação exata", () => {
+    expect(nftListQuerySchema.safeParse({ priceMin: "5", priceMax: "1" }).success).toBe(false);
+    expect(nftListQuerySchema.safeParse({ priceMin: "1", priceMax: "1.0" }).success).toBe(true);
+    expect(
+      nftListQuerySchema.safeParse({
+        priceMin: "0.100000000000000001",
+        priceMax: "0.1",
+      }).success,
+    ).toBe(false);
+  });
+
   it("recusa categoria fora da lista e página maior que 48 itens", () => {
     expect(nftListQuerySchema.safeParse({ category: "music,arte" }).success).toBe(false);
     expect(nftListQuerySchema.safeParse({ pageSize: "49" }).success).toBe(false);
