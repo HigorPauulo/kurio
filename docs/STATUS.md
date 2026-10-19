@@ -15,13 +15,12 @@
 |---|---|
 | **Repositório** | github.com/HigorPauulo/kurio |
 | **`develop` / `main`** | Existem; `main` é a padrão e só recebe publicação |
-| **Deploy** | Produção pública em `kurio-beta.vercel.app`, com as fatias 1 e 2 (`7237d0c`); a fatia 3 entra com o merge em `main`; preview por branch, protegido por login |
+| **Deploy** | Produção pública em `kurio-beta.vercel.app`, com as fatias 1 a 3 (`6b10280`); preview por branch, protegido por login |
 | **Protótipo** | Figma do desafio; campos já mapeados em [API](API.md#campos-do-layout) |
 
 ## O que fazer agora, nesta ordem
 
-1. **Publicar a fatia 3:** PR para `develop`, CI, PR para `main`, smoke em produção.
-2. **Fatia 4:** catálogo e detalhe, em `feature/catalog`.
+1. **Fatia 4:** catálogo e detalhe, em `feature/catalog`.
 
 ## O que trava
 
