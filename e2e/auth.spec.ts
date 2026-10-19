@@ -53,6 +53,17 @@ test("rota privada sem sessão leva ao login e volta ao destino", async ({ page 
   await expect(page.getByRole("heading", { name: "Perfil do colecionador" })).toBeVisible();
 });
 
+test("fechar o login aberto por rota privada não prende o usuário no diálogo", async ({ page }) => {
+  await page.goto("/account/wallets");
+  const dialog = page.getByRole("dialog", { name: "Entrar" });
+  await expect(dialog).toBeVisible();
+
+  await page.keyboard.press("Escape");
+
+  await expect(dialog).toHaveCount(0);
+  await expect(page).toHaveURL(/\/$/);
+});
+
 test("redirect para fora do site cai no início", async ({ page }) => {
   await login(page, "ana@kurio.test", "/\\evil.com");
 
@@ -82,6 +93,15 @@ test("expiração no meio do fluxo mostra o diálogo e o login de novo volta ao 
 
   await expect(page).toHaveURL(/\/account\/profile$/);
   await expect(page.getByRole("dialog", { name: "Sua sessão expirou" })).toHaveCount(0);
+});
+
+test("sessão que o servidor esqueceu leva ao aviso de expiração, não a uma tela presa", async ({ page }) => {
+  await login(page, "ana@kurio.test", "/account/profile");
+  await page.evaluate(() => (window as unknown as { __kurio: { reset: () => void } }).__kurio.reset());
+
+  await page.getByRole("button", { name: "Salvar", exact: true }).click();
+
+  await expect(page.getByRole("dialog", { name: "Sua sessão expirou" })).toBeVisible();
 });
 
 test("troca de Ana para Bruno sem recarregar não deixa nenhum dado da Ana na tela", async ({ page }) => {
