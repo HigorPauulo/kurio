@@ -16,7 +16,7 @@ real funcionando no ambiente publicado. Critérios em [Entrega](#entrega).
 
 | Ordem | Fatia | Entrega | Requisitos | Depende de | Horas |
 |---|---|---|---|---|---|
-| 1 | 🟡 **Fundação e spike** | Vite, TS strict, lint, Tailwind, shadcn, Router, Query, Axios, Vitest, Playwright, CI. Spike: `socket.io-client` no MSW com ack, evento, queda e reconexão | NF-6 | | 2 |
+| 1 | ✅ **Fundação e spike** | Vite, TS strict, lint, Tailwind, shadcn, Router, Query, Axios, Vitest, Playwright, CI. Spike: `socket.io-client` no MSW com ack, evento, queda e reconexão | NF-6 | | 2 |
 | 2 | ⬜ **Contratos e mocks** | Schemas Zod, `MockDb`, fixtures, cenários, `window.__kurio` | MOC, AUT-4 | 1 | 3 |
 | 3 | ⬜ **Sessão e conta** | `configureHttp`, login, cadastro, expiração, `switchIdentity`, perfil e carteiras com os campos do layout | AUT-1..4, PER, WAL, NAV-2 | 2 | 2,5 |
 | 4 | ⬜ **Catálogo e detalhe** | Filtros, ordenação e página na URL; detalhe; favoritos otimistas | CAT, DET, NAV-1, NAV-3 | 2 | 2 |
@@ -24,7 +24,7 @@ real funcionando no ambiente publicado. Critérios em [Entrega](#entrega).
 | 6 | ⬜ **Tempo real** | Socket por sessão, `eventStore`, subscriptions, reconciliação | RT, CRT-5 | 4, 5 | 1,5 |
 | 7 | ⬜ **Checkout e pedido** | Campos do layout, revisão, idempotência, recibo, pedido alheio | PAG, PED, AUT-5 | 3, 6 | 2,5 |
 | 8 | ⬜ **Visual e responsivo** | Tokens do Figma, composição em 390 e 1440, 768 sem quebra, estados de carregamento | VIS, NF-1, NF-2, NF-3 | 7 | 2 |
-| 9 | 🔒 **Publicação** | Vercel, smoke, Lighthouse, roteiro manual, documentação conferida com o código | NF-4, NF-6, NF-7, MOC-8, VIS-4 | 8 | 1 |
+| 9 | ⬜ **Publicação** | Vercel, smoke, Lighthouse, roteiro manual, documentação conferida com o código | NF-4, NF-6, NF-7, MOC-8, VIS-4 | 8 | 1 |
 | | **Linha de chegada** | | | | **18** |
 
 Ordem por dependência e risco: o spike abre a fila porque é a única peça cuja viabilidade não está
@@ -72,6 +72,9 @@ ela, canonical e Open Graph apontam para `localhost`), saída `dist`. `vite.conf
 `VERCEL_GIT_COMMIT_SHA` em `window.__kurio.build`. O `vercel.json` faz rewrite SPA para `index.html`,
 serve `mockServiceWorker.js` sem cache e aplica os cabeçalhos de segurança. `main` publica; rollback
 é "Promote" do deploy anterior.
+
+Cada branch gera um preview, protegido pela Vercel Authentication (só quem está logado na conta
+abre). A produção, servida pela `main`, é pública: a publicação confere a URL sem login.
 
 **Smoke a cada publicação** (no navegador): catálogo vindo do MSW sem erro no console; refresh em rota
 profunda e em rota inexistente; compra como Ana até o recibo; `__kurio.catalog.setPrice` chegando ao

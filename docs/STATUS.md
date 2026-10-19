@@ -2,35 +2,31 @@
 
 **Este é o único documento que declara estado.** Voltou de uma pausa? Leia só este.
 
-**Atualizado em 2026-10-19: fatia 1 em andamento; spike de Socket.IO aprovado; entrega em até 24 h.**
+**Atualizado em 2026-10-19: fatia 1 concluída (fundação, spike e preview na Vercel); entrega em até 24 h.**
 
 ## Onde estou
 
-> **Fatia 1 de 9, em andamento.** Existem o esqueleto (Vite, React, TypeScript strict), o MSW com o
-> Socket.IO simulado, o Playwright, o ESLint com as regras de fronteira, o Tailwind v4, o shadcn/ui, o Router (com a
-> tela de não encontrado), o Query, o transporte HTTP com `configureHttp`, o Vitest e o
-> CI no GitHub Actions (verde). O spike aprovou o binding com três contornos
-> ([DECISIONS](DECISIONS.md)), provados por 4 testes E2E em desktop e mobile. Falta o `vercel.json`
-> e a publicação. `pnpm verify` roda o gate completo.
+> **Fatia 1 de 9, concluída.** A fundação está pronta: Vite, React e TypeScript strict; MSW com o
+> Socket.IO simulado; ESLint com as regras de fronteira; Tailwind v4 e shadcn/ui; Router, Query e
+> transporte HTTP com `configureHttp`; Vitest e Playwright; `pnpm verify` como gate; CI verde no
+> GitHub Actions. O spike aprovou o binding com três contornos ([DECISIONS](DECISIONS.md)). O preview
+> da Vercel foi conferido: rewrite, cabeçalhos de segurança, mocks e heartbeat do socket funcionando.
 
 | | |
 |---|---|
 | **Repositório** | github.com/HigorPauulo/kurio |
 | **`develop` / `main`** | Existem; `main` é a padrão e só recebe publicação |
-| **Deploy** | Não existe |
+| **Deploy** | Preview por branch na Vercel, protegido por login; produção em `kurio-beta.vercel.app`, pública a partir da fatia 9 |
 | **Protótipo** | Figma do desafio; campos já mapeados em [API](API.md#campos-do-layout) |
 
 ## O que fazer agora, nesta ordem
 
-1. **Fatia 1, restante:** `vercel.json` e conexão do repositório com a Vercel.
-2. **Fechar a fatia 1:** PR de `feature/foundation` para `develop`, com CI verde.
-3. **Fatia 2:** contratos e mocks.
+1. **Fechar a fatia 1:** merge do PR #1 (`feature/foundation` → `develop`), com CI verde.
+2. **Fatia 2:** contratos e mocks, em `feature/contracts-mocks`.
 
 ## O que trava
 
-| Trava | Bloqueia | Dono |
-|---|---|---|
-| Conta Vercel de destino (**G1**, GitHub resolvido) | Publicação da fatia 9 | Higor |
+Nenhuma. O gate **G1** (GitHub e Vercel) foi resolvido.
 
 ## Dívida aberta
 
@@ -42,7 +38,7 @@
 
 | | |
 |---|---|
-| Fatias | 0 de 9 (18 h estimadas, 6 h de margem) |
+| Fatias | 1 de 9; a fatia 1 levou cerca de 2 h 20 min contra 2 h estimadas |
 | Requisitos | 45 funcionais e 7 não funcionais em [REQUIREMENTS](REQUIREMENTS.md) |
 | Verificação | 7 specs E2E, 4 arquivos de unidade e o roteiro manual em [QUALITY](QUALITY.md) |
 | Decisões | 30 em [DECISIONS](DECISIONS.md) |
