@@ -9,7 +9,7 @@ erro não aparece na tela, e o resto é roteiro manual executado antes da entreg
 | Nível | Ferramenta | Alvo | Reprova |
 |---|---|---|---|
 | Estático | `tsc --noEmit`, ESLint `--max-warnings=0` | `src/`, `mocks/`, `e2e/` | qualquer erro ou warning |
-| Unidade | Vitest | `lib/eth`, `lib/http`, `eventStore`, `MockDb`, handshake do mock | qualquer falha |
+| Unidade | Vitest | contratos, `lib/eth`, `lib/http`, `eventStore`, `MockDb`, handshake do mock | qualquer falha |
 | E2E | Playwright 1.64.1, Chromium, desktop (1440) e mobile (390) | fluxos pela UI, com MSW e Socket.IO reais | qualquer falha; flake não se resolve com `retries` |
 | Acessibilidade | `@axe-core/playwright` em toda spec | telas visitadas | violação `serious` ou `critical` (WCAG 2.2 AA) |
 | Roteiro | navegador, 390, 768 e 1440 | §4 | item não conferido |
@@ -24,6 +24,7 @@ erro não aparece na tela, e o resto é roteiro manual executado antes da entreg
 | `apiError.test.ts` | timeout e falha de rede recuperáveis; corpo de erro da API com mensagem, `details` e `fieldErrors`; fora do formato, código derivado do status (400, 401, 404, 500, 503) e 408, 429 e 5xx recuperáveis; código desconhecido preserva mensagem e `requestId` |
 | `client.test.ts` | expiração dispara uma vez por token enviado, inclusive com requisições simultâneas e novo login antes da resposta antiga; requisição sem token não dispara; erro fora do Axios chega intacto |
 | `handshake.test.ts` | token do CONNECT com e sem namespace; JSON ilegível, token que não é texto e auth ausente viram `null` |
+| `contracts.test.ts` | ETH com até 18 casas e formatos recusados; Nome ENS gravado com `.eth`; e-mail normalizado; senha com letra e número; código de indicação em maiúsculas; carteira secundária 0x ou `.eth`; filtros do catálogo vindos da URL; observação até 500; eventos separados pelo tipo |
 | `mockDb.test.ts` | idempotência (mesmo hash, hash diferente); cotação de uso único; reserva e liberação; remoção parcial do carrinho; hash PBKDF2 sem senha em claro; rollback de commit; fixtures com ≥ 2 usuários e variedade para filtros |
 
 ## 3. E2E
