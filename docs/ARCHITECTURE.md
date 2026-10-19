@@ -43,10 +43,11 @@ flowchart LR
 | `src/lib/url` | `safeRedirect` | nada |
 | `src/lib/query` | `queryClient`, `keys.ts`, política de retry, wrapper de `queryFn` que semeia versões | `contracts`, `lib/realtime/eventStore` (módulo puro: não há ciclo) |
 | `src/lib/realtime` | `socketManager`, `eventStore`, `useNftSubscription`, ponte com o cache | `contracts`, `lib/query` |
-| `src/lib/session` | `sessionStore`, `switchIdentity`, detecção de expiração | `http`, `realtime`, `query`, `contracts` |
+| `src/lib/session` | `sessionStore`, `switchIdentity`, `completeLogin`, guards de rota (`requireUserId`, `redirectIfAuthenticated`) | `http`, `realtime`, `query`, `url`, `contracts` |
+| `src/lib/forms` | `applyApiError`: `fieldErrors` da API no campo, o resto na mensagem do formulário | `http` |
 | `src/features/<domínio>/api.ts` | Uma função por endpoint: Axios + `schema.parse` | `lib/http`, `contracts` |
 | `src/features/<domínio>/queries.ts` | `queryOptions` e mutations, com `lib/query/keys` | `api.ts`, `lib/query` |
-| `src/features/<domínio>/components` | UI | `queries.ts`, `components/ui`, `lib/eth`, `lib/realtime`, `lib/session`, `lib/url` |
+| `src/features/<domínio>/components` | UI | `queries.ts`, `components/ui`, `components/form`, `lib/eth`, `lib/forms`, `lib/realtime`, `lib/session`, `lib/url` |
 | `src/routes` | Rotas, `beforeLoad`, `loader`, composição das telas | `features/*`, `lib/session`, `lib/url` |
 | `mocks/` | Backend simulado | `src/contracts`, `src/lib/eth` (só isso) |
 
@@ -110,18 +111,17 @@ Toda `queryFn` repassa `signal`: key que deixa de ser observada aborta a requisi
 | Escopo | Keys |
 |---|---|
 | Público | `['catalog', 'list', normalize(q)]`, `['catalog', 'featured']`, `['nft', id]` |
-| Identidade | `['session']`: só `{ userId, expiresAt }` |
+| Identidade | Fora do cache: `sessionStore` (`anonymous`, `authenticated`, `expired`), lido por `useSyncExternalStore` |
 | Privado | `['u', owner, ...]` com `cart`, `quote` (por rede e `cartVersion`), `order`, `favorites`, `me`, `wallets`; `owner` é o `userId` ou `guest:<id>` |
 
-Invariante: **todo dado de pessoa vive sob `['u', owner]`**. A `queryFn` de `GET /auth/session` grava
-`Session.user` em `me` e devolve só a identidade. `normalize` ordena listas e remove defaults, para
+Invariante: **todo dado de pessoa vive sob `['u', owner]`**. O login grava `Session.user` em `me`; a
+tela lê pessoa só de `me`, e do `sessionStore` só o estado e o `userId`. `normalize` ordena listas e remove defaults, para
 que URLs equivalentes compartilhem cache.
 
 ### 6.2 Política
 
 | Query | `staleTime` | `gcTime` | Observação |
 |---|---|---|---|
-| `session` | 5 min | ∞ | `refetchOnWindowFocus`; só com token salvo |
 | `catalog.list` | 30 s | 5 min | `keepPreviousData` |
 | `catalog.featured`, `nft` | 60 s | 5 min | `nft` atualizado por evento |
 | `cart`, `quote` | 0 | 1 min | sempre a resposta do servidor |
@@ -159,12 +159,11 @@ refetch: mantém o conteúdo com indicador, nunca volta ao skeleton. Vazio é su
 
 | Rota | `beforeLoad` | `loader` |
 |---|---|---|
-| `__root` | `ensureQueryData(session)` sem lançar | |
 | `/` | | prefetch de `featured` e da lista |
 | `/nft/$nftId` | | `ensureQueryData(nft)`; `NOT_FOUND` vira `notFound()` |
 | `/cart` | | prefetch de `cart` |
-| `/checkout`, `/orders/$orderId`, `/account/*` | sem sessão: login com `redirect` | `ensureQueryData` da rota |
-| `/login`, `/register` | com sessão: vai a `safeRedirect(redirect)` | |
+| `/checkout`, `/orders/$orderId`, `/account/*` | `requireUserId`: sem sessão ativa, login com `redirect`; com sessão, `userId` no contexto | `ensureQueryData` da rota |
+| `/login`, `/register` | `redirectIfAuthenticated`: com sessão, vai a `safeRedirect(redirect)` | |
 
 Search params validados por Zod com `.catch` (inválido degrada ao default, nunca lança) e defaults
 removidos da URL. `q` usa `replace` após debounce de 300 ms; filtro, ordenação e página usam `push`;
@@ -186,16 +185,18 @@ stateDiagram-v2
 
 1. cancela as queries
 2. destrói o socket e chama `eventStore.reset(next?.user.id)`
-3. remove `['u']` e `['session']` do cache
-4. grava ou apaga `kurio:session`
+3. remove `['u']` do cache
+4. grava ou apaga a sessão no `sessionStore` (`kurio:session`)
 5. cria o socket com o novo token
-6. com `next`: grava `session` e `me`; se havia carrinho de visitante, `POST /cart/merge`
+6. com `next`: grava `me`; se havia carrinho de visitante, `POST /cart/merge`
 
 Entre os passos 3 e 6 nenhuma key guarda dado do usuário anterior.
 
 **Expiração não é troca de identidade:** desconecta o socket e suspende as requisições privadas, mas
 mantém cache, rascunho e tentativa de pedido. O mesmo `userId` retoma; outro usuário ou o descarte
-passam pelo `switchIdentity`.
+passam pelo `switchIdentity`. `completeLogin` faz essa escolha. A sessão salva é carregada no boot sem
+`GET /auth/session`: o `expiresAt` local arma o timer, e o servidor confirma na primeira requisição
+privada.
 
 ## 9. Carrinho, checkout e pedido
 
@@ -315,7 +316,7 @@ Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lan�
 
 - Filtros abaixo de 768: drawer com "Aplicar", uma requisição por aplicação.
 - `prefers-reduced-motion` remove shimmer e transições.
-- Login e cadastro são rotas renderizadas como diálogo sobre a rota de origem; em acesso direto, sobre `/`.
+- Login e cadastro são rotas próprias renderizadas como diálogo sobre o layout; fechar volta ao `redirect`.
 - Mudança de cotação mostra o diff por linha e exige aceite.
 - Ação fora do escopo vai a `/unavailable` ou fica desabilitada com o motivo.
 - ETH na tela: valor exato, sem arredondar nem zeros à direita, vírgula decimal e ponto de milhar

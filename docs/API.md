@@ -136,8 +136,8 @@ O botão "Ou continue com" do cadastro e do login leva a `/unavailable` (login s
 | `GET /auth/session` | | 200 `Session` | 401 |
 | `POST /auth/logout` | | 204, idempotente | |
 
-No cadastro, `name` nasce igual ao `username` e `ensName` nasce nulo. O cliente só chama
-`GET /auth/session` se houver token salvo. TTL do token de 30 min (configurável por cenário); sem
+No cadastro, `name` nasce igual ao `username` e `ensName` nasce nulo. O cliente carrega a
+sessão salva sem chamar `GET /auth/session` ([ARCHITECTURE](ARCHITECTURE.md#8-sessão)). TTL do token de 30 min (configurável por cenário); sem
 refresh token.
 
 ### NFTs (público)
