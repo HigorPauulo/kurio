@@ -93,7 +93,7 @@ Axios com `baseURL` de `VITE_API_BASE_URL` e timeout de 10 s.
 | request 2 | `withAuth` | `Authorization: Bearer <token>` se houver token |
 | request 3 | `withGuestCart` | `X-Guest-Cart-Id` se não houver token |
 | response 1 | `normalizeError` | Toda falha vira `ApiError` |
-| response 2 | `onSessionExpired` | `SESSION_EXPIRED` avisa a sessão uma vez por token enviado (o do cabeçalho da requisição que falhou, não o token atual) |
+| response 2 | `onSessionExpired` | `SESSION_EXPIRED` ou `UNAUTHENTICATED` avisa a sessão uma vez por token enviado (o do cabeçalho da requisição que falhou, não o token atual) |
 
 `ApiError` tem quatro tipos: `http` (corpo de erro da [API](API.md#erros) mais `status`), `network`
 e `timeout` (ambos retryable) e `contract` (falha de `schema.parse`, com o `path`, nunca retryable).
@@ -138,7 +138,8 @@ Mutation não repete, exceto `createOrder` (§9.2).
 | Mutation de carrinho | grava `cart` com a resposta; invalida `quote` do dono |
 | `POST /cart/merge` | grava `cart` do usuário; remove o escopo `guest:<id>` |
 | Favorito | otimista (§6.4) |
-| Perfil, avatar, carteira | grava `me` ou `wallets` com a resposta |
+| Perfil, avatar | grava `me` com a resposta |
+| Carteira | invalida `wallets` (promover troca o papel das duas) |
 | `nft.updated` aceito | grava `nft`; nas listas que contêm o id, patch se a lista não depende de preço nem de disponibilidade, senão invalida (ordem e filtro mudariam); invalida `cart` e `quote` |
 | `order.updated` terminal | grava `order`; invalida `cart` e `catalog` |
 | Reconexão do socket | invalida as queries ativas lastreadas em tempo real |
@@ -175,7 +176,7 @@ mudar qualquer coisa que não seja `page` volta a `page=1`. Preço vai à URL co
 stateDiagram-v2
   [*] --> Anonymous
   Anonymous --> Authenticated: login / register (merge do carrinho)
-  Authenticated --> Expired: 401 SESSION_EXPIRED | connect_error | timer(expiresAt)
+  Authenticated --> Expired: 401 com token enviado | connect_error | timer(expiresAt)
   Expired --> Authenticated: login do mesmo userId (rascunho restaurado)
   Expired --> Anonymous: descartar
   Authenticated --> Anonymous: logout
@@ -183,7 +184,7 @@ stateDiagram-v2
 
 `switchIdentity(next)` é a única troca de identidade, nesta ordem:
 
-1. cancela as queries
+1. cancela as queries de `['u']` (as públicas seguem)
 2. destrói o socket e chama `eventStore.reset(next?.user.id)`
 3. remove `['u']` do cache
 4. grava ou apaga a sessão no `sessionStore` (`kurio:session`)
@@ -268,7 +269,7 @@ preserva `redirect=/checkout?step=...`; o rascunho só volta para o mesmo `userI
 | `QUOTE_STALE`, `QUOTE_EXPIRED` | nova cotação com diff, aceite obrigatório |
 | `QUOTE_ALREADY_USED`, `IDEMPOTENCY_CONFLICT` | vai ao pedido de `details.orderId` |
 | `SESSION_EXPIRED` | diálogo de expiração (§8) |
-| `UNAUTHENTICATED` | login com `redirect` |
+| `UNAUTHENTICATED` | sem token: login com `redirect`; com token enviado, a sessão foi perdida no servidor e segue o fluxo de expiração (§8) |
 | `FORBIDDEN`, `NOT_FOUND` em recurso privado | mesma tela de "não encontrado", para não confirmar que o recurso alheio existe |
 | `retryable` | retry automático em query; "tentar de novo" em mutation |
 | `CONTRACT_VIOLATION` | `errorComponent` da rota; log com `path` em dev |
@@ -316,7 +317,9 @@ Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lan�
 
 - Filtros abaixo de 768: drawer com "Aplicar", uma requisição por aplicação.
 - `prefers-reduced-motion` remove shimmer e transições.
-- Login e cadastro são rotas próprias renderizadas como diálogo sobre o layout; fechar volta ao `redirect`.
+- Login e cadastro são rotas próprias renderizadas como diálogo sobre o layout. Entrar vai ao `redirect`;
+  fechar sem entrar volta a ele só se for público, senão vai a `/` (`getDismissTarget`), para o guard não
+  reabrir o diálogo.
 - Mudança de cotação mostra o diff por linha e exige aceite.
 - Ação fora do escopo vai a `/unavailable` ou fica desabilitada com o motivo.
 - ETH na tela: valor exato, sem arredondar nem zeros à direita, vírgula decimal e ponto de milhar

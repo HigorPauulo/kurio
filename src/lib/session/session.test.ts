@@ -75,6 +75,25 @@ describe("sessionStore", () => {
     expect(store.getState().status).toBe("anonymous");
     expect(storage.getItem(SESSION_STORAGE_KEY)).toBeNull();
   });
+
+  it("troca de estado mesmo quando o armazenamento recusa a gravação", () => {
+    const refusing: Pick<Storage, "getItem" | "setItem" | "removeItem"> = {
+      getItem: () => null,
+      setItem: () => {
+        throw new DOMException("cheio", "QuotaExceededError");
+      },
+      removeItem: () => {
+        throw new DOMException("bloqueado", "SecurityError");
+      },
+    };
+    const store = createSessionStore({ storage: refusing });
+
+    store.setSession(makeSession("usr_ana", "tok_a"));
+    expect(store.getToken()).toBe("tok_a");
+
+    store.clear();
+    expect(store.getState().status).toBe("anonymous");
+  });
 });
 
 describe("troca de identidade", () => {
@@ -92,6 +111,21 @@ describe("troca de identidade", () => {
     expect(queryClient.getQueryCache().findAll({ queryKey: keys.privRoot() }).map((q) => q.queryKey[1])).toEqual([
       "usr_bruno",
     ]);
+  });
+
+  it("não cancela a busca de dado público em andamento", async () => {
+    const queryClient = new QueryClient();
+    const store = createSessionStore({ storage: memoryStorage() });
+    let resolveCatalog: (value: string[]) => void = () => undefined;
+    const catalog = queryClient.fetchQuery({
+      queryKey: ["catalog", "featured"],
+      queryFn: () => new Promise<string[]>((resolve) => (resolveCatalog = resolve)),
+    });
+
+    await switchIdentity(store, queryClient, makeSession("usr_ana", "tok_a"));
+    resolveCatalog(["nft_001"]);
+
+    await expect(catalog).resolves.toEqual(["nft_001"]);
   });
 
   it("completeLogin do mesmo usuário depois da expiração mantém o cache; de outro usuário, limpa", async () => {

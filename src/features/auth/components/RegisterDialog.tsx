@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { registerBodySchema } from "@/contracts/user";
 import { applyApiError } from "@/lib/forms";
+import { getDismissTarget } from "@/lib/session/guards";
 import { safeRedirect } from "@/lib/url/safeRedirect";
 import { useRegisterMutation } from "../queries";
 
@@ -40,14 +41,14 @@ export function RegisterDialog({ redirect }: { redirect?: string }): JSX.Element
   async function handleSubmit({ username, email, password }: RegisterFormOutput): Promise<void> {
     try {
       await register.mutateAsync({ username, email, password });
-      await navigate({ to: destination });
+      await navigate({ href: destination });
     } catch (error) {
       applyApiError(error, form.setError, ["username", "email", "password"]);
     }
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && void navigate({ to: destination })}>
+    <Dialog open onOpenChange={(open) => !open && void navigate({ href: getDismissTarget(redirect) })}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Criar conta</DialogTitle>

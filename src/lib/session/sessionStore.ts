@@ -33,6 +33,15 @@ function readStored(storage: SessionStoreOptions["storage"]): Session | null {
   }
 }
 
+function writeStored(storage: SessionStoreOptions["storage"], session: Session | null): void {
+  try {
+    if (session) storage?.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+    else storage?.removeItem(SESSION_STORAGE_KEY);
+  } catch {
+    return;
+  }
+}
+
 export function createSessionStore({ storage, now = () => Date.now() }: SessionStoreOptions): SessionStore {
   const listeners = new Set<() => void>();
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -56,7 +65,7 @@ export function createSessionStore({ storage, now = () => Date.now() }: SessionS
       return () => listeners.delete(listener);
     },
     setSession(session) {
-      storage?.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+      writeStored(storage, session);
       emit({ status: "authenticated", session });
       schedule(session);
     },
@@ -67,7 +76,7 @@ export function createSessionStore({ storage, now = () => Date.now() }: SessionS
     },
     clear() {
       clearTimeout(timer);
-      storage?.removeItem(SESSION_STORAGE_KEY);
+      writeStored(storage, null);
       emit({ status: "anonymous" });
     },
     getToken: () => (state.status === "anonymous" ? null : state.session.token),

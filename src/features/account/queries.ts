@@ -1,5 +1,7 @@
 import {
   queryOptions,
+  type DataTag,
+  type UseQueryOptions,
   useMutation,
   useQueryClient,
   type UseMutationResult,
@@ -20,7 +22,13 @@ import {
 
 const FIVE_MINUTES = 5 * 60_000;
 
-export function meQuery(userId: string) {
+type PrivateKeys = ReturnType<typeof keys.priv>;
+
+type PrivateQueryOptions<TData, TKey extends readonly unknown[]> = UseQueryOptions<TData, Error, TData, TKey> & {
+  queryKey: DataTag<TKey, TData, Error>;
+};
+
+export function meQuery(userId: string): PrivateQueryOptions<User, PrivateKeys["me"]> {
   return queryOptions({
     queryKey: keys.priv(userId).me,
     queryFn: ({ signal }) => getMe(signal),
@@ -28,7 +36,7 @@ export function meQuery(userId: string) {
   });
 }
 
-export function walletsQuery(userId: string) {
+export function walletsQuery(userId: string): PrivateQueryOptions<Wallet[], PrivateKeys["wallets"]> {
   return queryOptions({
     queryKey: keys.priv(userId).wallets,
     queryFn: ({ signal }) => getWallets(signal),
