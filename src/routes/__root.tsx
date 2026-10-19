@@ -1,18 +1,26 @@
 import type { QueryClient } from "@tanstack/react-query";
-import {
-  createRootRouteWithContext,
-  Link,
-  Outlet,
-} from "@tanstack/react-router";
+import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router";
+import { Header } from "@/components/layout/Header";
+import { ExpiredSessionDialog } from "@/features/auth/components/ExpiredSessionDialog";
 
 export type RouterContext = {
   queryClient: QueryClient;
 };
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-  component: Outlet,
+  component: RootLayout,
   notFoundComponent: NotFound,
 });
+
+function RootLayout() {
+  return (
+    <>
+      <Header />
+      <Outlet />
+      <ExpiredSessionDialog />
+    </>
+  );
+}
 
 function NotFound() {
   return (

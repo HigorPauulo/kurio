@@ -3,6 +3,14 @@ import { RouterProvider } from "@tanstack/react-router";
 import type { JSX } from "react";
 import { queryClient } from "@/lib/query/queryClient";
 import { router } from "@/router";
+import { configureHttp } from "@/lib/http/client";
+import { sessionStore } from "@/lib/session/instance";
+
+configureHttp({
+  getToken: () => sessionStore.getToken(),
+  getGuestCartId: () => null,
+  onSessionExpired: () => sessionStore.expire(),
+});
 
 export default function App(): JSX.Element {
   return (
