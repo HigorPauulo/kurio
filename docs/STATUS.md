@@ -15,13 +15,12 @@
 |---|---|
 | **Repositório** | github.com/HigorPauulo/kurio |
 | **`develop` / `main`** | Existem; `main` é a padrão e só recebe publicação |
-| **Deploy** | Produção pública em `kurio-beta.vercel.app`, com a fatia 1 e as correções da revisão (`2cb7467`); preview por branch, protegido por login |
+| **Deploy** | Produção pública em `kurio-beta.vercel.app`, com as fatias 1 e 2 (`7237d0c`); preview por branch, protegido por login |
 | **Protótipo** | Figma do desafio; campos já mapeados em [API](API.md#campos-do-layout) |
 
 ## O que fazer agora, nesta ordem
 
-1. **Publicar a fatia 2:** PR de `feature/contracts-mocks` para `develop`, depois `develop` para `main`.
-2. **Fatia 3:** sessão e conta, com os primeiros handlers REST.
+1. **Fatia 3:** sessão e conta, com os primeiros handlers REST, em `feature/session-account`.
 
 ## O que trava
 

@@ -85,3 +85,4 @@ detalhe aberto; `__kurio.build` igual ao SHA da `main`.
 |---|---|---|
 | 2026-10-19 | `5fd30c2` | ok: rotas, refresh em rota profunda, socket simulado, ack, cabeçalhos de segurança, console sem erro |
 | 2026-10-19 | `2cb7467` | ok: correções da revisão; `/assets/` inexistente responde 404 em texto; rotas, socket, ack e console sem erro |
+| 2026-10-19 | `7237d0c` | ok: fatia 2 e correções da revisão; `__kurio.build` igual ao SHA; cenário da URL, persistência e reset; rotas, socket e ack; console sem erro |
