@@ -1,0 +1,45 @@
+# Dependências
+node_modules/
+.pnpm-store/
+
+# Build
+dist/
+dist-ssr/
+*.local
+*.tsbuildinfo
+
+# Ambiente: segredo nunca sobe; o exemplo sobe
+.env
+.env.*
+!.env.example
+
+# Testes
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+coverage/
+
+# Lighthouse: execução local fica fora; o relatório de entrega em lighthouse/ sobe
+.lighthouseci/
+
+# Vercel
+.vercel/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Editor e sistema
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Contexto de IA local: nunca versionar
+CLAUDE.md
+CLAUDE.local.md
+.claude/

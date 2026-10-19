@@ -1,0 +1,128 @@
+# Mocks (MSW)
+
+Especificação do backend simulado. Contratos que ele implementa em [API](API.md); decisões em
+[DECISIONS](DECISIONS.md).
+
+## 1. Invariantes
+
+1. `src/` não importa `mocks/` (lint). O app não distingue backend simulado de real.
+2. Um único `MockDb` atende REST e Socket.IO. Toda mutação passa por `db.commit()`, que devolve os
+   eventos a emitir; não existe emissão fora de um commit.
+3. Determinismo: mesmo cenário, mesma sequência de respostas e de IDs (sorteio por `mulberry32` com
+   semente fixa).
+4. `reset()` restaura fixtures, cenário e relógio, e apaga a persistência.
+
+## 2. Estrutura
+
+| Pasta | Conteúdo |
+|---|---|
+| `mocks/browser.ts` | `setupWorker` com os handlers, liga o Socket.IO simulado; exporta `start()` ao bootstrap |
+| `mocks/db/` | `MockDb`, schema do snapshot, persistência, seed |
+| `mocks/fixtures/` | JSON versionado |
+| `mocks/handlers/` | auth, nfts, favorites, cart, quotes, orders, me, wallets |
+| `mocks/realtime/` | `ws.link` + `@mswjs/socket.io-binding`, subscriptions, handshake |
+| `mocks/network/` | `withConditions()`: latência, falha e timeout em todo handler |
+| `mocks/scenarios/` | presets e composição |
+| `mocks/control.ts` | `window.__kurio` |
+
+## 3. `MockDb`
+
+Tabelas: `users`, `sessions`, `nfts`, `carts`, `quotes`, `orders`, `idempotency`, `favorites`,
+`wallets`. Leitura por `read(fn)`; escrita só por `commit(fn)`.
+
+- `commit` roda sobre uma cópia (`structuredClone`), valida invariantes e só então troca o estado:
+  falha no meio não deixa estado parcial.
+- Toda escrita em `nfts`, `carts` ou `orders` incrementa a `version` do registro, e o evento leva essa
+  versão.
+- Pedido segue a ordem de avaliação da [API](API.md#pedidos-privado): `idempotency` indexada por
+  `userId:key`, cotação marcada com `usedByOrderId`, reserva na criação, devolução na recusa, baixa e
+  remoção do carrinho só na confirmação. `buyer` é montado no commit e nunca recalculado.
+- Senha: PBKDF2-SHA256 com salt e 600 000 iterações via WebCrypto; as fixtures trazem o hash pronto.
+- Coleta: todo commit remove cotação vencida há mais de 1 min sem pedido e sessão vencida.
+  `idempotency` e `orders` ficam, porque são o que recupera um pedido.
+
+**Persistência:** snapshot em `localStorage` (`kurio:mockdb:v<schemaVersion>`) após cada commit;
+`schemaVersion` diferente descarta o snapshot e reaplica o seed. Pedido `pending` guarda `settleAt`
+absoluto; no boot, o agendador reagenda pelo tempo restante ou resolve na hora.
+
+**Orçamento:** snapshot até 1 MB (o `localStorage` tem cerca de 5 MB). Commit que estoure é recusado
+com `VALIDATION_FAILED`; `QuotaExceededError` vai ao console como erro, nunca é engolido.
+
+## 4. Fixtures
+
+| Conjunto | Conteúdo |
+|---|---|
+| NFTs | 24 (`nft_001` a `nft_024`), todas as 9 categorias e 3 redes, preços de `0.001` a `12.5` ETH com no máximo 6 casas; 2 páginas de 12 |
+| Edições | 1 a 3 por NFT; ao menos 3 NFTs totalmente esgotados, 2 edições indisponíveis e algumas com `maxPerOrder < available` |
+| Usuários e cupons | os do [README](../README.md#credenciais-fictícias); toda carteira com os campos obrigatórios do layout |
+| Taxas | por rede, na [API](API.md#cotação-privado-no-checkout-público-no-carrinho) |
+
+`nft_001` não muda: é a página de detalhe auditada pelo Lighthouse.
+
+## 5. Condições de rede
+
+`withConditions` resolve, nesta ordem: falha forçada, latência, handler.
+
+| Primitiva | Implementação |
+|---|---|
+| Latência | `delay(ms)`, fixa ou sorteada numa faixa |
+| Fora de ordem | `delay = base − step × (n mod k)` pelo contador da rota: a requisição antiga chega por último |
+| Timeout | `delay(20_000)`, acima dos 10 s do Axios |
+| Offline | `HttpResponse.error()` |
+| Falha HTTP | corpo de erro da API com o status, opcionalmente só nas `N` primeiras chamadas |
+
+Latência, desfecho de pedido, expiração e heartbeat usam o relógio da página: sob `page.clock` tudo
+para até o teste avançar o tempo, inclusive o `delay(0)` do `fast`.
+
+## 6. Cenários
+
+Composição de presets da esquerda para a direita (`?scenario=slow+payment-refused`); regra posterior
+vence na mesma rota. Precedência no boot: `?scenario`, depois `kurio:scenario`, depois
+`VITE_MOCK_DEFAULT_SCENARIO`. Troca vale a partir da próxima requisição; `&reset=1` ou `reset()`
+restauram as fixtures antes. O app tira `scenario` e `reset` da URL depois de aplicar.
+
+| Preset | Efeito |
+|---|---|
+| `default` | latência de 120 a 450 ms; desfecho `confirmed` em 3 s |
+| `fast` | latência 0; desfecho em 300 ms |
+| `slow` | 2,5 s em leituras |
+| `flaky` | 503 nas 2 primeiras chamadas de cada rota |
+| `out-of-order` | `/nfts` com `base = 3000`, `step = 1000`, `k = 3` |
+| `empty-catalog` / `offline` | `/nfts` vazio / erro de rede |
+| `session-short` | token com 60 s |
+| `price-change-on-review` | 2 s após a primeira cotação do checkout, +15% no primeiro item (truncado em 6 casas), com `nft.updated` |
+| `order-timeout` | primeira `POST /orders` de cada chave cria o pedido e responde após 20 s |
+| `payment-refused` | desfecho `refused` |
+| `wallet-reject` | `WALLET_REJECTED` na conexão |
+| `socket-duplicates` | todo evento emitido duas vezes, e a versão anterior reemitida após 1 s |
+| `socket-drop` | fecha o WebSocket 1 s após um pedido entrar em `pending`; aceita reconexão após 4 s |
+
+## 7. Socket.IO simulado
+
+- `ws.link('wss://realtime.kurio.mock/socket.io/*')` com o `toSocketIo` do binding.
+- Handshake valida `auth.token` contra `sessions`; inválido recusa com `{ code: 'SESSION_EXPIRED' }`.
+- Subscriptions por conexão; `order.subscribe` valida o dono.
+- `nft.updated` vai a quem assinou o NFT; `order.updated`, ao dono que assinou o pedido.
+- O servidor responde `ping` pelo relógio da página, para não romper sob `page.clock`.
+
+## 8. `window.__kurio`
+
+| Membro | Faz |
+|---|---|
+| `reset()` | restaura o seed |
+| `scenario.get()`, `scenario.set(presets)` | lê e troca o cenário |
+| `catalog.setPrice(nft, edição, preço)`, `catalog.setAvailable(nft, edição, n)` | muda o dado e emite `nft.updated` |
+| `orders.settle(id, 'confirmed' \| 'refused')` | resolve um pedido pendente |
+| `realtime.dropConnections({ reconnectAfterMs })`, `realtime.stats()` | derruba sockets; conta sockets e subscriptions |
+| `sessions.expire(userId?)` | vence o token |
+| `inspect.orders()`, `inspect.cart(owner)`, `inspect.lastRequest(padrão)` | leitura do estado do servidor |
+| `build` | SHA do build, conferido no smoke de publicação |
+
+Toda escrita passa por `db.commit()`; o evento chega ao app pelo `socket.io-client`. Nada aqui toca o
+cache do Query.
+
+## 9. Limitações
+
+- Só transporte WebSocket.
+- Um servidor por aba; abas não trocam eventos.
+- `msw` travado em `2.15.x` pela peer dependency do binding.
