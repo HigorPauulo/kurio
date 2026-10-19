@@ -9,6 +9,14 @@ import {
   type SnapshotStorage,
 } from "./mockDb";
 import { emptyTables, type QuoteRecord, type Tables } from "./tables";
+import { cartSchema } from "@/contracts/cart";
+import { categorySchema, chainSchema } from "@/contracts/common";
+import { nftSchema } from "@/contracts/nft";
+import { userSchema } from "@/contracts/user";
+import { createWalletBodySchema, walletSchema } from "@/contracts/wallet";
+import { compareEth, minEth } from "@/lib/eth";
+import { verifyPassword } from "./password";
+import { createSeed } from "./seed";
 
 const NOW = Date.parse("2026-10-19T12:00:00.000Z");
 const eth = (value: string): EthAmount => value as EthAmount;
@@ -259,5 +267,85 @@ describe("coleta", () => {
 
     expect(Object.keys(db.read((tables) => tables.quotes)).sort()).toEqual(["qte_grace", "qte_used"]);
     expect(Object.keys(db.read((tables) => tables.sessions))).toEqual(["active"]);
+  });
+});
+
+describe("seed", () => {
+  const tables = createSeed();
+  const nfts = Object.values(tables.nfts);
+  const editions = nfts.flatMap((nft) => nft.editions);
+
+  it("todo registro obedece aos contratos", () => {
+    for (const nft of nfts) expect(nftSchema.safeParse(nft).error).toBeUndefined();
+    for (const user of Object.values(tables.users)) {
+      expect(userSchema.safeParse(user).error).toBeUndefined();
+    }
+    for (const wallet of Object.values(tables.wallets)) {
+      expect(walletSchema.safeParse(wallet).error).toBeUndefined();
+      expect(createWalletBodySchema.safeParse(wallet).error).toBeUndefined();
+    }
+    for (const cart of Object.values(tables.carts)) {
+      expect(cartSchema.safeParse(cart).error).toBeUndefined();
+    }
+  });
+
+  it("tem 24 NFTs em duas páginas, com todas as categorias e redes", () => {
+    expect(nfts.map((nft) => nft.id)).toEqual(
+      Array.from({ length: 24 }, (_, index) => `nft_${String(index + 1).padStart(3, "0")}`),
+    );
+    expect(new Set(nfts.map((nft) => nft.category))).toEqual(new Set(categorySchema.options));
+    expect(new Set(nfts.map((nft) => nft.chain))).toEqual(new Set(chainSchema.options));
+  });
+
+  it("vai de 0.001 a 12.5 ETH, com no máximo 6 casas, e priceFrom é o menor preço", () => {
+    const prices = editions.map((edition) => edition.price);
+    expect(prices.reduce(minEth)).toBe("0.001");
+    expect(prices.reduce((max, price) => (compareEth(price, max) > 0 ? price : max))).toBe("12.5");
+    expect(prices.every((price) => (price.split(".")[1] ?? "").length <= 6)).toBe(true);
+    for (const nft of nfts) {
+      expect(nft.priceFrom).toBe(nft.editions.map((edition) => edition.price).reduce(minEth));
+    }
+  });
+
+  it("cobre esgotados, indisponíveis, limite por pedido e destaques", () => {
+    const soldOutNfts = nfts.filter((nft) => nft.editions.every((edition) => edition.available === 0));
+    expect(soldOutNfts.length).toBeGreaterThanOrEqual(3);
+    expect(editions.filter((edition) => edition.status === "unavailable").length).toBeGreaterThanOrEqual(2);
+    expect(editions.some((edition) => edition.maxPerOrder < edition.available)).toBe(true);
+    const featured = nfts.filter((nft) => nft.featured).length;
+    expect(featured).toBeGreaterThan(0);
+    expect(featured).toBeLessThanOrEqual(6);
+  });
+
+  it("tem Ana com carteiras, favoritos e carrinho, Bruno sem carteiras e Carla sem Nome ENS", () => {
+    const walletsOf = (userId: string): number =>
+      Object.values(tables.wallets).filter((wallet) => wallet.userId === userId).length;
+    expect(walletsOf("usr_ana")).toBe(2);
+    expect(walletsOf("usr_bruno")).toBe(0);
+    expect(tables.users.usr_carla.ensName).toBeNull();
+    expect(tables.favorites.usr_ana.every((id) => id in tables.nfts)).toBe(true);
+  });
+
+  it("monta o carrinho só com edições existentes e dentro do limite", () => {
+    for (const item of tables.carts.usr_ana.items) {
+      const edition = tables.nfts[item.nftId].editions.find((e) => e.id === item.editionId);
+      expect(edition).toBeDefined();
+      expect(item.quantity).toBeLessThanOrEqual(Math.min(edition!.available, edition!.maxPerOrder));
+      expect(item.unitPrice).toBe(edition!.price);
+    }
+  });
+
+  it("guarda senha só como hash PBKDF2 que confere com a senha das credenciais", async () => {
+    expect(JSON.stringify(tables)).not.toContain("Kurio@2026");
+    for (const user of Object.values(tables.users)) {
+      await expect(verifyPassword("Kurio@2026", user.salt, user.passwordHash)).resolves.toBe(true);
+      await expect(verifyPassword("senha-errada1", user.salt, user.passwordHash)).resolves.toBe(false);
+    }
+  });
+
+  it("devolve uma cópia nova a cada chamada", () => {
+    const first = createSeed();
+    first.nfts.nft_001.likes = 0;
+    expect(createSeed().nfts.nft_001.likes).toBe(412);
   });
 });

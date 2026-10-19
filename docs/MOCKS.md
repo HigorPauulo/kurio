@@ -17,8 +17,8 @@ Especificação do backend simulado. Contratos que ele implementa em [API](API.m
 | Pasta | Conteúdo |
 |---|---|
 | `mocks/browser.ts` | `setupWorker` com os handlers, liga o Socket.IO simulado; exporta `start()` ao bootstrap |
-| `mocks/db/` | `MockDb`, schema do snapshot, persistência, seed |
-| `mocks/fixtures/` | JSON versionado |
+| `mocks/db/` | `MockDb`, tabelas, seed, hash de senha (PBKDF2 via WebCrypto) |
+| `mocks/fixtures/` | dados versionados em TypeScript (catálogo, usuários, cupons, taxas), validados pelos contratos no teste |
 | `mocks/handlers/` | auth, nfts, favorites, cart, quotes, orders, me, wallets |
 | `mocks/realtime/` | `ws.link` + `@mswjs/socket.io-binding`, subscriptions, handshake |
 | `mocks/network/` | `withConditions()`: latência, falha e timeout em todo handler |
@@ -62,7 +62,8 @@ com `VALIDATION_FAILED`; `QuotaExceededError` vai ao console como erro, nunca é
 | Usuários e cupons | os do [README](../README.md#credenciais-fictícias); toda carteira com os campos obrigatórios do layout |
 | Taxas | por rede, na [API](API.md#cotação-privado-no-checkout-público-no-carrinho) |
 
-`nft_001` não muda: é a página de detalhe auditada pelo Lighthouse.
+`nft_001` não muda: é a página de detalhe auditada pelo Lighthouse. O `priceFrom` é calculado a partir
+das edições, nunca escrito à mão. As imagens usam um placeholder até a fatia 8.
 
 ## 5. Condições de rede
 

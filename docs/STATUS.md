@@ -32,6 +32,7 @@ Nenhuma. O gate **G1** (GitHub e Vercel) foi resolvido.
 | Dívida | Sai em |
 |---|---|
 | Rota `/dev/realtime` (página do spike) vai para produção | Fatia 6, quando a spec `realtime` cobrir o tempo real nas telas reais |
+| Imagens das NFTs são um placeholder | Fatia 8, com os assets do protótipo |
 
 ## Os números de hoje
 
