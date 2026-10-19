@@ -7,13 +7,19 @@ const SOCKET_URL = "https://realtime.kurio.mock";
 
 type ConnectError = Error & { data?: { code?: string } };
 
+type InvalidTokenProbe = { socket: Socket; timeoutId: number };
+
+const PROBE_DURATION_MS = 5000;
+
 export const Route = createFileRoute("/dev/realtime")({
   component: RealtimeSpike,
 });
 
 function RealtimeSpike() {
   const socketRef = useRef<Socket | null>(null);
+  const probeRef = useRef<InvalidTokenProbe | null>(null);
   const [status, setStatus] = useState("desconectado");
+  const [isProbing, setIsProbing] = useState(false);
   const [log, setLog] = useState<string[]>([]);
 
   function addLog(line: string): void {
@@ -44,6 +50,16 @@ function RealtimeSpike() {
     };
   }, []);
 
+  useEffect(() => {
+    return () => {
+      const probe = probeRef.current;
+      if (!probe) return;
+      window.clearTimeout(probe.timeoutId);
+      probe.socket.disconnect();
+      probeRef.current = null;
+    };
+  }, []);
+
   function handleSubscribe(): void {
     socketRef.current
       ?.timeout(2000)
@@ -61,6 +77,8 @@ function RealtimeSpike() {
   }
 
   function handleInvalidToken(): void {
+    if (probeRef.current) return;
+
     const socket = io(SOCKET_URL, {
       transports: ["websocket"],
       auth: { token: "token-vencido" },
@@ -81,12 +99,17 @@ function RealtimeSpike() {
       addLog(`pergunta 3: tentativa de reconexão ${attempts}`);
     });
 
-    window.setTimeout(() => {
+    const timeoutId = window.setTimeout(() => {
       addLog(
         `pergunta 3: após 5 s, conectado=${socket.connected}, tentativas=${attempts}`,
       );
       socket.disconnect();
-    }, 5000);
+      probeRef.current = null;
+      setIsProbing(false);
+    }, PROBE_DURATION_MS);
+
+    probeRef.current = { socket, timeoutId };
+    setIsProbing(true);
   }
 
   return (
@@ -95,7 +118,11 @@ function RealtimeSpike() {
       <p>Status: {status}</p>
       <div className="flex flex-wrap gap-2">
         <Button onClick={handleSubscribe}>Pergunta 2: assinar NFT (ack)</Button>
-        <Button variant="outline" onClick={handleInvalidToken}>
+        <Button
+          variant="outline"
+          onClick={handleInvalidToken}
+          disabled={isProbing}
+        >
           Pergunta 3: conectar com token inválido
         </Button>
       </div>
