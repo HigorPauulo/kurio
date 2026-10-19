@@ -5,6 +5,7 @@ import { isConnectPacket, readConnectToken } from "./handshake";
 import { createControl } from "./control";
 import { createMockDb } from "./db/mockDb";
 import { createSeed } from "./db/seed";
+import { openStorage } from "./db/storage";
 import { createNetworkConditions } from "./network/conditions";
 import { buildScenario, type PresetName } from "./scenarios/presets";
 import {
@@ -67,19 +68,20 @@ const handlers = [
 ];
 
 function setUpBackend(): void {
+  const storage = openStorage(() => localStorage);
   const initial = resolveInitialScenario({
     search: location.search,
-    stored: localStorage.getItem(SCENARIO_STORAGE_KEY),
+    stored: storage?.getItem(SCENARIO_STORAGE_KEY) ?? null,
     envDefault: import.meta.env.VITE_MOCK_DEFAULT_SCENARIO,
   });
   let scenarioNames: PresetName[] = initial.names;
 
   function saveScenario(names: PresetName[]): void {
     scenarioNames = names;
-    localStorage.setItem(SCENARIO_STORAGE_KEY, names.join("+"));
+    storage?.setItem(SCENARIO_STORAGE_KEY, names.join("+"));
   }
 
-  const db = createMockDb({ seed: createSeed, storage: localStorage });
+  const db = createMockDb({ seed: createSeed, storage });
   if (initial.reset) db.reset();
   saveScenario(scenarioNames);
 
