@@ -1,4 +1,4 @@
-import { cartSchema, quoteSchema, type Cart, type Quote } from "@/contracts/cart";
+import { cartSchema, quoteSchema, type Cart, type Quote, type QuotePurpose } from "@/contracts/cart";
 import type { Chain } from "@/contracts/common";
 import { parseResponse } from "@/lib/http/apiError";
 import { http } from "@/lib/http/client";
@@ -35,7 +35,7 @@ export async function removeCoupon(): Promise<Cart> {
   return parseResponse(cartSchema, data);
 }
 
-export async function createQuote(network: Chain, signal?: AbortSignal): Promise<Quote> {
-  const { data } = await http.post<unknown>("/quotes", { network }, { signal });
+export async function createQuote(network: Chain, signal?: AbortSignal, purpose: QuotePurpose = "cart"): Promise<Quote> {
+  const { data } = await http.post<unknown>("/quotes", { network, purpose }, { signal });
   return parseResponse(quoteSchema, data);
 }

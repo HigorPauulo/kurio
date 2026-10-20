@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { AlertTriangle, Minus, Plus, Trash2 } from "lucide-react";
 import { useState, type FormEvent, type JSX } from "react";
 import { TextField } from "@/components/form/TextField";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import type { Cart, CartItem, Quote } from "@/contracts/cart";
 import { purchaseLimit } from "@/contracts/nft";
 import { formatEth } from "@/lib/eth";
@@ -207,6 +207,9 @@ function Summary({ owner, cart }: { owner: string; cart: Cart }): JSX.Element {
       <p role="status" className="text-xs text-muted-foreground">
         {isRefreshing ? "Atualizando o resumo..." : "Valores calculados pelo servidor."}
       </p>
+      <Link to="/checkout" className={buttonVariants()}>
+        Conectar e finalizar
+      </Link>
       <Link to="/" className="text-sm underline underline-offset-4">
         Continuar explorando
       </Link>

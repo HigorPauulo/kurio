@@ -8,9 +8,11 @@ import {
 } from "@tanstack/react-query";
 import type { ChangePasswordBody, UpdateMeBody, User } from "@/contracts/user";
 import type { CreateWalletBody, Wallet } from "@/contracts/wallet";
+import type { Chain } from "@/contracts/common";
 import { keys } from "@/lib/query/keys";
 import {
   changePassword,
+  connectWallet,
   createWallet,
   getMe,
   getWallets,
@@ -79,5 +81,18 @@ export function useSaveWalletMutation(userId: string): UseMutationResult<Wallet,
     mutationFn: (input: SaveWalletInput) =>
       input.walletId ? updateWallet(input.walletId, input.body) : createWallet(input.body),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: keys.priv(userId).wallets }),
+  });
+}
+
+export type ConnectWalletInput = { walletId: string; network: Chain };
+
+export function useConnectWalletMutation(userId: string): UseMutationResult<Wallet, Error, ConnectWalletInput> {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ walletId, network }: ConnectWalletInput) => connectWallet(walletId, network),
+    onSuccess: (wallet) =>
+      queryClient.setQueryData<Wallet[]>(keys.priv(userId).wallets, (wallets) =>
+        wallets?.map((candidate) => (candidate.id === wallet.id ? wallet : candidate)),
+      ),
   });
 }
