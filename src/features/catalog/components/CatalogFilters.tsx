@@ -86,7 +86,7 @@ function FilterForm({ filters, onApply }: FilterFormProps): JSX.Element {
             label="Preço mínimo"
             inputMode="decimal"
             autoComplete="off"
-            placeholder="0,02"
+            placeholder="ex.: 0,02"
             value={priceMin}
             error={errors.priceMin}
             onChange={(event) => setPriceMin(event.target.value)}
@@ -95,7 +95,7 @@ function FilterForm({ filters, onApply }: FilterFormProps): JSX.Element {
             label="Preço máximo"
             inputMode="decimal"
             autoComplete="off"
-            placeholder="12,3"
+            placeholder="ex.: 12,3"
             value={priceMax}
             error={errors.priceMax}
             onChange={(event) => setPriceMax(event.target.value)}

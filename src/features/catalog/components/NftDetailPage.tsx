@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "@tanstack/react-router";
-import { CircleOff, Heart, Minus, Plus } from "lucide-react";
+import { Check, CircleOff, Heart, Minus, Plus } from "lucide-react";
 import { useId, useState, type JSX, type ReactNode } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { purchaseLimit, type Edition, type Nft } from "@/contracts/nft";
@@ -86,7 +86,7 @@ function EditionPicker({ nft, selected, onChange }: { nft: Nft; selected: Editio
           return (
             <label
               key={edition.id}
-              className="relative inline-flex h-7 cursor-pointer items-center rounded-full border border-border-soft px-3 text-caption text-text-secondary hover:border-primary has-checked:border-primary has-checked:text-text-accent has-disabled:cursor-not-allowed has-disabled:line-through has-disabled:opacity-60 has-focus-visible:ring-2 has-focus-visible:ring-ring"
+              className="group/edition relative inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border border-input px-3 text-caption text-text-secondary hover:border-primary has-checked:border-primary has-checked:bg-surface-raised has-checked:font-bold has-checked:text-text-accent has-disabled:cursor-not-allowed has-disabled:line-through has-disabled:opacity-60 has-focus-visible:ring-2 has-focus-visible:ring-ring"
             >
               <input
                 type="radio"
@@ -98,6 +98,7 @@ function EditionPicker({ nft, selected, onChange }: { nft: Nft; selected: Editio
                 onChange={() => onChange(edition.id)}
                 className="absolute inset-0 size-full cursor-pointer appearance-none rounded-full opacity-0 disabled:cursor-not-allowed"
               />
+              <Check aria-hidden="true" className="hidden size-3.5 group-has-checked/edition:block" />
               {edition.label} · {formatEth(edition.price)} ETH
             </label>
           );

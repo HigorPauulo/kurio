@@ -91,7 +91,7 @@ export function HomeHero(): JSX.Element {
       </div>
       <img
         src={HERO_IMAGE}
-        alt="Emerald Ape #042, macaco de óculos e jaqueta verde"
+        alt="Arte em destaque: macaco de óculos e jaqueta verde"
         width={640}
         height={640}
         fetchPriority="high"
