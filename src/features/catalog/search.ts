@@ -23,6 +23,16 @@ export type CatalogSearch = {
   page?: number;
 };
 
+const CATALOG_SEARCH_KEYS = ["q", "category", "chain", "status", "view", "priceMin", "priceMax", "sort", "page"] as const satisfies readonly (keyof CatalogSearch)[];
+
+export function pickCatalogSearch(search: CatalogSearch): CatalogSearch {
+  const picked: CatalogSearch = {};
+  for (const key of CATALOG_SEARCH_KEYS) {
+    if (search[key] !== undefined) Object.assign(picked, { [key]: search[key] });
+  }
+  return picked;
+}
+
 export type CatalogFilters = Omit<CatalogSearch, "q" | "sort" | "page" | "view">;
 
 export const CLEARED_FILTERS: { [Key in keyof Required<CatalogFilters>]: undefined } = {

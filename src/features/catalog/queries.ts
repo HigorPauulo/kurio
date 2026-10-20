@@ -27,7 +27,7 @@ import {
   getNfts,
   removeFavorite,
 } from "./api";
-import type { CatalogSearch } from "./search";
+import { pickCatalogSearch, type CatalogSearch } from "./search";
 
 const THIRTY_SECONDS = 30_000;
 const ONE_MINUTE = 60_000;
@@ -40,7 +40,8 @@ type TaggedQueryOptions<TData, TKey extends readonly unknown[]> = UseQueryOption
 type ListKey = ReturnType<typeof keys.catalog.list<CatalogSearch>>;
 type FavoritesKey = ReturnType<typeof keys.priv>["favorites"];
 
-export function catalogListQuery(search: CatalogSearch): TaggedQueryOptions<NftListResponse, ListKey> {
+export function catalogListQuery(rawSearch: CatalogSearch): TaggedQueryOptions<NftListResponse, ListKey> {
+  const search = pickCatalogSearch(rawSearch);
   return queryOptions({
     queryKey: keys.catalog.list(search),
     queryFn: ({ signal }) => seedNftVersions(() => getNfts(search, signal), (list) => list.items),
