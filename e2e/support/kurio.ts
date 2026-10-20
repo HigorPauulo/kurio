@@ -24,6 +24,14 @@ export async function logout(page: Page): Promise<void> {
 }
 
 export async function expectNoA11yViolations(page: Page): Promise<void> {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
+        .map((animation) => animation.finished.catch(() => undefined)),
+    ),
+  );
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
   const blocking = results.violations
     .filter((violation) => violation.impact === "serious" || violation.impact === "critical")
