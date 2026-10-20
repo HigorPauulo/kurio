@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectNoA11yViolations, login, startFresh } from "./support/kurio.js";
+import { expectCartCount, expectNoA11yViolations, login, startFresh } from "./support/kurio.js";
 
 type ServerCart = { items: { editionId: string; quantity: number }[]; coupon: { code: string } | null } | null;
 
@@ -103,7 +103,7 @@ test("login une o carrinho do visitante, limita ao disponível e anuncia o ajust
 
   await login(page, "ana@kurio.test", "/cart");
   await expect(page.getByText(/Unimos o carrinho de visitante ao seu\. 1 item foi ajustado/)).toBeAttached();
-  await expect(page.getByRole("link", { name: "Carrinho, 7 itens" })).toBeVisible();
+  await expectCartCount(page, 7);
   await expect(page.getByRole("group", { name: "Quantidade de Golden Pulse #402" })).toContainText("6");
 
   expect(await serverCart(page, "usr_ana")).toMatchObject({

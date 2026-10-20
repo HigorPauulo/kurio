@@ -29,10 +29,16 @@ function RootLayout() {
   const location = useLocation();
   const isFullScreen = location.pathname.startsWith("/orders/");
   const hasBuyBar = location.pathname.startsWith("/nft/");
-  const hasTabBar = !isFullScreen && !hasBuyBar;
+  const hasTabBar = !isFullScreen && !hasBuyBar && location.pathname !== "/cart";
 
   return (
-    <div className={cn("flex min-h-dvh flex-col", hasTabBar && "pb-20 md:pb-0", hasBuyBar && "pb-56 md:pb-0")}>
+    <div
+      className={cn(
+        "flex min-h-dvh flex-col max-md:has-data-fixed-sheet:pb-112",
+        hasTabBar && "pb-20 md:pb-0",
+        hasBuyBar && "pb-56 md:pb-0",
+      )}
+    >
       {!isFullScreen && <Header />}
       <div className="flex flex-1 flex-col">
         <Outlet />

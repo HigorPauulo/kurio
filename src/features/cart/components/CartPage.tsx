@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Minus, Plus } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Minus, Plus } from "lucide-react";
 import { useState, type FormEvent, type JSX } from "react";
 import { TextField } from "@/components/form/TextField";
 import { DeleteIcon } from "@/components/icons/KurioIcons";
@@ -23,7 +23,8 @@ import {
 } from "../queries";
 import { EmptyCart } from "./EmptyCart";
 
-const QUANTITY_BUTTON = "h-7.5 w-5 rounded-full border border-ink p-0 shadow-md [&_svg:not([class*='size-'])]:size-3.5";
+const QUANTITY_BUTTON =
+  "h-7.5 w-5 rounded-full border border-ink p-0 shadow-md max-md:size-6 max-md:border-border-strong max-md:bg-surface-raised max-md:text-foreground max-md:shadow-none [&_svg:not([class*='size-'])]:size-3.5";
 const ROW = "grid grid-cols-[auto_1fr] md:grid-cols-[minmax(0,1fr)_7.5rem_8rem_7.5rem_2.5rem]";
 
 function itemLimit(item: CartItem): number {
@@ -59,21 +60,26 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
   const isBlocked = item.status === "sold_out";
 
   return (
-    <li className={cn(ROW, "relative items-center gap-x-4 gap-y-2 bg-surface-card p-0 pr-3")}>
-      <div className="col-span-2 flex min-w-0 items-start gap-4 md:col-span-1">
+    <li
+      className={cn(
+        ROW,
+        "relative items-center gap-x-4 gap-y-2 bg-surface-card p-0 pr-3 max-md:flex max-md:min-h-25 max-md:items-stretch max-md:overflow-hidden max-md:rounded-[0.875rem] max-md:shadow-lg",
+      )}
+    >
+      <div className="col-span-2 flex min-w-0 items-start gap-4 max-md:flex-1 max-md:gap-2.5 md:col-span-1">
         <img
           src={item.cover.url}
           alt={item.cover.alt}
           width={96}
           height={96}
-          className="aspect-square w-24 shrink-0 rounded-md object-cover md:w-17.5"
+          className="aspect-square w-24 shrink-0 rounded-md object-cover max-md:h-full max-md:min-h-25 max-md:w-25 max-md:rounded-none md:w-17.5"
         />
-        <div className="flex min-w-0 flex-1 flex-col gap-1 py-2 pr-10 md:pr-0">
-          <Link to="/nft/$nftId" params={{ nftId: item.nftId }} className="truncate font-bold hover:text-text-accent">
+        <div className="flex min-w-0 flex-1 flex-col gap-1 py-2 pr-10 max-md:py-3 max-md:pr-8 md:pr-0">
+          <Link to="/nft/$nftId" params={{ nftId: item.nftId }} className="truncate font-bold hover:text-text-accent max-md:text-body">
             {item.nftName}
           </Link>
-          <span className="truncate text-sm text-secondary-base">ID do token: {item.tokenId}</span>
-          <span className="text-lg font-bold text-text-accent md:hidden">
+          <span className="truncate text-sm text-secondary-base max-md:text-text-secondary">ID do token: {item.tokenId}</span>
+          <span className="text-lg font-bold text-text-accent max-md:mt-auto md:hidden">
             {formatEth(line?.unitPrice ?? item.unitPrice)} ETH
           </span>
           <ItemNotice item={item} quote={quote} />
@@ -94,7 +100,11 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
         <span className="sr-only">Preço unitário: </span>
         {formatEth(line?.unitPrice ?? item.unitPrice)} ETH
       </p>
-      <div className="flex items-center gap-2 pb-3 pl-3 md:p-0" role="group" aria-label={`Quantidade de ${item.nftName}`}>
+      <div
+        className="flex items-center gap-2 pb-3 pl-3 max-md:absolute max-md:right-3 max-md:bottom-3 max-md:p-0 md:p-0"
+        role="group"
+        aria-label={`Quantidade de ${item.nftName}`}
+      >
         <Button
           type="button"
           className={QUANTITY_BUTTON}
@@ -115,7 +125,7 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
           <Plus aria-hidden="true" />
         </Button>
       </div>
-      <p className="pb-3 text-right text-base font-bold text-text-accent md:p-0 md:text-left">
+      <p className="pb-3 text-right text-base font-bold text-text-accent max-md:sr-only md:p-0 md:text-left">
         <span className="sr-only">Total da linha: </span>
         {line ? `${formatEth(line.lineTotal)} ETH` : "..."}
       </p>
@@ -174,8 +184,8 @@ function CouponForm({ owner, cart, quote }: { owner: string; cart: Cart; quote: 
 
   return (
     <form noValidate className="flex flex-col gap-2" onSubmit={(event) => void handleSubmit(event)}>
-      <div className="flex items-end">
-        <div className="min-w-0 flex-1 [&_input]:rounded-r-none [&_input]:border-primary [&_label]:text-sm [&_label]:font-bold">
+      <div className="flex items-end max-md:relative">
+        <div className="min-w-0 flex-1 [&_input]:rounded-r-none [&_input]:border-primary [&_label]:text-sm [&_label]:font-bold max-md:[&_input]:h-12.5 max-md:[&_input]:rounded-full max-md:[&_input]:border-border-strong max-md:[&_input]:pr-28 max-md:[&_input]:pl-4 max-md:[&_input]:shadow-lg max-md:[&_label]:sr-only">
           <TextField
             label="Tem um código promocional?"
             autoComplete="off"
@@ -189,7 +199,10 @@ function CouponForm({ owner, cart, quote }: { owner: string; cart: Cart; quote: 
           type="submit"
           disabled={apply.isPending}
           aria-busy={apply.isPending}
-          className={cn("rounded-l-none", error && "mb-7")}
+          className={cn(
+            "rounded-l-none max-md:absolute max-md:top-0 max-md:right-0 max-md:h-12.5 max-md:w-24 max-md:rounded-full max-md:bg-linear-to-r max-md:from-primary/55 max-md:to-primary max-md:text-body max-md:font-bold max-md:text-foreground",
+            error && "mb-7 max-md:mb-0",
+          )}
         >
           Aplicar
         </Button>
@@ -203,8 +216,13 @@ function Summary({ owner, cart }: { owner: string; cart: Cart }): JSX.Element {
   const isRefreshing = quote.isPlaceholderData || quote.isFetching;
 
   return (
-    <section aria-labelledby="summary-title" aria-busy={isRefreshing} className="flex flex-col gap-5 bg-surface-card p-4 md:bg-transparent md:p-0">
-      <h2 id="summary-title" className="border-b border-border-strong pb-3 text-lg font-bold">
+    <section
+      aria-labelledby="summary-title"
+      aria-busy={isRefreshing}
+      data-fixed-sheet
+      className="flex flex-col gap-3 bg-surface-card p-4 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-40 max-md:rounded-t-[2.5rem] max-md:px-6 max-md:pt-6 max-md:pb-[max(2.25rem,env(safe-area-inset-bottom))] max-md:shadow-[0_0_10px_var(--color-ink)] md:gap-5 md:bg-transparent md:p-0"
+    >
+      <h2 id="summary-title" className="border-b border-border-strong pb-3 text-lg font-bold max-md:sr-only">
         Resumo do pedido
       </h2>
       <CouponForm owner={owner} cart={cart} quote={quote.data} />
@@ -216,18 +234,18 @@ function Summary({ owner, cart }: { owner: string; cart: Cart }): JSX.Element {
           </Button>
         </div>
       ) : (
-        <dl className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-3 text-base">
+        <dl className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-3 text-base max-md:text-body">
           <dt>Subtotal</dt>
-          <dd className="text-right text-lg">{quote.data ? `${formatEth(quote.data.subtotal)} ETH` : "..."}</dd>
+          <dd className="text-right text-lg max-md:text-body">{quote.data ? `${formatEth(quote.data.subtotal)} ETH` : "..."}</dd>
           <dt>Desconto</dt>
           <dd className="text-right">{quote.data ? `- ${formatEth(quote.data.discount)} ETH` : "..."}</dd>
           <dt>Taxa de rede</dt>
-          <dd className="text-right text-lg">
+          <dd className="text-right text-lg max-md:text-body">
             {quote.data ? `${formatEth(quote.data.networkFee)} ETH` : "..."}
             <span className="block text-xs text-text-accent">Taxa estimada</span>
           </dd>
-          <dt className="mt-3 font-bold">Total</dt>
-          <dd className="mt-3 text-right text-lg font-bold text-text-accent">
+          <dt className="font-bold md:mt-3">Total</dt>
+          <dd className="text-right text-lg font-bold text-text-accent max-md:text-base md:mt-3">
             {quote.data ? `${formatEth(quote.data.total)} ETH` : "..."}
           </dd>
         </dl>
@@ -235,10 +253,16 @@ function Summary({ owner, cart }: { owner: string; cart: Cart }): JSX.Element {
       <p role="status" className="sr-only">
         {isRefreshing ? "Atualizando o resumo..." : ""}
       </p>
-      <Link to="/checkout" className={cn(buttonVariants({ size: "lg" }), "w-full rounded-full md:h-10 md:rounded-md")}>
+      <Link
+        to="/checkout"
+        className={cn(
+          buttonVariants({ size: "lg" }),
+          "w-full rounded-full max-md:h-15 max-md:bg-linear-to-r max-md:from-primary max-md:to-primary/80 max-md:text-base md:h-10 md:rounded-md",
+        )}
+      >
         Conectar e finalizar
       </Link>
-      <Link to="/" className="self-center text-base text-text-accent hover:underline">
+      <Link to="/" className="self-center text-base text-text-accent hover:underline max-md:hidden">
         Continuar explorando
       </Link>
     </section>
@@ -316,7 +340,7 @@ function CartSkeleton(): JSX.Element {
 export function CartPage({ owner }: { owner: string | null }): JSX.Element {
   return (
     <main className="mx-auto flex w-full max-w-300 flex-col gap-6 px-4 pt-6 lg:pt-8">
-      <nav aria-label="Trilha" className="text-sm font-bold">
+      <nav aria-label="Trilha" className="hidden text-sm font-bold md:block">
         <ol className="flex flex-wrap gap-1">
           <li>
             <Link to="/" className="hover:text-text-accent">
@@ -335,7 +359,17 @@ export function CartPage({ owner }: { owner: string | null }): JSX.Element {
           </li>
         </ol>
       </nav>
-      <h1 className="text-2xl font-bold md:sr-only">Carrinho de NFTs</h1>
+      <div className="relative flex min-h-11 items-center justify-center md:block md:min-h-0">
+        <Link
+          to="/"
+          hash="mercado"
+          aria-label="Voltar ao mercado"
+          className="absolute left-0 flex size-9 items-center justify-center rounded-full border border-border-strong bg-surface-raised hover:text-text-accent md:hidden"
+        >
+          <ArrowLeft aria-hidden="true" className="size-4" />
+        </Link>
+        <h1 className="text-xl font-bold md:sr-only">Carrinho de NFTs</h1>
+      </div>
       {owner ? <CartContent owner={owner} /> : <EmptyCart />}
       <div className="mt-6 lg:mt-10">
         <AlsoViewedRail owner={owner} />

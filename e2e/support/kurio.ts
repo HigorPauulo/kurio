@@ -31,6 +31,17 @@ export async function expectLoggedIn(page: Page): Promise<void> {
   }
 }
 
+export async function expectCartCount(page: Page, count: number): Promise<void> {
+  if (isCompactViewport(page) && new URL(page.url()).pathname === "/cart") {
+    const groups = page.getByRole("list", { name: "Itens do carrinho" }).getByRole("group");
+    await expect
+      .poll(() => groups.evaluateAll((items) => items.reduce((total, item) => total + Number.parseInt(item.querySelector("span")?.textContent ?? "0", 10), 0)))
+      .toBe(count);
+    return;
+  }
+  await expect(page.getByRole("link", { name: `Carrinho, ${count} ${count === 1 ? "item" : "itens"}` })).toBeVisible();
+}
+
 export async function openAccount(page: Page): Promise<void> {
   if (isCompactViewport(page)) {
     await page.getByRole("navigation", { name: "Atalhos" }).getByRole("link", { name: "Minha conta" }).click();
