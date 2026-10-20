@@ -171,7 +171,7 @@ de tempo real: muda sem `nft.updated` e chega ao catálogo pelo `staleTime`.
 
 | Endpoint | Corpo | Sucesso | Erros |
 |---|---|---|---|
-| `GET /cart` | | 200 `Cart` (criado vazio se não existir) | |
+| `GET /cart` | | 200 `Cart` (criado vazio se não existir) | 400 sem `Authorization` nem `X-Guest-Cart-Id` (UUID) |
 | `POST /cart/items` | `{ nftId, editionId, quantity }` | 200 `Cart`; soma se a edição já estiver | 404; 409 `AVAILABILITY_CONFLICT` |
 | `PATCH /cart/items/:id` | `{ quantity }` (≥ 1) | 200 `Cart` | 404; 409 `AVAILABILITY_CONFLICT` |
 | `DELETE /cart/items/:id` | | 200 `Cart`, idempotente | |
@@ -182,6 +182,12 @@ de tempo real: muda sem `nft.updated` e chega ao catálogo pelo `staleTime`.
 Merge: por edição, soma e limita a `min(available, maxPerOrder)`; cada corte vira um `adjustment`. O
 cupom do visitante só entra se o usuário não tiver um. O carrinho do visitante é apagado.
 
+Item do carrinho: `unitPrice` é o preço que o comprador viu ao adicionar ou alterar o item; `available`,
+`maxPerOrder` e `status` são recalculados a cada resposta. `status` é `sold_out` se a edição não está à
+venda ou zerou, `insufficient` se a quantidade passa do limite, `price_changed` se o preço atual difere
+do `unitPrice`. O preço atual vem na cotação (`PRICE_CHANGED { from, to }`); adicionar ou alterar o item
+grava o preço atual. Erros de cupom trazem `fieldErrors.code` com a mensagem do campo.
+
 Cupom com mínimo: aplicar com subtotal abaixo do mínimo responde 422. Se o subtotal cair abaixo depois
 de aplicado, o cupom permanece no carrinho e a cotação traz a issue `COUPON_MINIMUM_NOT_MET` com
 `discount = 0`; volta a valer sozinho quando o subtotal sobe.
@@ -190,7 +196,7 @@ de aplicado, o cupom permanece no carrinho e a cotação traz a issue `COUPON_MI
 
 | Endpoint | Corpo | Sucesso | Erros |
 |---|---|---|---|
-| `POST /quotes` | `{ network }` | 201 `Quote` do carrinho atual | 422 |
+| `POST /quotes` | `{ network }` | 201 `Quote` do carrinho atual | 422 (inclui carrinho vazio) |
 
 Cálculo em wei: `lineTotal = unitPrice × quantity`; `subtotal = Σ lineTotal`; desconto percentual
 `floor(subtotal × bps / 10000)`, fixo `min(valor, subtotal)`; `networkFee = base(rede) + porItem(rede)
@@ -204,7 +210,9 @@ rede escolhida. Cotação vencida e sem pedido é coletada pelo mock ([MOCKS](MO
 | `polygon` | `0.0001` | `0.00002` |
 | `base` | `0.0002` | `0.00004` |
 
-Valores simulados em ETH ([DECISIONS](DECISIONS.md)), versionados nas fixtures.
+Valores simulados em ETH ([DECISIONS](DECISIONS.md)), versionados nas fixtures. A cotação traz uma
+linha por item, inclusive esgotado ou acima do limite; `SOLD_OUT` e `INSUFFICIENT` tornam
+`purchasable` falso, `PRICE_CHANGED` só avisa.
 
 ### Pedidos (privado)
 

@@ -44,7 +44,7 @@ flowchart LR
 | `src/lib/a11y` | `announce()` e a live region única | nada |
 | `src/lib/query` | `queryClient`, `keys.ts`, política de retry, wrapper de `queryFn` que semeia versões | `contracts`, `lib/realtime/eventStore` (módulo puro: não há ciclo) |
 | `src/lib/realtime` | `socketManager`, `eventStore`, `useNftSubscription`, ponte com o cache | `contracts`, `lib/query` |
-| `src/lib/session` | `sessionStore`, `switchIdentity`, `completeLogin`, guards de rota (`requireUserId`, `redirectIfAuthenticated`) | `http`, `realtime`, `query`, `url`, `contracts` |
+| `src/lib/session` | `sessionStore`, `switchIdentity`, `completeLogin`, carrinho de visitante (`guestCart`, `getCartOwner`, `useCartOwner`), guards de rota (`requireUserId`, `redirectIfAuthenticated`) | `http`, `realtime`, `query`, `url`, `contracts` |
 | `src/lib/forms` | `applyApiError`: `fieldErrors` da API no campo, o resto na mensagem do formulário | `http` |
 | `src/features/<domínio>/api.ts` | Uma função por endpoint: Axios + `schema.parse` | `lib/http`, `contracts` |
 | `src/features/<domínio>/queries.ts` | `queryOptions` e mutations, com `lib/query/keys` | `api.ts`, `lib/query` |
@@ -185,6 +185,10 @@ stateDiagram-v2
   Expired --> Anonymous: descartar
   Authenticated --> Anonymous: logout
 ```
+
+O visitante ganha um UUID em `kurio:guestCartId` na primeira tela que lê o carrinho (o contador do
+header); o `withGuestCart` só lê, nunca cria. O merge do passo 6 roda com o token novo; falhou, o login
+segue e o UUID fica para a próxima tentativa; deu certo, o UUID é apagado e os ajustes são anunciados.
 
 `switchIdentity(next)` é a única troca de identidade, nesta ordem:
 
@@ -350,6 +354,9 @@ mantido durante a implementação.
 | Início | Faixa de preço por dois campos (mínimo e máximo) em vez de slider | Slider não digita valor exato em ETH; os campos aceitam vírgula e 18 casas |
 | Detalhe | Aba "Avaliações de colecionadores", estrelas e "Mais desta coleção" ausentes | Avaliações não existem no contrato; `GET /nfts` não filtra por coleção |
 | Detalhe | Visitante vê "Entrar para favoritar", que leva ao login e volta ao NFT | Favorito é dado de pessoa (`['u', owner]`) e exige sessão |
+| Detalhe | "Comprar" vira "Adicionar ao carrinho", com a quantidade escolhida | A compra passa pelo carrinho e pela cotação; não há compra direta no contrato |
+| Carrinho | "ID do token" ausente nas linhas; a linha mostra a edição | O contrato não tem ID de token, e a compra é por edição |
+| Carrinho | "Conectar e finalizar" ausente até a fatia 7 | O pagamento nasce com o checkout; até lá, só "Continuar explorando" |
 
 ## 16. Limitações
 
