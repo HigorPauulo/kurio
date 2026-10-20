@@ -3,7 +3,8 @@ import { Heart, House, UserRound } from "lucide-react";
 import type { JSX } from "react";
 import { CartLink } from "@/features/cart/components/CartLink";
 
-const TAB = "inline-flex size-11 items-center justify-center rounded-full text-foreground hover:text-text-accent aria-[current=page]:text-text-accent";
+const TAB =
+  "relative inline-flex size-11 items-center justify-center rounded-full text-foreground hover:text-text-accent aria-[current=page]:text-text-accent aria-[current=page]:after:absolute aria-[current=page]:after:bottom-0 aria-[current=page]:after:size-1.5 aria-[current=page]:after:rounded-full aria-[current=page]:after:bg-primary";
 
 export function MobileTabBar(): JSX.Element {
   return (

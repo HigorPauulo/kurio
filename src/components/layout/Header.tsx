@@ -11,7 +11,8 @@ type Section = "home" | "market" | "account" | "other";
 
 const MARKET_PREFIXES = ["/nft/", "/cart", "/checkout", "/orders/"];
 
-function getSection(pathname: string): Section {
+function getSection(pathname: string, hash: string): Section {
+  if (pathname === "/" && hash.replace("#", "") === "mercado") return "market";
   if (pathname === "/" || pathname === "/login" || pathname === "/register") return "home";
   if (MARKET_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return "market";
   if (pathname.startsWith("/account/")) return "account";
@@ -21,14 +22,14 @@ function getSection(pathname: string): Section {
 const EXACT = { exact: true, includeHash: true } as const;
 
 const NAV_ITEM =
-  "relative flex h-12 shrink-0 items-center text-base whitespace-nowrap hover:text-text-accent data-[active=true]:font-bold data-[active=true]:text-text-accent data-[active=true]:after:absolute data-[active=true]:after:inset-x-0 data-[active=true]:after:bottom-0 data-[active=true]:after:h-0.75 data-[active=true]:after:bg-primary lg:h-auto lg:pb-6";
+  "relative flex h-12 shrink-0 items-center text-base whitespace-nowrap hover:text-text-accent aria-[current=page]:font-bold aria-[current=page]:text-text-accent aria-[current=page]:after:absolute aria-[current=page]:after:inset-x-0 aria-[current=page]:after:bottom-0 aria-[current=page]:after:h-0.75 aria-[current=page]:after:bg-primary lg:h-auto lg:pb-6";
 
 export function Header(): JSX.Element {
   const session = useSession();
   const location = useLocation();
   const navigate = useNavigate();
   const logout = useLogoutMutation();
-  const section = getSection(location.pathname);
+  const section = getSection(location.pathname, location.hash);
   const isAuthenticated = session.status === "authenticated";
 
   async function handleLogout(): Promise<void> {
@@ -36,26 +37,26 @@ export function Header(): JSX.Element {
     await navigate({ to: "/" });
   }
 
-  function isActive(target: Section | "profile" | "wallets"): boolean {
-    if (target === "profile") return location.pathname === "/account/profile";
-    if (target === "wallets") return location.pathname === "/account/wallets";
-    return section === target;
+  function current(target: Section | "profile" | "wallets"): "page" | undefined {
+    if (target === "profile") return location.pathname === "/account/profile" ? "page" : undefined;
+    if (target === "wallets") return location.pathname === "/account/wallets" ? "page" : undefined;
+    return section === target ? "page" : undefined;
   }
 
   return (
-    <header className={cn("mx-auto w-full max-w-300 px-4", section !== "market" && "border-b-[0.3px] border-primary")}>
+    <header className={cn("mx-auto w-full max-w-300 border-b-[0.3px] border-primary px-4", section === "market" && "border-transparent")}>
       <nav aria-label="Principal" className="flex flex-wrap items-center gap-x-4 pt-4 lg:flex-nowrap lg:items-start lg:justify-between lg:pt-6">
-        <Link to="/" className="flex h-10 w-40 items-center text-sm font-bold tracking-brand lg:h-auto lg:pt-2">
+        <Link to="/" activeOptions={EXACT} className="flex h-10 w-40 items-center text-sm font-bold tracking-brand lg:h-auto lg:pt-2">
           KURIO
         </Link>
         <ul className="order-last -mx-4 flex w-[calc(100%+2rem)] gap-6 overflow-x-auto px-4 lg:order-none lg:mx-0 lg:w-auto lg:gap-8 lg:overflow-visible lg:px-0 xl:gap-10">
           <li>
-            <Link to="/" data-active={isActive("home")} activeOptions={EXACT} className={NAV_ITEM}>
+            <Link to="/" aria-current={current("home")} activeOptions={EXACT} className={NAV_ITEM}>
               Início
             </Link>
           </li>
           <li>
-            <Link to="/" hash="mercado" data-active={isActive("market")} activeOptions={EXACT} className={NAV_ITEM}>
+            <Link to="/" hash="mercado" aria-current={current("market")} activeOptions={EXACT} className={NAV_ITEM}>
               Mercado
             </Link>
           </li>
@@ -72,12 +73,12 @@ export function Header(): JSX.Element {
           {isAuthenticated && (
             <>
               <li>
-                <Link to="/account/profile" data-active={isActive("profile")} activeOptions={EXACT} className={NAV_ITEM}>
+                <Link to="/account/profile" aria-current={current("profile")} activeOptions={EXACT} className={NAV_ITEM}>
                   Perfil
                 </Link>
               </li>
               <li>
-                <Link to="/account/wallets" data-active={isActive("wallets")} activeOptions={EXACT} className={NAV_ITEM}>
+                <Link to="/account/wallets" aria-current={current("wallets")} activeOptions={EXACT} className={NAV_ITEM}>
                   Carteiras
                 </Link>
               </li>
@@ -88,6 +89,7 @@ export function Header(): JSX.Element {
           <Link
             to="/"
             hash="catalog-search"
+            activeOptions={EXACT}
             aria-label="Ir para a busca"
             className="hidden size-10 items-center justify-center rounded-md hover:text-text-accent md:inline-flex"
           >
