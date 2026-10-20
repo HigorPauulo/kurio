@@ -28,7 +28,7 @@ beforeEach(() => {
       scenarioNames = names;
     },
     defaultScenarioNames: ["default"],
-    realtime: { dropConnections: () => undefined, stats: () => ({ sockets: 0, subscriptions: 0, delivered: 0 }) },
+    realtime: { dropConnections: () => undefined, stats: () => ({ sockets: 0, authenticated: 0, subscriptions: 0, delivered: 0 }) },
     build: "abc1234",
   });
 });

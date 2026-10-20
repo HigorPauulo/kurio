@@ -115,10 +115,7 @@ export function createControl({
       },
     },
 
-    realtime: {
-      dropConnections: (options) => realtime.dropConnections(options),
-      stats: () => realtime.stats(),
-    },
+    realtime,
 
     inspect: {
       orders: () =>

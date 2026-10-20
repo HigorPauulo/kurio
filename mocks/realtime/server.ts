@@ -22,7 +22,7 @@ type ClientState = {
   orderIds: Set<string>;
 };
 
-export type RealtimeStats = { sockets: number; subscriptions: number; delivered: number };
+export type RealtimeStats = { sockets: number; authenticated: number; subscriptions: number; delivered: number };
 
 export type RealtimeServer = {
   handler: ReturnType<ReturnType<typeof ws.link>["addEventListener"]>;
@@ -84,8 +84,17 @@ export function createRealtimeServer({ db, getScenario, now }: RealtimeServerDep
       const parsed = nftSubscriptionSchema.safeParse(payload);
       if (!parsed.success) return null;
       for (const nftId of parsed.data.nftIds) {
-        if (event === "nft.subscribe") client.nftIds.add(nftId);
-        else client.nftIds.delete(nftId);
+        if (event === "nft.unsubscribe") {
+          client.nftIds.delete(nftId);
+          continue;
+        }
+        if (client.nftIds.has(nftId)) continue;
+        client.nftIds.add(nftId);
+        const last = lastEventByResource.get(`nft:${nftId}`);
+        if (last) {
+          sendEvent(client.link, last);
+          delivered += 1;
+        }
       }
       return { ok: true };
     }
@@ -154,6 +163,7 @@ export function createRealtimeServer({ db, getScenario, now }: RealtimeServerDep
       const authorized = [...clients].filter((client) => client.isAuthorized);
       return {
         sockets: authorized.length,
+        authenticated: authorized.filter((client) => client.userId !== null).length,
         subscriptions: authorized.reduce((total, client) => total + client.nftIds.size + client.orderIds.size, 0),
         delivered,
       };
