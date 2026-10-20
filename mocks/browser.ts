@@ -4,7 +4,9 @@ import { toSocketIo } from "@mswjs/socket.io-binding";
 import { isConnectPacket, readConnectToken } from "./handshake";
 import { createControl } from "./control";
 import { authHandlers } from "./handlers/auth";
+import { favoriteHandlers } from "./handlers/favorites";
 import { meHandlers } from "./handlers/me";
+import { nftHandlers } from "./handlers/nfts";
 import type { HandlerDeps } from "./handlers/shared";
 import { walletHandlers } from "./handlers/wallets";
 import { createMockDb } from "./db/mockDb";
@@ -113,6 +115,8 @@ export function start(): Promise<unknown> {
   const deps = setUpBackend();
   return setupWorker(
     ...authHandlers(deps),
+    ...nftHandlers(deps),
+    ...favoriteHandlers(deps),
     ...meHandlers(deps),
     ...walletHandlers(deps),
     ...handlers,
