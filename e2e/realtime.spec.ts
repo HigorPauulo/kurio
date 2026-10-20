@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { expectNoA11yViolations, login, startFresh } from "./support/kurio.js";
 
-type Stats = { sockets: number; subscriptions: number; delivered: number };
+type Stats = { sockets: number; authenticated: number; subscriptions: number; delivered: number };
 
 type KurioWindow = {
   __kurio: {
@@ -98,16 +98,19 @@ test("queda do socket reconecta, reassina e reconcilia pelo REST", async ({ page
   await waitForSubscriptions(page, 1);
 });
 
-test("token recusado no handshake expira a sessão e não reconecta", async ({ page }) => {
+test("token recusado no handshake expira a sessão, não reconecta com ele e segue como visitante", async ({ page }) => {
   await startFresh(page);
-  await login(page, "ana@kurio.test");
+  await login(page, "ana@kurio.test", "/nft/nft_001");
+  await expect.poll(async () => (await stats(page)).authenticated).toBe(1);
   await page.evaluate(() => (window as unknown as KurioWindow).__kurio.sessions.expire("usr_ana"));
   await page.reload();
 
   await expect(page.getByRole("dialog", { name: "Sua sessão expirou" })).toBeVisible();
-  await expect.poll(async () => (await stats(page)).sockets).toBe(0);
-  await page.getByRole("dialog", { name: "Sua sessão expirou" }).getByRole("button").first().waitFor();
-  expect((await stats(page)).sockets).toBe(0);
+  await expect.poll(async () => stats(page)).toMatchObject({ sockets: 1, authenticated: 0 });
+  await waitForSubscriptions(page, 1);
+  await setPrice(page, "nft_001", "ed_001_1", "2.6");
+  await expect(page.getByLabel(/^Padrão · 2,6 ETH/)).toBeAttached();
+  expect((await stats(page)).authenticated).toBe(0);
 });
 
 test("subscriptions são liberadas ao sair das telas com NFT", async ({ page }) => {
