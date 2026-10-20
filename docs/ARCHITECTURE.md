@@ -405,7 +405,8 @@ mantido durante a implementação.
 | Início | "NFT em destaque" mostra o primeiro destaque da API com nome e preço sobre a arte | O destaque é dado do servidor; nome e preço tornam o bloco um link útil |
 | Início | A lupa do cabeçalho abre um campo de busca; busca ativa vira uma etiqueta ao lado das abas | CAT-1 exige busca por texto, e quem buscou precisa ver e desfazer a busca |
 | Detalhe | Botões de quantidade com rótulo "Quantidade" visível e limite por pedido; disponibilidade da edição escolhida abaixo das pílulas | DET-2 pede o limite e o motivo do bloqueio na tela |
-| Detalhe | "ID do token", "Atributos", compartilhamento e zoom ausentes; "Detalhes do NFT" mostra descrição, categoria e rede | O contrato não tem esses campos |
+| Detalhe | "ID do token", "Atributos" e compartilhamento ausentes; "Detalhes do NFT" mostra descrição, categoria e rede | O contrato não tem esses campos |
+| Detalhe | Galeria com setas, contador, arrastar e setas do teclado; miniaturas sempre visíveis (inclusive com uma imagem), na altura da imagem principal, arrastáveis e com degradê na borda quando há mais; a lupa abre o mesmo carrossel ampliado | O protótipo mostra miniaturas e lupa sem definir a navegação; com até 6 imagens a coluna precisa rolar sem barra nativa |
 | Detalhe (mobile) | Barra de compra fixa vira bloco no fluxo da página | A barra de abas ocupa a base da tela |
 | Login e cadastro | Ícone de mostrar senha ausente; rótulos dos campos só para leitor de tela, com o texto do protótipo no placeholder | O protótipo não desenha rótulo visível; o ícone não tem função no escopo |
 | Perfil | "Alterar senha" com botão próprio; "Sair" fica só no cabeçalho, fora do menu lateral | Perfil e senha são formulários e endpoints separados; uma ação de saída por tela |

@@ -76,7 +76,7 @@ const ROWS: NftRow[] = [
   { name: "Ivory Static #064", collection: "Algoritmos", creator: "maya", category: "generative", chain: "ethereum", likes: 266, featured: true, editions: [["Padrão", "0.42", 9, 40, 3], ["Variante", "0.9", 2, 4, 1]] },
   { name: "Golden Boss #099", collection: "Arcade", creator: "kenji", category: "gaming", chain: "polygon", likes: 189, editions: [["Padrão", "0.075", 0, 60, 4]] },
   { name: "Sage Council #121", collection: "Clube Kurio", creator: "lia", category: "memberships", chain: "base", likes: 54, editions: [["Padrão", "3.25", 6, 25, 1]] },
-  { name: "Emerald Pass #303", collection: "Utilidades", creator: "theo", category: "utility", chain: "ethereum", likes: 23, editions: [["Padrão", "0.15", 0, 20, 2, true], ["Reserva", "0.2", 5, 10, 2]] },
+  { name: "Emerald Pass #303", collection: "Utilidades", creator: "theo", category: "utility", chain: "ethereum", likes: 23, images: 6, editions: [["Padrão", "0.15", 0, 20, 2, true], ["Reserva", "0.2", 5, 10, 2]] },
   { name: "Ivory Tide #219", collection: "Litoral", creator: "noa", category: "digital-art", chain: "base", likes: 317, featured: true, editions: [["Padrão", "6.8", 2, 5, 1]] },
   { name: "Golden Hour #120", collection: "Analógica", creator: "iris", category: "photography", chain: "ethereum", likes: 88, editions: [["Padrão", "0.95", 11, 30, 3]] },
   { name: "Violet Groove #045", collection: "Sinais", creator: "noa", category: "music", chain: "polygon", likes: 142, editions: [["Capa dupla", "2.75", 1, 2, 1], ["Padrão", "1.05", 3, 6, 1]] },

@@ -222,3 +222,30 @@ test("abas filtram em alta e novos lançamentos, e filtrar não volta ao topo da
   await expect(page).not.toHaveURL(/view=/);
   await expect(results(page)).toHaveCount(12);
 });
+
+test("galeria navega por setas, miniatura e teclado, e a lupa abre o mesmo carrossel", async ({ page }) => {
+  await startFresh(page, "fast", "/nft/nft_018");
+  const gallery = page.getByRole("group", { name: "Imagens de Emerald Pass #303" });
+  const counter = gallery.getByText(/^\d+ \/ 6$/);
+  await expect(page.getByRole("list", { name: "Galeria" }).getByRole("button")).toHaveCount(6);
+  await expect(counter).toHaveText("1 / 6");
+
+  await gallery.getByRole("button", { name: "Imagem anterior" }).click();
+  await expect(counter).toHaveText("6 / 6");
+  await page.getByRole("button", { name: "Ver imagem 3 de 6" }).click();
+  await expect(counter).toHaveText("3 / 6");
+  await gallery.getByRole("button", { name: "Próxima imagem" }).press("ArrowRight");
+  await expect(counter).toHaveText("4 / 6");
+
+  await gallery.getByRole("button", { name: "Ampliar a imagem" }).click();
+  const zoom = page.getByRole("dialog");
+  await expect(zoom.getByText("4 / 6")).toBeVisible();
+  await zoom.getByRole("button", { name: "Próxima imagem" }).click();
+  await expect(zoom.getByText("5 / 6")).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(counter).toHaveText("5 / 6");
+
+  await page.goto("/nft/nft_004");
+  await expect(page.getByRole("list", { name: "Galeria" }).getByRole("button")).toHaveCount(1);
+  await expect(page.getByRole("button", { name: "Próxima imagem" })).toHaveCount(0);
+});
