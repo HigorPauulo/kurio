@@ -285,7 +285,7 @@ function CartContent({ owner }: { owner: string }): JSX.Element {
           ))}
         </ul>
       </div>
-      <div className="xl:w-83">
+      <div className="md:ml-auto md:w-full md:max-w-md xl:w-83">
         <Summary owner={owner} cart={cart.data} />
       </div>
     </div>
