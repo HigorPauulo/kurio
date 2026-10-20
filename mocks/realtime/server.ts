@@ -8,6 +8,8 @@ import type { Scenario } from "../scenarios/presets";
 const PING_INTERVAL_MS = 25_000;
 const ENGINE_IO_PING = "2";
 const DUPLICATE_REPLAY_MS = 1_000;
+const SOCKET_DROP_DELAY_MS = 1_000;
+const SOCKET_DROP_RECONNECT_MS = 4_000;
 const REFUSAL = { message: "SESSION_EXPIRED", data: { code: "SESSION_EXPIRED" } };
 
 export const REALTIME_URL = "wss://realtime.kurio.mock/*";
@@ -46,6 +48,15 @@ export function createRealtimeServer({ db, getScenario, now }: RealtimeServerDep
   let refuseUntil = 0;
   let delivered = 0;
 
+  function isPendingOrder(event: MockDbEvent): boolean {
+    return (event.data as { status?: string } | null)?.status === "pending";
+  }
+
+  function dropConnections(reconnectAfterMs: number): void {
+    refuseUntil = now() + reconnectAfterMs;
+    for (const client of [...clients]) client.link.close();
+  }
+
   function sessionUserId(token: string): string | null {
     const session = db.read((tables) => tables.sessions[token]);
     if (!session || Date.parse(session.expiresAt) <= now()) return null;
@@ -69,6 +80,9 @@ export function createRealtimeServer({ db, getScenario, now }: RealtimeServerDep
   db.subscribe((events) => {
     const isDuplicating = Boolean(getScenario().flags.socketDuplicates);
     for (const event of events) {
+      if (getScenario().flags.socketDrop && event.type === "order.updated" && isPendingOrder(event)) {
+        setTimeout(() => dropConnections(SOCKET_DROP_RECONNECT_MS), SOCKET_DROP_DELAY_MS);
+      }
       const resourceKey = `${event.resource.kind}:${event.resource.id}`;
       const previous = lastEventByResource.get(resourceKey);
       lastEventByResource.set(resourceKey, event);
@@ -156,8 +170,7 @@ export function createRealtimeServer({ db, getScenario, now }: RealtimeServerDep
   return {
     handler,
     dropConnections({ reconnectAfterMs = 0 } = {}) {
-      refuseUntil = now() + reconnectAfterMs;
-      for (const client of [...clients]) client.link.close();
+      dropConnections(reconnectAfterMs);
     },
     stats() {
       const authorized = [...clients].filter((client) => client.isAuthorized);
