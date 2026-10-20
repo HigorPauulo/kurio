@@ -170,7 +170,7 @@ refetch: mantém o conteúdo com indicador, nunca volta ao skeleton. Vazio é su
 | `/` | | prefetch de `featured` e da lista |
 | `/nft/$nftId` | | `ensureQueryData(nft)`, repetido uma vez se cancelado (`ensureDespiteCancel`); `NOT_FOUND` vira `notFound()` |
 | `/cart` | | prefetch de `cart` |
-| `/checkout`, `/orders/$orderId`, `/account/*` | `requireUserId`: sem sessão ativa, login com `redirect`; com sessão, `userId` no contexto | `ensureQueryData` da rota |
+| `/checkout`, `/orders/$orderId`, `/account/*` | `requireUserId`: sem sessão ativa, vai a `/?auth=login` com `redirect` (sem passar por `/login`); com sessão, `userId` no contexto | `ensureQueryData` da rota |
 | `/login`, `/register` | `openAuthDialog`: com sessão, vai a `safeRedirect(redirect)`; sem sessão, redireciona ao destino com `?auth=` (ou a `/` com `redirect`, se o destino for privado) | |
 
 A busca da URL é texto puro, sem JSON (`?priceMin=0.10`, não `?priceMin=%220.10%22`): o parser padrão do
@@ -363,9 +363,12 @@ Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lan�
 - Login e cadastro são uma sobreposição sobre a página aberta, controlada pela busca da raiz
   (`?auth=login|register`, com `redirect` opcional); "Entrar", "Favoritar" do visitante e a troca de aba
   só acrescentam o parâmetro, sem voltar ao topo. Fechar remove o parâmetro e mantém a página; entrar vai
-  ao `redirect` se houver, senão fica na página. `/login` e `/register` seguem para link direto e guard:
-  abrem a sobreposição sobre o destino, ou sobre `/` com `redirect` se o destino for privado
-  (`openAuthDialog`), para o guard não reabrir o diálogo.
+  ao `redirect` se houver (substituindo a entrada do histórico), senão fica na página. Com sessão ativa,
+  o `beforeLoad` da raiz descarta `auth`, então Voltar ou link salvo não reabre o diálogo. O formulário
+  vive dentro do conteúdo do diálogo e desmonta ao fechar, sem guardar dado entre visitas. `/login` e
+  `/register` seguem para link direto e para o diálogo de expiração: abrem a sobreposição sobre o
+  destino, ou sobre `/` com `redirect` se o destino for privado (`openAuthDialog`). O catálogo só leva
+  à API os campos dele (`pickCatalogSearch`), então abrir o login sobre a home não refaz a busca.
 - Mudança de cotação mostra o diff por linha e exige aceite.
 - Ação fora do escopo vai a `/unavailable` ou fica desabilitada com o motivo.
 - ETH na tela: valor exato, sem arredondar nem zeros à direita, vírgula decimal e ponto de milhar
