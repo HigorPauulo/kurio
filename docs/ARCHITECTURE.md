@@ -148,9 +148,11 @@ Mutation não repete, exceto `createOrder` (§9.2).
 
 ### 6.4 Atualização otimista
 
-Favoritos e quantidade no carrinho: cancela a key, guarda snapshot por mutation, aplica o patch;
-no erro restaura o snapshot e anuncia; no fim invalida. Snapshot por mutation evita que mutations
-concorrentes restaurem um estado já sobrescrito.
+Favoritos e quantidade no carrinho: cancela a key, guarda por mutation o estado anterior só do item
+tocado, aplica o patch; no erro desfaz só aquele item e anuncia; no fim, a última mutation em voo
+invalida. Desfazer o item, e não restaurar a lista inteira, evita que uma mutation concorrente perca o
+patch da outra. Sem dado no cache (query com erro), o patch não cria entrada e a ação fica bloqueada
+até a nova tentativa.
 
 ### 6.5 Estados de tela
 

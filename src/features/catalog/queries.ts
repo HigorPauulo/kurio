@@ -11,6 +11,7 @@ import {
 import type { Nft, NftListResponse, NftSummary } from "@/contracts/nft";
 import { announce } from "@/lib/a11y/announcer";
 import { ApiError } from "@/lib/http/apiError";
+import { toggleItem } from "@/lib/list";
 import { keys } from "@/lib/query/keys";
 import { addFavorite, getFavorites, getFeaturedNfts, getNft, getNfts, removeFavorite } from "./api";
 import type { CatalogSearch } from "./search";
@@ -74,12 +75,7 @@ export function favoritesQuery(userId: string): TaggedQueryOptions<string[], Fav
 
 export type ToggleFavoriteInput = { nftId: string; isFavorite: boolean };
 
-type ToggleFavoriteContext = { wasFavorite: boolean };
-
-function withFavorite(ids: readonly string[], nftId: string, isFavorite: boolean): string[] {
-  const others = ids.filter((id) => id !== nftId);
-  return isFavorite ? [...others, nftId] : others;
-}
+type ToggleFavoriteContext = { isPreviouslyFavorite: boolean };
 
 export function useToggleFavoriteMutation(
   userId: string,
@@ -94,13 +90,13 @@ export function useToggleFavoriteMutation(
       isFavorite ? addFavorite(nftId) : removeFavorite(nftId),
     onMutate: async ({ nftId, isFavorite }) => {
       await queryClient.cancelQueries({ queryKey: favoritesKey });
-      const wasFavorite = queryClient.getQueryData(favoritesKey)?.includes(nftId) ?? !isFavorite;
-      queryClient.setQueryData(favoritesKey, (ids = []) => withFavorite(ids, nftId, isFavorite));
-      return { wasFavorite };
+      const isPreviouslyFavorite = queryClient.getQueryData(favoritesKey)?.includes(nftId) ?? !isFavorite;
+      queryClient.setQueryData(favoritesKey, (ids) => ids && toggleItem(ids, nftId, isFavorite));
+      return { isPreviouslyFavorite };
     },
     onError: (_error, { nftId }, context) => {
       if (context) {
-        queryClient.setQueryData(favoritesKey, (ids = []) => withFavorite(ids, nftId, context.wasFavorite));
+        queryClient.setQueryData(favoritesKey, (ids) => ids && toggleItem(ids, nftId, context.isPreviouslyFavorite));
       }
       announce("Não foi possível atualizar os favoritos. Tente de novo.", "assertive");
     },

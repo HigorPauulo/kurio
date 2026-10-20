@@ -117,7 +117,7 @@ function QuantityField({ edition }: { edition: Edition }): JSX.Element {
   const inputId = useId();
   const hintId = `${inputId}-hint`;
   const limit = getQuantityLimit(edition);
-  const [quantity, setQuantity] = useState(1);
+  const [draft, setDraft] = useState("1");
 
   if (edition.status !== "available" || limit < 1) {
     return (
@@ -132,6 +132,8 @@ function QuantityField({ edition }: { edition: Edition }): JSX.Element {
     return Math.min(Math.max(Math.trunc(value), 1), limit);
   }
 
+  const quantity = clamp(Number.parseInt(draft, 10));
+
   return (
     <div className="flex flex-col gap-1.5">
       <label htmlFor={inputId} className="text-sm font-medium">
@@ -144,7 +146,7 @@ function QuantityField({ edition }: { edition: Edition }): JSX.Element {
           size="icon"
           aria-label="Diminuir quantidade"
           disabled={quantity <= 1}
-          onClick={() => setQuantity(clamp(quantity - 1))}
+          onClick={() => setDraft(String(clamp(quantity - 1)))}
         >
           <Minus aria-hidden="true" />
         </Button>
@@ -154,9 +156,10 @@ function QuantityField({ edition }: { edition: Edition }): JSX.Element {
           inputMode="numeric"
           min={1}
           max={limit}
-          value={quantity}
+          value={draft}
           aria-describedby={hintId}
-          onChange={(event) => setQuantity(clamp(event.target.valueAsNumber))}
+          onChange={(event) => setDraft(event.target.value)}
+          onBlur={() => setDraft(String(quantity))}
           className="h-8 w-16 rounded-lg border bg-background text-center text-sm"
         />
         <Button
@@ -165,7 +168,7 @@ function QuantityField({ edition }: { edition: Edition }): JSX.Element {
           size="icon"
           aria-label="Aumentar quantidade"
           disabled={quantity >= limit}
-          onClick={() => setQuantity(clamp(quantity + 1))}
+          onClick={() => setDraft(String(clamp(quantity + 1)))}
         >
           <Plus aria-hidden="true" />
         </Button>
@@ -182,12 +185,23 @@ function FavoriteButton({ nftId, userId }: { nftId: string; userId: string }): J
   const toggle = useToggleFavoriteMutation(userId);
   const isFavorite = favorites.data?.includes(nftId) ?? false;
 
+  if (favorites.isError && !favorites.data) {
+    return (
+      <div className="flex flex-wrap items-center gap-2 text-sm" role="alert">
+        <span>Não foi possível carregar os favoritos.</span>
+        <Button type="button" variant="outline" size="sm" onClick={() => void favorites.refetch()}>
+          Tentar de novo
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <Button
       type="button"
       variant="outline"
       aria-pressed={isFavorite}
-      disabled={favorites.isPending}
+      disabled={!favorites.data}
       onClick={() => toggle.mutate({ nftId, isFavorite: !isFavorite })}
     >
       <Heart aria-hidden="true" className={isFavorite ? "fill-current" : undefined} />
