@@ -56,9 +56,9 @@ const POSTS = [
 
 function Promos(): JSX.Element {
   return (
-    <section aria-label="Lançamentos" className="grid gap-8 md:grid-cols-2">
+    <section aria-label="Lançamentos" className="grid gap-8 lg:grid-cols-2 lg:gap-7">
       {PROMOS.map((promo) => (
-        <article key={promo.from} className="flex overflow-hidden bg-surface-card">
+        <article key={promo.from} className="relative flex min-h-62.5 overflow-hidden rounded-lg bg-surface-card">
           <img
             src={promo.image}
             alt=""
@@ -66,16 +66,23 @@ function Promos(): JSX.Element {
             height={640}
             loading="lazy"
             decoding="async"
-            className="aspect-square w-2/5 max-w-50 shrink-0 object-cover"
+            className="w-9/25 shrink-0 rounded-[1.125rem] object-cover sm:w-9/20"
           />
-          <div className="flex flex-1 flex-col items-end justify-center gap-3 p-4 text-right">
-            <h2 className="text-base leading-5 font-bold">{promo.title}</h2>
-            <p className="text-xs leading-5 text-text-secondary">{promo.text}</p>
+          <img
+            src="/images/icons/promo-arcs.svg"
+            alt=""
+            width={586}
+            height={250}
+            className="pointer-events-none absolute top-0 left-0 h-62.5 w-146.5 max-w-none"
+          />
+          <div className="relative flex flex-1 flex-col items-end justify-center gap-3 p-4 text-right sm:px-7.5">
+            <h2 className="max-w-75 text-base leading-6 font-bold sm:text-lg">{promo.title}</h2>
+            <p className="max-w-66 text-xs leading-5 text-text-secondary sm:text-sm sm:leading-6">{promo.text}</p>
             <Link
               to="/unavailable"
               search={{ from: promo.from }}
               aria-label={`Explorar: ${promo.title}`}
-              className={cn(buttonVariants({ size: "sm" }), "gap-1 font-medium")}
+              className={cn(buttonVariants(), "mt-2 h-10 w-35 gap-1 text-sm font-medium")}
             >
               Explorar
               <ArrowRight aria-hidden="true" />
