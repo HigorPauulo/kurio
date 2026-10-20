@@ -301,7 +301,7 @@ describe("catálogo", () => {
 
   it("busca sem acento e sem caixa em nome, coleção e criador", async () => {
     const byCreator = await list("?q=IRIS");
-    expect(byCreator.body.items.map((item) => item.name)).toContain("Pulso Neon");
+    expect(byCreator.body.items.map((item) => item.name)).toContain("Neon Vessel #552");
     const byCollection = await list("?q=analogica");
     expect(byCollection.body.items.map((item) => item.id).sort()).toEqual(["nft_011", "nft_020"]);
   });

@@ -48,12 +48,12 @@ test("filtros, ordenação e página vivem na URL e sobrevivem a refresh, voltar
 
   await page.getByLabel("Ordenar por").selectOption("price_asc");
   await expect(page).toHaveURL(/sort=price_asc/);
-  await expect(results(page).first()).toHaveText("Lo-fi Noturno");
+  await expect(results(page).first()).toHaveText("Golden Pulse #402");
   expect(await lastListQuery(page)).toMatchObject({ category: "music", sort: "price_asc" });
 
   await page.reload();
   await expect(page.getByLabel("Ordenar por")).toHaveValue("price_asc");
-  await expect(results(page).first()).toHaveText("Lo-fi Noturno");
+  await expect(results(page).first()).toHaveText("Golden Pulse #402");
   await expect(results(page)).toHaveCount(3);
 
   await page.goBack();
@@ -62,10 +62,10 @@ test("filtros, ordenação e página vivem na URL e sobrevivem a refresh, voltar
   await page.goForward();
   await expect(page.getByLabel("Ordenar por")).toHaveValue("price_asc");
 
-  await searchFor(page, "vinil");
-  await expect(page).toHaveURL(/q=vinil/);
-  await expect(results(page)).toHaveText(["Vinil Raro"]);
-  await page.getByRole("button", { name: "Limpar a busca por vinil" }).click();
+  await searchFor(page, "groove");
+  await expect(page).toHaveURL(/q=groove/);
+  await expect(results(page)).toHaveText(["Violet Groove #045"]);
+  await page.getByRole("button", { name: "Limpar a busca por groove" }).click();
   await expect(page).not.toHaveURL(/q=/);
 });
 
@@ -92,7 +92,7 @@ test("faixa de preço pelo controle deslizante vai à URL em ETH com ponto, e o 
   await filters.getByRole("button", { name: "Aplicar", exact: true }).click();
   await expect(page).toHaveURL(/[?&]priceMax=0\.01(&|$)/);
   await expect(page).not.toHaveURL(/priceMin=/);
-  await expect(results(page)).toHaveText(["Selo Raro 1998", "Arena Pixel"]);
+  await expect(results(page)).toHaveText(["Emerald Relic #198", "Golden Frequency #071"]);
   expect(await lastListQuery(page)).toMatchObject({ priceMax: "0.01" });
 
   await page.reload();
@@ -118,7 +118,7 @@ test("resposta antiga que chega por último é descartada", async ({ page }) => 
   await page.clock.runFor(3500);
 
   await expect(page.getByRole("status").filter({ hasText: "NFTs encontrados" })).toBeVisible();
-  await expect(results(page).first()).toHaveText("Campo Gerado #7");
+  await expect(results(page).first()).toHaveText("Golden Beat #207");
   await expect(page).toHaveURL(/sort=popular/);
 });
 

@@ -69,8 +69,11 @@ com `VALIDATION_FAILED`; `QuotaExceededError` vai ao console como erro, nunca é
 
 `nft_001` não muda: é a página de detalhe auditada pelo Lighthouse. O `priceFrom` é calculado a partir
 das edições, nunca escrito à mão. As imagens são as quatro artes do protótipo em WebP de 640 px
-(`public/images/nfts/`), distribuídas em ciclo pela ordem das fixtures; a mudança de URL subiu o
-snapshot para `v2`, e o boot apaga do `localStorage` o snapshot de versões anteriores.
+(`public/images/nfts/`), escolhidas pela primeira palavra do nome (Emerald, Sage, Ivory, Golden). Os
+nomes são os 9 do protótipo (Emerald Ape #042, Sage Nomad #009, Neon Vessel #552, Cosmic Bloom #118,
+Violet Nomad #314, Ivory Baron #088, Golden Beat #207, Golden Frequency #071, Golden Signal #160) e
+outros 15 no mesmo padrão. A troca de nomes subiu o snapshot para `v3`, e o boot apaga do
+`localStorage` o snapshot de versões anteriores.
 
 ## 5. Condições de rede
 
