@@ -33,7 +33,7 @@ export function NftCard({ nft }: { nft: NftSummary }): JSX.Element {
           </Link>
         </h3>
         <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs text-secondary-base">
-          a partir de
+          A partir de{" "}
           <strong className="text-lg leading-4 font-bold whitespace-nowrap text-text-accent">{formatEth(nft.priceFrom)} ETH</strong>
         </p>
       </div>
