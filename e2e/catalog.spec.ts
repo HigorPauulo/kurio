@@ -33,7 +33,7 @@ test("filtros, ordenação e página vivem na URL e sobrevivem a refresh, voltar
 
   const filters = await openFilters(page);
   await filters.getByLabel("Música").check();
-  await filters.getByRole("button", { name: "Aplicar filtros" }).click();
+  await filters.getByRole("button", { name: "Aplicar", exact: true }).click();
   await expect(page).toHaveURL(/[?&]category=music/);
   await expect(page).not.toHaveURL(/page=/);
   await expect(results(page)).toHaveCount(3);
@@ -60,26 +60,39 @@ test("filtros, ordenação e página vivem na URL e sobrevivem a refresh, voltar
   await expect(results(page)).toHaveText(["Vinil Raro"]);
 });
 
-test("preço digitado com vírgula vai à URL com ponto, e faixa invertida é recusada no campo", async ({ page }) => {
+test("faixa de preço pelo controle deslizante vai à URL em ETH com ponto, e o mínimo não passa do máximo", async ({ page }) => {
   await startFresh(page);
   await expect(results(page)).toHaveCount(12);
 
   let filters = await openFilters(page);
-  await filters.getByLabel("Preço mínimo").fill("5");
-  await filters.getByLabel("Preço máximo").fill("1");
-  await filters.getByRole("button", { name: "Aplicar filtros" }).click();
-  await expect(filters.getByText("O preço máximo deve ser maior ou igual ao mínimo.")).toBeVisible();
+  await expect(filters.getByText("Preço: 0,001 - 12,5 ETH")).toBeVisible();
+  await expect(filters.getByLabel("Música")).toHaveAccessibleName("Música, 3 NFTs");
 
-  await filters.getByLabel("Preço mínimo").fill("0,01");
-  await filters.getByLabel("Preço máximo").fill("0,1");
-  await filters.getByRole("button", { name: "Aplicar filtros" }).click();
-  await expect(page).toHaveURL(/priceMin=0\.01&priceMax=0\.1|priceMax=0\.1.*priceMin=0\.01/);
-  await expect(results(page).first()).toBeVisible();
+  const max = filters.getByLabel("Preço máximo");
+  await max.focus();
+  await page.keyboard.press("Home");
+  for (let step = 0; step < 9; step += 1) await page.keyboard.press("ArrowRight");
+  await expect(max).toHaveAttribute("aria-valuetext", "0,01 ETH");
 
+  const min = filters.getByLabel("Preço mínimo");
+  await min.focus();
+  await page.keyboard.press("End");
+  await expect(min).toHaveAttribute("aria-valuetext", "0,01 ETH");
+  await page.keyboard.press("Home");
+
+  await filters.getByRole("button", { name: "Aplicar", exact: true }).click();
+  await expect(page).toHaveURL(/[?&]priceMax=0\.01(&|$)/);
+  await expect(page).not.toHaveURL(/priceMin=/);
+  await expect(results(page)).toHaveText(["Selo Raro 1998", "Arena Pixel"]);
+  expect(await lastListQuery(page)).toMatchObject({ priceMax: "0.01" });
+
+  await page.reload();
+  await expect(results(page)).toHaveCount(2);
   filters = await openFilters(page);
-  await expect(filters.getByLabel("Preço mínimo")).toHaveValue("0,01");
-
-  await filters.getByRole("button", { name: "Limpar filtros" }).click();
+  await expect(filters.getByText("Preço: 0,001 - 0,01 ETH")).toBeVisible();
+  await filters.getByLabel("Preço máximo").focus();
+  await page.keyboard.press("End");
+  await filters.getByRole("button", { name: "Aplicar", exact: true }).click();
   await expect(page).not.toHaveURL(/price(Min|Max)=/);
   await expect(results(page)).toHaveCount(12);
 });
