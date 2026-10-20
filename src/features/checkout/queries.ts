@@ -1,21 +1,23 @@
 import { queryOptions, type DataTag, type QueryClient, type UseQueryOptions } from "@tanstack/react-query";
+import { quoteSchema } from "@/contracts/cart";
 import type { Quote } from "@/contracts/cart";
 import type { Chain } from "@/contracts/common";
 import type { Order } from "@/contracts/order";
 import { ApiError } from "@/lib/http/apiError";
+import { ensureDespiteCancel } from "@/lib/query/ensure";
 import { keys } from "@/lib/query/keys";
 import { eventStore } from "@/lib/realtime/eventStore";
-import { isRealtimeConnected } from "@/lib/realtime/instance";
 import { createQuote } from "../cart/api";
 import { createOrder, getOrder } from "./api";
 import type { CheckoutAttempt } from "./storage";
 
 const ONE_MINUTE = 60_000;
 const FIVE_MINUTES = 5 * ONE_MINUTE;
-const POLL_MS = 5_000;
+export const ORDER_POLL_MS = 5_000;
 const MIN_QUOTE_REFRESH_MS = 1_000;
 const MAX_SEND_ATTEMPTS = 3;
-const ORDER_CODES = new Set(["QUOTE_ALREADY_USED", "IDEMPOTENCY_CONFLICT"]);
+const RETRY_BASE_MS = 1_000;
+const ORDER_CODES = new Set(["QUOTE_ALREADY_USED", "IDEMPOTENCY_CONFLICT", "ORDER_PENDING"]);
 const REVIEW_CODES = new Set(["QUOTE_STALE", "QUOTE_EXPIRED", "AVAILABILITY_CONFLICT", "WALLET_NOT_CONNECTED"]);
 const HIDDEN_ORDER_CODES = new Set(["NOT_FOUND", "FORBIDDEN"]);
 
@@ -54,13 +56,12 @@ export function orderQuery(userId: string, orderId: string): TaggedQueryOptions<
     },
     staleTime: 0,
     gcTime: FIVE_MINUTES,
-    refetchInterval: (query) => (query.state.data?.status === "pending" && !isRealtimeConnected() ? POLL_MS : false),
   });
 }
 
 export async function ensureOrder(queryClient: QueryClient, userId: string, orderId: string): Promise<Order | null> {
   try {
-    return await queryClient.ensureQueryData(orderQuery(userId, orderId));
+    return await ensureDespiteCancel(() => queryClient.ensureQueryData(orderQuery(userId, orderId)));
   } catch (error) {
     if (error instanceof ApiError && HIDDEN_ORDER_CODES.has(error.info.code)) return null;
     throw error;
@@ -69,9 +70,19 @@ export async function ensureOrder(queryClient: QueryClient, userId: string, orde
 
 export type SubmitOutcome =
   | { kind: "order"; orderId: string }
-  | { kind: "review"; message: string }
+  | { kind: "review"; code: string; message: string; quote: Quote | null }
   | { kind: "details"; error: unknown }
   | { kind: "retry"; message: string };
+
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function staleQuote(error: ApiError): Quote | null {
+  if (error.info.kind !== "http") return null;
+  const parsed = quoteSchema.safeParse((error.info.details as { quote?: unknown } | undefined)?.quote);
+  return parsed.success ? parsed.data : null;
+}
 
 function detailsOrderId(error: ApiError): string | null {
   if (error.info.kind !== "http") return null;
@@ -88,11 +99,14 @@ export async function submitAttempt(attempt: CheckoutAttempt): Promise<SubmitOut
       if (!(error instanceof ApiError)) return { kind: "details", error };
       const orderId = ORDER_CODES.has(error.info.code) ? detailsOrderId(error) : null;
       if (orderId) return { kind: "order", orderId };
-      if (REVIEW_CODES.has(error.info.code)) return { kind: "review", message: error.message };
+      if (REVIEW_CODES.has(error.info.code)) {
+        return { kind: "review", code: error.info.code, message: error.message, quote: staleQuote(error) };
+      }
       if (!error.info.retryable) return { kind: "details", error };
       if (sent >= MAX_SEND_ATTEMPTS) {
         return { kind: "retry", message: "Não tivemos resposta do servidor. O pedido pode já existir: tentar de novo não cria outro." };
       }
+      await wait(RETRY_BASE_MS * sent);
     }
   }
 }

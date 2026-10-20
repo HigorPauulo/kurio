@@ -4,9 +4,7 @@ import { createOrderBodySchema } from "@/contracts/order";
 
 const attemptSchema = z.object({
   key: z.uuid(),
-  quoteId: z.string(),
   body: createOrderBodySchema,
-  bodyHash: z.string(),
 });
 
 const draftSchema = z.object({
@@ -62,13 +60,4 @@ export function readDraft(userId: string): CheckoutDraft {
 
 export function saveDraft(userId: string, draft: CheckoutDraft): void {
   writeJson(() => sessionStorage, draftKey(userId), draft);
-}
-
-export function hashBody(body: unknown): string {
-  const text = JSON.stringify(body);
-  let hash = 0x811c9dc5;
-  for (let index = 0; index < text.length; index += 1) {
-    hash = Math.imul(hash ^ text.charCodeAt(index), 0x01000193) >>> 0;
-  }
-  return hash.toString(16).padStart(8, "0");
 }

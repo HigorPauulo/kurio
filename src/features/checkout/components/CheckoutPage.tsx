@@ -17,7 +17,7 @@ import { cartQuery } from "../../cart/queries";
 import { CHAIN_LABELS } from "../../catalog/labels";
 import { PROVIDER_LABELS } from "../labels";
 import { checkoutQuoteQuery, submitAttempt } from "../queries";
-import { hashBody, readAttempt, readDraft, saveAttempt, saveDraft, type CheckoutAttempt, type CheckoutDraft } from "../storage";
+import { readAttempt, readDraft, saveAttempt, saveDraft, type CheckoutAttempt, type CheckoutDraft } from "../storage";
 
 export type CheckoutStep = "details" | "review";
 
@@ -28,7 +28,7 @@ type CheckoutPageProps = {
   onOrderPlaced: (orderId: string) => void;
 };
 
-type FieldErrors = Partial<Record<"ensName" | "wallet" | "network" | "note" | "connection", string>>;
+type FieldErrors = Partial<Record<"ensName" | "wallet" | "network" | "note" | "connection" | "form", string>>;
 
 type Phase = { kind: "idle" } | { kind: "submitting" } | { kind: "retry"; message: string };
 
@@ -44,17 +44,34 @@ function pickNetwork(wallet: Wallet | undefined, preferred: Chain | undefined): 
   return wallet.networks[0];
 }
 
+type WalletChoice = { secondary: Wallet | undefined; wallet: Wallet | undefined; network: Chain | undefined };
+
+function selectWallet(wallets: Wallet[], draft: CheckoutDraft): WalletChoice {
+  const primary = wallets.find((candidate) => candidate.role === "primary");
+  const secondary = wallets.find((candidate) => candidate.role === "secondary");
+  const wallet = draft.isSecondaryWallet && secondary ? secondary : primary;
+  return { secondary, wallet, network: pickNetwork(wallet, draft.network) };
+}
+
+function moneySignature(quote: Quote): string {
+  const lines = quote.lines.map((line) => [line.itemId, line.quantity, line.unitPrice, line.lineTotal]);
+  return JSON.stringify([lines, quote.coupon?.code, quote.subtotal, quote.discount, quote.networkFee, quote.total]);
+}
+
 function isConnectedOn(wallet: Wallet | undefined, network: Chain | undefined): boolean {
   return wallet?.connection.status === "connected" && wallet.connection.network === network;
 }
 
 function serverFieldErrors(error: unknown): FieldErrors {
-  return {
+  const errors: FieldErrors = {
     ensName: getApiFieldError(error, "ensName"),
     wallet: getApiFieldError(error, "walletId"),
     network: getApiFieldError(error, "network"),
     note: getApiFieldError(error, "note"),
   };
+  if (hasErrors(errors)) return errors;
+  const message = error instanceof Error && error.message ? error.message : "";
+  return { form: `Não foi possível enviar o pedido. ${message}`.trim() };
 }
 
 function hasErrors(errors: FieldErrors): boolean {
@@ -124,20 +141,18 @@ function WalletConnection({ userId, wallet, network, error }: ConnectionProps): 
 type DetailsProps = {
   userId: string;
   user: User;
-  wallets: Wallet[];
   cart: Cart;
+  choice: WalletChoice;
   draft: CheckoutDraft;
   onDraftChange: (patch: Partial<CheckoutDraft>) => void;
-  serverErrors: FieldErrors;
+  errors: FieldErrors;
+  onErrorsChange: (errors: FieldErrors) => void;
   onReview: () => void;
 };
 
-function DetailsStep({ userId, user, wallets, cart, draft, onDraftChange, serverErrors, onReview }: DetailsProps): JSX.Element {
-  const primary = wallets.find((wallet) => wallet.role === "primary");
-  const secondary = wallets.find((wallet) => wallet.role === "secondary");
-  const wallet = draft.isSecondaryWallet && secondary ? secondary : primary;
-  const network = pickNetwork(wallet, draft.network);
-  const [errors, setErrors] = useState<FieldErrors>(serverErrors);
+function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors, onErrorsChange, onReview }: DetailsProps): JSX.Element {
+  const { secondary, wallet, network } = choice;
+  const setErrors = onErrorsChange;
   const noteId = useId();
 
   function handleReview(): void {
@@ -245,8 +260,13 @@ function DetailsStep({ userId, user, wallets, cart, draft, onDraftChange, server
             </p>
           )}
         </div>
-        <WalletConnection userId={userId} wallet={wallet} network={network} error={errors.connection} />
-        {hasErrors(errors) && <FormError message="Corrija os campos indicados para continuar." />}
+        <WalletConnection
+          userId={userId}
+          wallet={wallet}
+          network={network}
+          error={isConnectedOn(wallet, network) ? undefined : errors.connection}
+        />
+        {errors.form ? <FormError message={errors.form} /> : hasErrors(errors) && <FormError message="Corrija os campos indicados para continuar." />}
         <Button type="submit">Revisar pedido</Button>
       </form>
       <aside aria-labelledby="items-title" className="flex flex-col gap-3 rounded-xl border p-4 lg:w-96">
@@ -321,7 +341,7 @@ function ReviewStep({ userId, cart, wallet, network, note, phase, message, onBac
   const [accepted, setAccepted] = useState<Quote | null>(null);
   useNftSubscription(cart.items.map((item) => item.nftId));
 
-  if (quote.data && (!accepted || (accepted.basisHash === quote.data.basisHash && accepted.id !== quote.data.id))) {
+  if (quote.data && accepted?.id !== quote.data.id && (!accepted || moneySignature(accepted) === moneySignature(quote.data))) {
     setAccepted(quote.data);
   }
 
@@ -338,9 +358,9 @@ function ReviewStep({ userId, cart, wallet, network, note, phase, message, onBac
   }
 
   const current = quote.data;
-  const hasChanged = accepted !== null && accepted.basisHash !== current.basisHash;
+  const hasChanged = accepted !== null && moneySignature(accepted) !== moneySignature(current);
   const isSubmitting = phase.kind === "submitting";
-  const canConfirm = !hasChanged && current.purchasable && !isSubmitting && !quote.isFetching;
+  const canConfirm = !hasChanged && current.purchasable && phase.kind === "idle" && !quote.isFetching;
 
   return (
     <section aria-labelledby="review-title" className="flex max-w-2xl flex-col gap-4">
@@ -383,9 +403,11 @@ function ReviewStep({ userId, cart, wallet, network, note, phase, message, onBac
             Aceitar novos valores
           </Button>
         )}
-        <Button type="button" disabled={!canConfirm} aria-busy={isSubmitting} onClick={() => onConfirm(current)}>
-          {isSubmitting ? "Enviando pedido..." : "Confirmar compra"}
-        </Button>
+        {phase.kind !== "retry" && (
+          <Button type="button" disabled={!canConfirm} aria-busy={isSubmitting} onClick={() => onConfirm(current)}>
+            {isSubmitting ? "Enviando pedido..." : "Confirmar compra"}
+          </Button>
+        )}
         <Button type="button" variant="ghost" disabled={isSubmitting} onClick={onBack}>
           Voltar aos dados
         </Button>
@@ -403,7 +425,7 @@ export function CheckoutPage({ userId, step, onStepChange, onOrderPlaced }: Chec
   const [attempt, setAttempt] = useState<CheckoutAttempt | null>(() => readAttempt(userId));
   const [phase, setPhase] = useState<Phase>(() => (attempt ? { kind: "submitting" } : { kind: "idle" }));
   const [reviewMessage, setReviewMessage] = useState<string>();
-  const [serverErrors, setServerErrors] = useState<FieldErrors>({});
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const isSendingRef = useRef(false);
 
   async function send(current: CheckoutAttempt): Promise<void> {
@@ -422,12 +444,21 @@ export function CheckoutPage({ userId, step, onStepChange, onOrderPlaced }: Chec
     setPhase({ kind: "idle" });
     if (outcome.kind === "order") {
       onOrderPlaced(outcome.orderId);
+    } else if (outcome.kind === "review" && outcome.code === "WALLET_NOT_CONNECTED") {
+      await queryClient.invalidateQueries({ queryKey: keys.priv(userId).wallets });
+      setFieldErrors({ connection: outcome.message });
+      onStepChange("details");
     } else if (outcome.kind === "review") {
       setReviewMessage(outcome.message);
-      await queryClient.invalidateQueries({ queryKey: keys.priv(userId).quotes });
+      if (outcome.quote) {
+        queryClient.setQueryData(checkoutQuoteQuery(userId, outcome.quote.network, outcome.quote.cartVersion).queryKey, outcome.quote);
+      } else {
+        await queryClient.invalidateQueries({ queryKey: keys.priv(userId).quotes });
+      }
+      await queryClient.invalidateQueries({ queryKey: keys.priv(userId).cart });
       onStepChange("review");
     } else {
-      setServerErrors(serverFieldErrors(outcome.error));
+      setFieldErrors(serverFieldErrors(outcome.error));
       onStepChange("details");
     }
   }
@@ -441,7 +472,7 @@ export function CheckoutPage({ userId, step, onStepChange, onOrderPlaced }: Chec
   function handleConfirm(quote: Quote, wallet: Wallet, network: Chain): void {
     if (attempt) return void send(attempt);
     const body = { quoteId: quote.id, walletId: wallet.id, network, note: draft.note.trim() || null };
-    const next: CheckoutAttempt = { key: crypto.randomUUID(), quoteId: quote.id, body, bodyHash: hashBody(body) };
+    const next: CheckoutAttempt = { key: crypto.randomUUID(), body };
     saveAttempt(userId, next);
     setAttempt(next);
     setReviewMessage(undefined);
@@ -478,10 +509,8 @@ export function CheckoutPage({ userId, step, onStepChange, onOrderPlaced }: Chec
       </div>
     );
   } else {
-    const primary = wallets.data.find((wallet) => wallet.role === "primary");
-    const secondary = wallets.data.find((wallet) => wallet.role === "secondary");
-    const wallet = draft.isSecondaryWallet && secondary ? secondary : primary;
-    const network = pickNetwork(wallet, draft.network);
+    const choice = selectWallet(wallets.data, draft);
+    const { wallet, network } = choice;
     const isReady = step === "review" && wallet && network && me.data.ensName && isConnectedOn(wallet, network);
 
     content = isReady ? (
@@ -506,14 +535,14 @@ export function CheckoutPage({ userId, step, onStepChange, onOrderPlaced }: Chec
       </>
     ) : (
       <DetailsStep
-        key={JSON.stringify(serverErrors)}
         userId={userId}
         user={me.data}
-        wallets={wallets.data}
         cart={cart.data}
+        choice={choice}
         draft={draft}
         onDraftChange={updateDraft}
-        serverErrors={serverErrors}
+        errors={fieldErrors}
+        onErrorsChange={setFieldErrors}
         onReview={() => onStepChange("review")}
       />
     );
