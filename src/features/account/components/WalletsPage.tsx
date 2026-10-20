@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import type { z } from "zod";
 import { FormError, TextField } from "@/components/form/TextField";
 import { Button } from "@/components/ui/button";
+import { NativeSelect } from "@/components/ui/native-select";
 import { chainSchema } from "@/contracts/common";
 import type { User } from "@/contracts/user";
 import {
@@ -14,6 +15,7 @@ import {
 } from "@/contracts/wallet";
 import { applyApiError } from "@/lib/forms";
 import { meQuery, useSaveWalletMutation, walletsQuery } from "../queries";
+import { AccountLayout } from "./AccountLayout";
 
 const walletFormSchema = createWalletBodySchema.omit({ role: true });
 type WalletFormInput = z.input<typeof walletFormSchema>;
@@ -83,47 +85,79 @@ function WalletForm({ role, title, wallet, user }: WalletFormProps): JSX.Element
     <form
       noValidate
       aria-labelledby={headingId}
-      className="flex flex-col gap-4 rounded-xl border p-4"
+      className="flex flex-col gap-6"
       onSubmit={(event) => void form.handleSubmit(handleSubmit)(event)}
     >
-      <h2 id={headingId} className="text-lg font-semibold">
-        {title}
-      </h2>
-      <TextField label="Nome de exibição" value={user.name} readOnly editIn={{ to: "/account/profile", label: "Editar no Perfil" }} />
-      <TextField label="Apelido da carteira" error={errors.label?.message} {...form.register("label")} />
-      <fieldset className="flex flex-col gap-1.5">
-        <legend className="text-sm font-medium">Rede</legend>
-        <div className="flex flex-wrap gap-4">
-          {chainSchema.options.map((network) => (
-            <label key={network} className="flex items-center gap-2 text-sm">
-              <input type="checkbox" value={network} {...form.register("networks")} />
-              {NETWORK_LABELS[network]}
-            </label>
-          ))}
-        </div>
-        {errors.networks && <p className="text-sm text-destructive">{errors.networks.message}</p>}
-      </fieldset>
-      <TextField label="Nome do perfil" error={errors.profileName?.message} {...form.register("profileName")} />
-      <TextField label="Endereço da carteira" placeholder="Endereço 0x da carteira" autoComplete="off" error={errors.address?.message} {...form.register("address")} />
-      <TextField label="ENS ou carteira secundária (opcional)" autoComplete="off" error={errors.backupAddress?.message} {...form.register("backupAddress")} />
-      <div className="flex flex-col gap-1.5">
-        <label htmlFor={`${role}-provider`} className="text-sm font-medium">
-          Tipo de carteira
-        </label>
-        <select id={`${role}-provider`} className="h-8 rounded-lg border px-2 text-sm" {...form.register("provider")}>
-          {walletProviderSchema.options.map((provider) => (
-            <option key={provider} value={provider}>
-              {PROVIDER_LABELS[provider]}
-            </option>
-          ))}
-        </select>
+      <div className="flex flex-col gap-1">
+        <h2 id={headingId} className="text-lg font-bold">
+          {title}
+        </h2>
+        {role === "primary" && (
+          <p className="text-sm text-text-secondary">Estas carteiras ficam disponíveis no pagamento e para receber NFTs comprados.</p>
+        )}
       </div>
-      <TextField label="Código de indicação" autoComplete="off" error={errors.referralCode?.message} {...form.register("referralCode")} />
-      <TextField label="E-mail" value={user.email} readOnly editIn={{ to: "/account/profile", label: "Editar no Perfil" }} />
-      <TextField label="Nome ENS" value={user.ensName ?? ""} readOnly editIn={{ to: "/account/profile", label: "Editar no Perfil" }} />
+      <div className="grid gap-x-7 gap-y-6 sm:grid-cols-2">
+        <TextField label="Nome de exibição" value={user.name} readOnly required editIn={{ to: "/account/profile", label: "Editar no Perfil" }} />
+        <TextField label="Apelido da carteira" required error={errors.label?.message} {...form.register("label")} />
+        <fieldset className="flex flex-col gap-2">
+          <legend className="mb-2 flex items-center gap-1 text-body leading-4">
+            Rede
+            <span aria-hidden="true" className="text-lg leading-none text-destructive">
+              *
+            </span>
+          </legend>
+          <div className="flex min-h-10 flex-wrap items-center gap-x-5 gap-y-2 rounded-md border border-input px-3 py-2">
+            {chainSchema.options.map((network) => (
+              <label key={network} className="flex items-center gap-2 text-sm">
+                <input type="checkbox" className="size-4 accent-primary" value={network} {...form.register("networks")} />
+                {NETWORK_LABELS[network]}
+              </label>
+            ))}
+          </div>
+          {errors.networks && <p className="text-sm text-destructive">{errors.networks.message}</p>}
+        </fieldset>
+        <TextField label="Nome do perfil" required error={errors.profileName?.message} {...form.register("profileName")} />
+        <TextField
+          label="Endereço da carteira"
+          placeholder="Endereço 0x da carteira"
+          autoComplete="off"
+          required
+          error={errors.address?.message}
+          {...form.register("address")}
+        />
+        <TextField
+          label="ENS ou carteira secundária (opcional)"
+          placeholder="ENS ou carteira secundária (opcional)"
+          autoComplete="off"
+          error={errors.backupAddress?.message}
+          {...form.register("backupAddress")}
+        />
+        <div className="flex flex-col gap-2">
+          <label htmlFor={`${role}-provider`} className="flex items-center gap-1 text-body leading-4">
+            Tipo de carteira
+            <span aria-hidden="true" className="text-lg leading-none text-destructive">
+              *
+            </span>
+          </label>
+          <NativeSelect id={`${role}-provider`} required {...form.register("provider")}>
+            {walletProviderSchema.options.map((provider) => (
+              <option key={provider} value={provider}>
+                {PROVIDER_LABELS[provider]}
+              </option>
+            ))}
+          </NativeSelect>
+        </div>
+        <TextField label="Código de indicação" autoComplete="off" required error={errors.referralCode?.message} {...form.register("referralCode")} />
+        <TextField label="E-mail" value={user.email} readOnly required editIn={{ to: "/account/profile", label: "Editar no Perfil" }} />
+        <TextField label="Nome ENS" value={user.ensName ?? ""} readOnly required editIn={{ to: "/account/profile", label: "Editar no Perfil" }} />
+      </div>
       <FormError message={errors.root?.server?.message} />
-      {saved && <p role="status">Carteira salva.</p>}
-      <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
+      {saved && (
+        <p role="status" className="text-sm text-success">
+          Carteira salva.
+        </p>
+      )}
+      <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting} className="self-start">
         Salvar carteira
       </Button>
     </form>
@@ -135,13 +169,26 @@ export function WalletsPage({ userId }: { userId: string }): JSX.Element {
   const wallets = useQuery(walletsQuery(userId));
   const [addingSecondary, setAddingSecondary] = useState(false);
 
-  if (me.isPending || wallets.isPending) return <p className="p-6">Carregando as carteiras...</p>;
+  if (me.isPending || wallets.isPending) {
+    return (
+      <AccountLayout title="Carteiras">
+        <div aria-busy="true" className="grid gap-6 sm:grid-cols-2">
+          <p className="sr-only">Carregando as carteiras...</p>
+          {Array.from({ length: 10 }, (_, index) => (
+            <div key={index} className="skeleton h-16 w-full" />
+          ))}
+        </div>
+      </AccountLayout>
+    );
+  }
   if (me.isError || wallets.isError) {
     return (
-      <div className="flex flex-col gap-2 p-6">
-        <p role="alert">Não foi possível carregar as carteiras.</p>
-        <Button onClick={() => void Promise.all([me.refetch(), wallets.refetch()])}>Tentar de novo</Button>
-      </div>
+      <AccountLayout title="Carteiras">
+        <div className="flex flex-col items-start gap-3 bg-surface-card p-6">
+          <p role="alert">Não foi possível carregar as carteiras.</p>
+          <Button onClick={() => void Promise.all([me.refetch(), wallets.refetch()])}>Tentar de novo</Button>
+        </div>
+      </AccountLayout>
     );
   }
 
@@ -149,25 +196,23 @@ export function WalletsPage({ userId }: { userId: string }): JSX.Element {
   const secondary = wallets.data.find((wallet) => wallet.role === "secondary");
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-8 p-6">
-      <h1 className="text-2xl font-semibold">Carteiras</h1>
-      <p className="text-sm text-muted-foreground">
-        Estas carteiras ficam disponíveis no pagamento e para receber NFTs comprados.
-      </p>
+    <AccountLayout title="Carteiras">
       <WalletForm key={`${me.data.id}-primary`} role="primary" title="Carteira principal" wallet={primary} user={me.data} />
       {secondary || addingSecondary ? (
         <WalletForm key={`${me.data.id}-secondary`} role="secondary" title="Carteira secundária" wallet={secondary} user={me.data} />
       ) : (
-        <section className="flex flex-col gap-2 rounded-xl border p-4" aria-labelledby="secondary-empty">
-          <h2 id="secondary-empty" className="text-lg font-semibold">
-            Carteira secundária
-          </h2>
-          <p className="text-sm">Você ainda não adicionou uma carteira secundária.</p>
-          <Button variant="outline" onClick={() => setAddingSecondary(true)}>
+        <section className="flex flex-wrap items-start justify-between gap-3" aria-labelledby="secondary-empty">
+          <div className="flex flex-col gap-1">
+            <h2 id="secondary-empty" className="text-lg font-bold">
+              Carteira secundária
+            </h2>
+            <p className="text-sm text-text-secondary">Você ainda não adicionou uma carteira secundária.</p>
+          </div>
+          <Button variant="link" className="px-0 text-lg font-bold" onClick={() => setAddingSecondary(true)}>
             Adicionar
           </Button>
         </section>
       )}
-    </main>
+    </AccountLayout>
   );
 }
