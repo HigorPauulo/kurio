@@ -31,3 +31,9 @@ export const VIEW_TABS: { view: CatalogView | undefined; label: string }[] = [
   { view: "new", label: "Novos lançamentos" },
   { view: "trending", label: "Em alta" },
 ];
+
+const RATING_FORMAT = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+export function formatRating(value: number): string {
+  return RATING_FORMAT.format(value);
+}

@@ -1,21 +1,32 @@
 import {
+  infiniteQueryOptions,
   keepPreviousData,
   queryOptions,
   useMutation,
   useQueryClient,
   type DataTag,
+  type InfiniteData,
   type QueryClient,
   type UseMutationResult,
   type UseQueryOptions,
 } from "@tanstack/react-query";
-import type { Nft, NftListResponse, NftSummary } from "@/contracts/nft";
+import type { Nft, NftListResponse, NftSummary, ReviewsResponse } from "@/contracts/nft";
 import { announce } from "@/lib/a11y/announcer";
 import { ApiError } from "@/lib/http/apiError";
 import { toggleItem } from "@/lib/list";
 import { ensureDespiteCancel } from "@/lib/query/ensure";
 import { keys } from "@/lib/query/keys";
 import { seedNftVersions } from "@/lib/query/versions";
-import { addFavorite, getCollectionNfts, getFavorites, getFeaturedNfts, getNft, getNfts, removeFavorite } from "./api";
+import {
+  addFavorite,
+  getCollectionNfts,
+  getFavorites,
+  getFeaturedNfts,
+  getNft,
+  getNftReviews,
+  getNfts,
+  removeFavorite,
+} from "./api";
 import type { CatalogSearch } from "./search";
 
 const THIRTY_SECONDS = 30_000;
@@ -46,6 +57,22 @@ export function collectionNftsQuery(collectionId: string): TaggedQueryOptions<Nf
     queryKey: keys.catalog.list({ collection: collectionId }),
     queryFn: ({ signal }) => seedNftVersions(() => getCollectionNfts(collectionId, signal), (list) => list.items),
     staleTime: ONE_MINUTE,
+    gcTime: FIVE_MINUTES,
+  });
+}
+
+type ReviewsKey = ReturnType<typeof keys.reviews>;
+type ReviewsQueryOptions = ReturnType<
+  typeof infiniteQueryOptions<ReviewsResponse, Error, InfiniteData<ReviewsResponse>, ReviewsKey, number>
+>;
+
+export function nftReviewsQuery(nftId: string): ReviewsQueryOptions {
+  return infiniteQueryOptions({
+    queryKey: keys.reviews(nftId),
+    queryFn: ({ pageParam, signal }): Promise<ReviewsResponse> => getNftReviews(nftId, pageParam, signal),
+    initialPageParam: 1,
+    getNextPageParam: (last: ReviewsResponse) => (last.page < last.totalPages ? last.page + 1 : undefined),
+    staleTime: FIVE_MINUTES,
     gcTime: FIVE_MINUTES,
   });
 }

@@ -3,13 +3,15 @@ import {
   featuredNftsResponseSchema,
   nftListResponseSchema,
   nftSchema,
+  reviewsResponseSchema,
   type Nft,
   type NftListResponse,
   type NftSummary,
+  type ReviewsResponse,
 } from "@/contracts/nft";
 import { parseResponse } from "@/lib/http/apiError";
 import { http } from "@/lib/http/client";
-import { CATALOG_PAGE_SIZE, COLLECTION_PAGE_SIZE, type CatalogSearch } from "./search";
+import { CATALOG_PAGE_SIZE, COLLECTION_PAGE_SIZE, REVIEWS_PAGE_SIZE, type CatalogSearch } from "./search";
 
 export async function getNfts(search: CatalogSearch, signal?: AbortSignal): Promise<NftListResponse> {
   const { data } = await http.get<unknown>("/nfts", { params: { ...search, pageSize: CATALOG_PAGE_SIZE }, signal });
@@ -22,6 +24,14 @@ export async function getCollectionNfts(collectionId: string, signal?: AbortSign
     signal,
   });
   return parseResponse(nftListResponseSchema, data);
+}
+
+export async function getNftReviews(nftId: string, page: number, signal?: AbortSignal): Promise<ReviewsResponse> {
+  const { data } = await http.get<unknown>(`/nfts/${encodeURIComponent(nftId)}/reviews`, {
+    params: { page, pageSize: REVIEWS_PAGE_SIZE },
+    signal,
+  });
+  return parseResponse(reviewsResponseSchema, data);
 }
 
 export async function getFeaturedNfts(signal?: AbortSignal): Promise<NftSummary[]> {

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "@tanstack/react-router";
-import { Check, ChevronLeft, ChevronRight, CircleOff, Heart, Minus, Plus, Star } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, CircleOff, Heart, Minus, Plus } from "lucide-react";
 import {
   useEffect,
   useId,
@@ -13,6 +13,7 @@ import {
 import { SearchIcon } from "@/components/icons/KurioIcons";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tabs, TabsList, TabsPanel, TabsTab } from "@/components/ui/tabs";
 import { purchaseLimit, type Edition, type Nft } from "@/contracts/nft";
 import { formatEth } from "@/lib/eth";
 import { useNftSubscription } from "@/lib/realtime/instance";
@@ -20,9 +21,11 @@ import { useSession } from "@/lib/session/instance";
 import { isVerticalScroller, useDragScroll } from "@/lib/useDragScroll";
 import { useSwipe } from "@/lib/useSwipe";
 import { cn } from "@/lib/utils";
-import { CATEGORY_LABELS, CHAIN_LABELS } from "../labels";
+import { CATEGORY_LABELS, CHAIN_LABELS, formatRating } from "../labels";
 import { favoritesQuery, nftQuery, useToggleFavoriteMutation } from "../queries";
 import { CollectionRail } from "./CollectionRail";
+import { NftReviews } from "./NftReviews";
+import { Stars } from "./Stars";
 
 export type PurchaseAction = (selection: { nftId: string; editionId: string; quantity: number }) => ReactNode;
 
@@ -437,25 +440,11 @@ function FavoriteAction({ nftId }: { nftId: string }): JSX.Element {
   );
 }
 
-const RATING_FORMAT = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-
 function Rating({ average, count }: Nft["rating"]): JSX.Element {
   return (
     <p className="flex items-center gap-2 text-sm">
-      <span aria-hidden="true" className="flex gap-0.5">
-        {Array.from({ length: 5 }, (_, star) => {
-          const fill = Math.min(Math.max(average - star, 0), 1) * 100;
-          return (
-            <span key={star} className="relative size-3.5">
-              <Star className="absolute inset-0 size-3.5 fill-secondary-base/50 text-secondary-base/50" />
-              <span className="absolute inset-y-0 left-0 overflow-hidden" style={{ width: `${fill}%` }}>
-                <Star className="size-3.5 fill-primary text-primary" />
-              </span>
-            </span>
-          );
-        })}
-      </span>
-      <span className="sr-only">Nota {RATING_FORMAT.format(average)} de 5, </span>
+      <Stars value={average} />
+      <span className="sr-only">Nota {formatRating(average)} de 5, </span>
       {count} {count === 1 ? "avaliação" : "avaliações"} de colecionadores
     </p>
   );
@@ -577,21 +566,27 @@ export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchas
           </div>
         </div>
       </div>
-      <section aria-labelledby="details-title" className="flex flex-col gap-4">
-        <h2 id="details-title" className="self-start border-b-3 border-primary pb-2 text-lg font-bold text-text-accent">
-          Detalhes do NFT
-        </h2>
-        <dl className="flex flex-col gap-1 border-t border-border-strong pt-4 text-sm leading-[1.375rem]">
-          <dt className="font-bold">Descrição:</dt>
-          <dd className="mb-3 text-text-secondary">{nft.description}</dd>
-          <dt className="font-bold">Categoria:</dt>
-          <dd className="mb-3 text-text-secondary">{CATEGORY_LABELS[nft.category]}</dd>
-          <dt className="font-bold">Curtidas:</dt>
-          <dd className="mb-3 text-text-secondary">{nft.likes}</dd>
-          <dt className="font-bold">Rede:</dt>
-          <dd className="text-text-secondary">Cunhado na {CHAIN_LABELS[nft.chain]}.</dd>
-        </dl>
-      </section>
+      <Tabs defaultValue="details" aria-label="Informações do NFT">
+        <TabsList>
+          <TabsTab value="details">Detalhes do NFT</TabsTab>
+          <TabsTab value="reviews">Avaliações de colecionadores ({nft.rating.count})</TabsTab>
+        </TabsList>
+        <TabsPanel value="details">
+          <dl className="flex flex-col gap-1 text-sm leading-[1.375rem]">
+            <dt className="font-bold">Descrição:</dt>
+            <dd className="mb-3 text-text-secondary">{nft.description}</dd>
+            <dt className="font-bold">Categoria:</dt>
+            <dd className="mb-3 text-text-secondary">{CATEGORY_LABELS[nft.category]}</dd>
+            <dt className="font-bold">Curtidas:</dt>
+            <dd className="mb-3 text-text-secondary">{nft.likes}</dd>
+            <dt className="font-bold">Rede:</dt>
+            <dd className="text-text-secondary">Cunhado na {CHAIN_LABELS[nft.chain]}.</dd>
+          </dl>
+        </TabsPanel>
+        <TabsPanel value="reviews">
+          <NftReviews nftId={nft.id} />
+        </TabsPanel>
+      </Tabs>
       <CollectionRail nftId={nft.id} collectionId={nft.collection.id} />
     </main>
   );

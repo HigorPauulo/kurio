@@ -263,3 +263,19 @@ test("mais desta coleção mostra os outros NFTs da coleção e leva ao detalhe"
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Emerald Pass #303");
   await expect(rail.getByRole("link").filter({ hasText: "Emerald Ape #042" })).toBeVisible();
 });
+
+test("aba de avaliações mostra o resumo igual à nota do NFT e carrega mais avaliações", async ({ page }) => {
+  await startFresh(page, "fast", "/nft/nft_001");
+  await expect(page.getByText("19 avaliações de colecionadores")).toBeVisible();
+  await expect(page.getByRole("tabpanel")).toContainText("Descrição:");
+
+  await page.getByRole("tab", { name: "Avaliações de colecionadores (19)" }).click();
+  const panel = page.getByRole("tabpanel");
+  await expect(panel.getByText("4,5", { exact: true })).toBeVisible();
+  await expect(panel.getByRole("list", { name: "Avaliações" }).getByRole("listitem")).toHaveCount(5);
+  await expectNoA11yViolations(page);
+
+  await panel.getByRole("button", { name: "Ver mais avaliações" }).click();
+  await expect(panel.getByRole("list", { name: "Avaliações" }).getByRole("listitem")).toHaveCount(10);
+  await expect(panel.getByText("Mostrando 10 de 19 avaliações")).toBeVisible();
+});
