@@ -1,11 +1,12 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import type { JSX } from "react";
-import { LoginIcon, SearchIcon } from "@/components/icons/KurioIcons";
+import { LoginIcon } from "@/components/icons/KurioIcons";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useLogoutMutation } from "@/features/auth/queries";
 import { CartLink } from "@/features/cart/components/CartLink";
 import { useSession } from "@/lib/session/instance";
 import { cn } from "@/lib/utils";
+import { HeaderSearch } from "./HeaderSearch";
 
 type Section = "home" | "market" | "account" | "other";
 
@@ -86,15 +87,7 @@ export function Header(): JSX.Element {
           )}
         </ul>
         <div className="ml-auto flex items-center gap-3 lg:ml-0 lg:gap-5">
-          <Link
-            to="/"
-            hash="catalog-search"
-            activeOptions={EXACT}
-            aria-label="Ir para a busca"
-            className="hidden size-10 items-center justify-center rounded-md hover:text-text-accent md:inline-flex"
-          >
-            <SearchIcon className="size-5" />
-          </Link>
+          <HeaderSearch />
           <CartLink className="hidden md:inline-flex" />
           {isAuthenticated ? (
             <Button variant="outline" size="sm" onClick={() => void handleLogout()}>
