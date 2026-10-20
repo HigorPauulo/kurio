@@ -3,13 +3,15 @@ import { Link } from "@tanstack/react-router";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useEffect, useId, useRef, useState, type JSX } from "react";
 import { FormError, TextField } from "@/components/form/TextField";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { NativeSelect } from "@/components/ui/native-select";
 import type { Cart, Quote } from "@/contracts/cart";
 import type { Chain } from "@/contracts/common";
 import type { User } from "@/contracts/user";
 import { walletProviderSchema, type Wallet } from "@/contracts/wallet";
 import { formatEth } from "@/lib/eth";
 import { getApiFieldError } from "@/lib/forms";
+import { cn } from "@/lib/utils";
 import { keys } from "@/lib/query/keys";
 import { useNftSubscription } from "@/lib/realtime/instance";
 import { meQuery, useConnectWalletMutation, walletsQuery } from "../../account/queries";
@@ -96,20 +98,35 @@ function WalletConnection({ userId, wallet, network, error }: ConnectionProps): 
   const isConnected = isConnectedOn(wallet, network);
 
   return (
-    <fieldset className="flex flex-col gap-2" aria-describedby={error ? "connection-error" : undefined}>
-      <legend className="mb-2 font-semibold">Carteira e rede</legend>
+    <fieldset className="flex flex-col gap-3" aria-describedby={error ? "connection-error" : undefined}>
+      <legend className="mb-3 w-full text-center text-lg font-bold">Carteira e rede</legend>
       {walletProviderSchema.options.map((provider) => {
         const isChosen = wallet?.provider === provider;
         return (
-          <div key={provider} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 text-sm">
-            <span className="font-medium">{PROVIDER_LABELS[provider]}</span>
+          <div
+            key={provider}
+            className={cn(
+              "flex min-h-11 flex-wrap items-center justify-between gap-2 border px-4 py-2 text-sm",
+              isChosen ? "border-foreground bg-surface-card" : "border-border-strong",
+            )}
+          >
+            <span className="flex items-center gap-3">
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "size-4 rounded-full border border-primary",
+                  isChosen && "border-4 border-surface-card bg-primary ring-1 ring-primary",
+                )}
+              />
+              {PROVIDER_LABELS[provider]}
+            </span>
             {!isChosen && (
-              <span className="text-muted-foreground">
+              <span className="text-xs text-secondary-base">
                 {wallet ? `A carteira escolhida é ${PROVIDER_LABELS[wallet.provider]}.` : "Cadastre uma carteira."}
               </span>
             )}
             {isChosen && isConnected && network && (
-              <span className="flex items-center gap-1">
+              <span className="flex items-center gap-1 text-success">
                 <CheckCircle2 aria-hidden="true" className="size-4" />
                 Conectada na {CHAIN_LABELS[network]}
               </span>
@@ -172,31 +189,34 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
   const profileLink = { to: "/account/profile", label: "Editar no Perfil" } as const;
 
   return (
-    <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-      <form
-        noValidate
-        aria-labelledby="buyer-title"
-        className="flex min-w-0 flex-1 flex-col gap-4"
-        onSubmit={(event) => {
-          event.preventDefault();
-          handleReview();
-        }}
-      >
-        <h2 id="buyer-title" className="text-lg font-semibold">
+    <form
+      noValidate
+      aria-labelledby="buyer-title"
+      className="grid gap-10 lg:grid-cols-[1fr_25.3rem] lg:gap-8"
+      onSubmit={(event) => {
+        event.preventDefault();
+        handleReview();
+      }}
+    >
+      <div className="flex min-w-0 flex-col gap-5">
+        <h2 id="buyer-title" className="text-lg font-bold">
           Perfil do colecionador
         </h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextField label="Nome de exibição" value={user.name} readOnly editIn={profileLink} />
-          <TextField label="Nome de usuário" value={user.username} readOnly editIn={profileLink} />
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="checkout-network" className="text-sm font-medium">
+        <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
+          <TextField label="Nome de exibição" value={user.name} readOnly required editIn={profileLink} />
+          <TextField label="Nome de usuário" value={user.username} readOnly required editIn={profileLink} />
+          <div className="flex flex-col gap-2">
+            <label htmlFor="checkout-network" className="flex items-center gap-1 text-body leading-4">
               Rede
+              <span aria-hidden="true" className="text-lg leading-none text-destructive">
+                *
+              </span>
             </label>
-            <select
+            <NativeSelect
               id="checkout-network"
-              className="h-8 rounded-lg border bg-background px-2 text-sm"
               value={network ?? ""}
               disabled={!wallet}
+              required
               aria-invalid={errors.network ? true : undefined}
               aria-describedby={errors.network ? "network-error" : undefined}
               onChange={(event) => onDraftChange({ network: event.target.value as Chain })}
@@ -206,29 +226,31 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
                   {CHAIN_LABELS[option]}
                 </option>
               ))}
-            </select>
+            </NativeSelect>
             {errors.network && (
               <p id="network-error" className="text-sm text-destructive">
                 {errors.network}
               </p>
             )}
           </div>
-          <TextField label="Nome do perfil" value={wallet?.profileName ?? ""} readOnly editIn={walletLink} />
-          <TextField label="Endereço da carteira" value={wallet?.address ?? ""} readOnly editIn={walletLink} error={errors.wallet} />
+          <TextField label="Nome do perfil" value={wallet?.profileName ?? ""} readOnly required editIn={walletLink} />
+          <TextField label="Endereço da carteira" value={wallet?.address ?? ""} readOnly required editIn={walletLink} error={errors.wallet} />
           <TextField label="ENS ou carteira secundária (opcional)" value={wallet?.backupAddress ?? ""} readOnly editIn={walletLink} />
           <TextField
             label="Tipo de carteira"
             value={wallet ? PROVIDER_LABELS[wallet.provider] : ""}
             readOnly
+            required
             editIn={walletLink}
           />
-          <TextField label="Código de indicação" value={wallet?.referralCode ?? ""} readOnly editIn={walletLink} />
-          <TextField label="E-mail" value={user.email} readOnly editIn={profileLink} />
-          <TextField label="Nome ENS" value={user.ensName ?? ""} readOnly editIn={profileLink} error={errors.ensName} />
+          <TextField label="Código de indicação" value={wallet?.referralCode ?? ""} readOnly required editIn={walletLink} />
+          <TextField label="E-mail" value={user.email} readOnly required editIn={profileLink} />
+          <TextField label="Nome ENS" value={user.ensName ?? ""} readOnly required editIn={profileLink} error={errors.ensName} />
         </div>
-        <label className="flex items-center gap-2 text-sm">
+        <label className="flex items-center gap-2 self-start text-body">
           <input
             type="checkbox"
+            className="size-4 accent-primary"
             checked={draft.isSecondaryWallet && Boolean(secondary)}
             disabled={!secondary}
             aria-describedby={secondary ? undefined : "secondary-reason"}
@@ -237,21 +259,24 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
           Usar outra carteira?
         </label>
         {!secondary && (
-          <p id="secondary-reason" className="text-xs text-muted-foreground">
-            Você não tem carteira secundária. <Link to="/account/wallets" className="underline underline-offset-4">Adicionar em Carteiras</Link>
+          <p id="secondary-reason" className="-mt-3 text-xs text-secondary-base">
+            Você não tem carteira secundária.{" "}
+            <Link to="/account/wallets" className="text-text-accent underline underline-offset-4">
+              Adicionar em Carteiras
+            </Link>
           </p>
         )}
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor={noteId} className="text-sm font-medium">
+        <div className="flex flex-col gap-2 sm:max-w-88">
+          <label htmlFor={noteId} className="text-body">
             Observação do colecionador (opcional)
           </label>
           <textarea
             id={noteId}
-            rows={4}
+            rows={6}
             value={draft.note}
             aria-invalid={errors.note ? true : undefined}
             aria-describedby={errors.note ? `${noteId}-error` : undefined}
-            className="rounded-lg border bg-background p-2 text-sm"
+            className="rounded-md border border-input bg-transparent p-3 text-sm outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/40 aria-invalid:border-destructive"
             onChange={(event) => onDraftChange({ note: event.target.value })}
           />
           {errors.note && (
@@ -260,6 +285,34 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
             </p>
           )}
         </div>
+      </div>
+      <div className="flex min-w-0 flex-col gap-6">
+        <section aria-labelledby="items-title" className="flex flex-col gap-3">
+          <h2 id="items-title" className="text-lg font-bold">
+            Seus NFTs
+          </h2>
+          <ul className="flex flex-col gap-3">
+            {cart.items.map((item) => (
+              <li key={item.id} className="flex items-center gap-3 bg-surface-card pr-4">
+                <img src={item.cover.url} alt="" width={70} height={70} className="aspect-square w-17.5 shrink-0 object-cover" />
+                <span className="flex min-w-0 flex-1 flex-col gap-1">
+                  <span className="font-bold">{item.nftName}</span>
+                  <span className="text-sm text-secondary-base">Edição: {item.editionLabel}</span>
+                </span>
+                <span className="text-sm text-text-secondary">(x {item.quantity})</span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-center text-sm">
+            {cart.coupon ? `Cupom ${cart.coupon.code} aplicado.` : "Tem um código promocional?"}{" "}
+            <Link to="/cart" className="text-text-accent underline underline-offset-4">
+              {cart.coupon ? "Editar no carrinho" : "Aplique no carrinho"}
+            </Link>
+          </p>
+          <p className="text-center text-xs text-text-accent">
+            O resumo com taxa e total aparece na revisão, cotado na rede escolhida.
+          </p>
+        </section>
         <WalletConnection
           userId={userId}
           wallet={wallet}
@@ -267,30 +320,11 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
           error={isConnectedOn(wallet, network) ? undefined : errors.connection}
         />
         {errors.form ? <FormError message={errors.form} /> : hasErrors(errors) && <FormError message="Corrija os campos indicados para continuar." />}
-        <Button type="submit">Revisar pedido</Button>
-      </form>
-      <aside aria-labelledby="items-title" className="flex flex-col gap-3 rounded-xl border p-4 lg:w-96">
-        <h2 id="items-title" className="text-lg font-semibold">
-          Seus NFTs
-        </h2>
-        <ul className="flex flex-col gap-2 text-sm">
-          {cart.items.map((item) => (
-            <li key={item.id} className="flex justify-between gap-2">
-              <span>
-                {item.nftName} ({item.editionLabel}) × {item.quantity}
-              </span>
-            </li>
-          ))}
-        </ul>
-        <p className="text-sm">
-          {cart.coupon ? `Cupom ${cart.coupon.code} aplicado.` : "Tem um código promocional?"}{" "}
-          <Link to="/cart" className="underline underline-offset-4">
-            {cart.coupon ? "Editar no carrinho" : "Aplique no carrinho"}
-          </Link>
-        </p>
-        <p className="text-xs text-muted-foreground">O resumo com taxa e total aparece na revisão, cotado na rede escolhida.</p>
-      </aside>
-    </div>
+        <Button type="submit" size="lg" className="w-full rounded-full md:rounded-md">
+          Revisar pedido
+        </Button>
+      </div>
+    </form>
   );
 }
 
@@ -301,7 +335,7 @@ function QuoteChanges({ accepted, current, cart }: { accepted: Quote; current: Q
   });
 
   return (
-    <div role="alert" className="flex flex-col gap-1 rounded-lg border border-destructive p-3 text-sm">
+    <div role="alert" className="flex flex-col gap-1 rounded-md border border-destructive p-4 text-sm">
       <p className="flex items-center gap-1 font-medium">
         <AlertTriangle aria-hidden="true" className="size-4" />
         Os valores mudaram desde a sua revisão.
@@ -345,7 +379,14 @@ function ReviewStep({ userId, cart, wallet, network, note, phase, message, onBac
     setAccepted(quote.data);
   }
 
-  if (quote.isPending) return <p>Calculando o pedido na {CHAIN_LABELS[network]}...</p>;
+  if (quote.isPending) {
+    return (
+      <div aria-busy="true" className="flex max-w-2xl flex-col gap-3">
+        <p className="text-sm text-text-secondary">Calculando o pedido na {CHAIN_LABELS[network]}...</p>
+        <div className="skeleton h-64 w-full" />
+      </div>
+    );
+  }
   if (quote.isError) {
     return (
       <div role="alert" className="flex flex-col items-start gap-2">
@@ -363,41 +404,45 @@ function ReviewStep({ userId, cart, wallet, network, note, phase, message, onBac
   const canConfirm = !hasChanged && current.purchasable && phase.kind === "idle" && !quote.isFetching;
 
   return (
-    <section aria-labelledby="review-title" className="flex max-w-2xl flex-col gap-4">
-      <h2 id="review-title" className="text-lg font-semibold">
+    <section aria-labelledby="review-title" className="flex w-full max-w-2xl flex-col gap-5 self-center border-b-8 border-primary bg-surface-card p-6 md:p-8">
+      <h2 id="review-title" className="text-lg font-bold">
         Revise o pedido
       </h2>
       {message && <FormError message={message} />}
       {hasChanged && accepted && <QuoteChanges accepted={accepted} current={current} cart={cart} />}
       {!current.purchasable && <FormError message="Algum item ficou indisponível. Ajuste o carrinho para continuar." />}
-      <ul aria-label="Itens do pedido" className="flex flex-col gap-2 text-sm">
+      <ul aria-label="Itens do pedido" className="flex flex-col gap-3 border-y border-border-strong py-4 text-sm">
         {current.lines.map((line) => {
           const item = cart.items.find((candidate) => candidate.id === line.itemId);
           return (
-            <li key={line.itemId} className="flex justify-between gap-2">
-              <span>
-                {item?.nftName ?? line.nftId} ({item?.editionLabel}) × {line.quantity}
+            <li key={line.itemId} className="flex items-center gap-3">
+              {item && <img src={item.cover.url} alt="" width={56} height={56} className="size-14 shrink-0 rounded-md object-cover" />}
+              <span className="min-w-0 flex-1">
+                <span className="block font-bold">{item?.nftName ?? line.nftId}</span>
+                <span className="text-secondary-base">
+                  {item?.editionLabel} · (x {line.quantity})
+                </span>
               </span>
-              <span>{formatEth(line.lineTotal)} ETH</span>
+              <span className="font-bold whitespace-nowrap text-text-accent">{formatEth(line.lineTotal)} ETH</span>
             </li>
           );
         })}
       </ul>
-      <dl aria-label="Resumo do pagamento" className="grid grid-cols-[1fr_auto] gap-y-1 text-sm">
+      <dl aria-label="Resumo do pagamento" className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-2 text-base">
         <dt>Subtotal</dt>
         <dd className="text-right">{formatEth(current.subtotal)} ETH</dd>
         <dt>Desconto{current.coupon ? ` (${current.coupon.code})` : ""}</dt>
         <dd className="text-right">- {formatEth(current.discount)} ETH</dd>
         <dt>Taxa de rede ({CHAIN_LABELS[network]})</dt>
         <dd className="text-right">{formatEth(current.networkFee)} ETH</dd>
-        <dt className="font-semibold">Total</dt>
-        <dd className="text-right font-semibold">{formatEth(current.total)} ETH</dd>
+        <dt className="mt-2 font-bold">Total</dt>
+        <dd className="mt-2 text-right text-lg font-bold text-text-accent">{formatEth(current.total)} ETH</dd>
       </dl>
-      <p className="text-sm">
+      <p className="text-sm break-all text-text-secondary">
         Carteira {wallet.label} ({PROVIDER_LABELS[wallet.provider]}), {wallet.address}
       </p>
-      {note.trim() && <p className="text-sm">Observação: {note.trim()}</p>}
-      <div className="flex flex-wrap gap-2">
+      {note.trim() && <p className="text-sm text-text-secondary">Observação: {note.trim()}</p>}
+      <div className="flex flex-wrap gap-3">
         {hasChanged && (
           <Button type="button" variant="outline" onClick={() => setAccepted(current)}>
             Aceitar novos valores
@@ -483,27 +528,39 @@ export function CheckoutPage({ userId, step, onStepChange, onOrderPlaced }: Chec
   if (attempt && phase.kind !== "idle" && step !== "review") {
     content =
       phase.kind === "retry" ? (
-        <div role="alert" className="flex flex-col items-start gap-2">
+        <div role="alert" className="flex flex-col items-start gap-3 bg-surface-card p-6">
           <p>{phase.message}</p>
           <Button onClick={() => void send(attempt)}>Tentar de novo</Button>
         </div>
       ) : (
-        <p role="status">Enviando o pedido anterior...</p>
+        <p role="status" className="bg-surface-card p-6">
+          Enviando o pedido anterior...
+        </p>
       );
   } else if (me.isPending || wallets.isPending || cart.isPending) {
-    content = <p>Carregando o pagamento...</p>;
+    content = (
+      <div aria-busy="true" className="grid gap-10 lg:grid-cols-[1fr_25.3rem] lg:gap-8">
+        <p className="sr-only">Carregando o pagamento...</p>
+        <div className="grid gap-5 sm:grid-cols-2">
+          {Array.from({ length: 10 }, (_, index) => (
+            <div key={index} className="skeleton h-16 w-full" />
+          ))}
+        </div>
+        <div className="skeleton h-96 w-full" />
+      </div>
+    );
   } else if (me.isError || wallets.isError || cart.isError) {
     content = (
-      <div role="alert" className="flex flex-col items-start gap-2">
-        <p>Não foi possível carregar o pagamento.</p>
+      <div role="alert" className="flex flex-col items-start gap-3 bg-surface-card p-6">
+        <p className="text-lg font-bold">Não foi possível carregar o pagamento.</p>
         <Button onClick={() => void Promise.all([me.refetch(), wallets.refetch(), cart.refetch()])}>Tentar de novo</Button>
       </div>
     );
   } else if (cart.data.items.length === 0) {
     content = (
-      <div className="flex flex-col items-start gap-2">
-        <p>Seu carrinho está vazio.</p>
-        <Link to="/" className="underline underline-offset-4">
+      <div className="flex flex-col items-start gap-4 bg-surface-card p-6">
+        <p className="text-lg font-bold">Seu carrinho está vazio.</p>
+        <Link to="/" className={buttonVariants()}>
           Explorar o catálogo
         </Link>
       </div>
@@ -527,7 +584,7 @@ export function CheckoutPage({ userId, step, onStepChange, onOrderPlaced }: Chec
           onConfirm={(quote) => handleConfirm(quote, wallet, network)}
         />
         {phase.kind === "retry" && attempt && (
-          <div role="alert" className="flex flex-col items-start gap-2">
+          <div role="alert" className="flex flex-col items-start gap-3 self-center">
             <p>{phase.message}</p>
             <Button onClick={() => void send(attempt)}>Tentar de novo</Button>
           </div>
@@ -549,19 +606,27 @@ export function CheckoutPage({ userId, step, onStepChange, onOrderPlaced }: Chec
   }
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 p-4 md:p-6">
-      <nav aria-label="Trilha" className="text-sm">
-        <Link to="/" className="underline underline-offset-4">
-          Início
-        </Link>
-        <span aria-hidden="true"> / </span>
-        <Link to="/cart" className="underline underline-offset-4">
-          Carrinho
-        </Link>
-        <span aria-hidden="true"> / </span>
-        <span aria-current="page">Pagamento</span>
+    <main className="mx-auto flex w-full max-w-300 flex-col gap-6 px-4 pt-6 lg:pt-8">
+      <nav aria-label="Trilha" className="text-sm font-bold">
+        <ol className="flex flex-wrap gap-1">
+          <li>
+            <Link to="/" className="hover:text-text-accent">
+              Início
+            </Link>
+            <span aria-hidden="true"> / </span>
+          </li>
+          <li>
+            <Link to="/cart" className="hover:text-text-accent">
+              Carrinho
+            </Link>
+            <span aria-hidden="true"> / </span>
+          </li>
+          <li aria-current="page" className="text-text-accent">
+            Pagamento
+          </li>
+        </ol>
       </nav>
-      <h1 className="text-2xl font-semibold md:text-3xl">Pagamento</h1>
+      <h1 className="text-2xl font-bold md:sr-only">Pagamento</h1>
       {content}
     </main>
   );

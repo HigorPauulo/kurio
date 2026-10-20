@@ -93,7 +93,7 @@ function Newsletter(): JSX.Element {
 export function Footer(): JSX.Element {
   return (
     <footer className="mx-auto mt-24 w-full max-w-300 px-4">
-      <section aria-label="Sobre o Kurio" className="grid gap-8 bg-surface-card p-8 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.35fr] lg:gap-0">
+      <div className="grid gap-8 bg-surface-card p-8 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.35fr] lg:gap-0">
         {FEATURES.map((feature) => (
           <div key={feature.initial} className="flex flex-col gap-3 lg:border-r lg:border-primary lg:px-4">
             <span
@@ -107,7 +107,7 @@ export function Footer(): JSX.Element {
           </div>
         ))}
         <Newsletter />
-      </section>
+      </div>
       <div className="grid gap-4 bg-surface-dark px-8 py-6 text-sm leading-[1.375rem] sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_14.25rem] lg:items-center lg:gap-16">
         <p className="font-bold tracking-brand">KURIO</p>
         <p>
@@ -121,8 +121,8 @@ export function Footer(): JSX.Element {
         <p>+55 11 4002 8922</p>
       </div>
       <div className="grid grid-cols-1 gap-10 bg-surface-card p-8 text-sm sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_14.25rem] lg:gap-16">
-        <section aria-labelledby="footer-profile" className="flex flex-col gap-2">
-          <h2 id="footer-profile" className={COLUMN_TITLE}>
+        <div className="flex flex-col gap-2">
+          <h2 className={COLUMN_TITLE}>
             Meu perfil
           </h2>
           <ul>
@@ -139,9 +139,9 @@ export function Footer(): JSX.Element {
               </li>
             ))}
           </ul>
-        </section>
-        <section aria-labelledby="footer-help" className="flex flex-col gap-2">
-          <h2 id="footer-help" className={COLUMN_TITLE}>
+        </div>
+        <div className="flex flex-col gap-2">
+          <h2 className={COLUMN_TITLE}>
             Central de ajuda
           </h2>
           <ul>
@@ -153,9 +153,9 @@ export function Footer(): JSX.Element {
               </li>
             ))}
           </ul>
-        </section>
-        <section aria-labelledby="footer-collections" className="flex flex-col gap-2">
-          <h2 id="footer-collections" className={COLUMN_TITLE}>
+        </div>
+        <div className="flex flex-col gap-2">
+          <h2 className={COLUMN_TITLE}>
             Coleções
           </h2>
           <ul>
@@ -167,10 +167,10 @@ export function Footer(): JSX.Element {
               </li>
             ))}
           </ul>
-        </section>
+        </div>
         <div className="flex flex-col gap-8">
-          <section aria-labelledby="footer-social" className="flex flex-col gap-5">
-            <h2 id="footer-social" className={COLUMN_TITLE}>
+          <div className="flex flex-col gap-5">
+            <h2 className={COLUMN_TITLE}>
               Redes sociais
             </h2>
             <ul className="flex gap-2.5">
@@ -187,15 +187,15 @@ export function Footer(): JSX.Element {
                 </li>
               ))}
             </ul>
-          </section>
-          <section aria-labelledby="footer-wallets" className="flex flex-col gap-3">
-            <h2 id="footer-wallets" className={COLUMN_TITLE}>
+          </div>
+          <div className="flex flex-col gap-3">
+            <h2 className={COLUMN_TITLE}>
               Carteiras compatíveis
             </h2>
             <p className="flex h-6.5 items-center justify-center rounded-md border border-border-soft bg-surface-dark px-2 text-tiny font-bold tracking-[0.1px] whitespace-pre text-text-accent">
               {"METAMASK  •  WALLETCONNECT  •  COINBASE"}
             </p>
-          </section>
+          </div>
         </div>
       </div>
       <p className="py-1.5 text-center text-sm leading-[1.875rem]">© 2026 Kurio. Propriedade digital para todos.</p>
