@@ -5,7 +5,9 @@ import { createSeed } from "../db/seed";
 import { createNetworkConditions } from "../network/conditions";
 import { buildScenario, type PresetName } from "../scenarios/presets";
 import { authHandlers } from "./auth";
+import { favoriteHandlers } from "./favorites";
 import { meHandlers } from "./me";
+import { nftHandlers } from "./nfts";
 import type { HandlerDeps } from "./shared";
 import { walletHandlers } from "./wallets";
 
@@ -26,7 +28,13 @@ const deps: HandlerDeps = {
   now: () => nowMs,
 };
 
-const server = setupServer(...authHandlers(deps), ...meHandlers(deps), ...walletHandlers(deps));
+const server = setupServer(
+  ...authHandlers(deps),
+  ...nftHandlers(deps),
+  ...favoriteHandlers(deps),
+  ...meHandlers(deps),
+  ...walletHandlers(deps),
+);
 
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterAll(() => server.close());
@@ -248,5 +256,95 @@ describe("carteiras", () => {
     expect(connected.json.connection).toEqual({ status: "connected", network: "base" });
     expect(rejected.json.error.code).toBe("WALLET_REJECTED");
     expect(foreign.status).toBe(404);
+  });
+});
+
+type ListBody = {
+  items: { id: string; name: string; priceFrom: string; status: string; category: string; chain: string }[];
+  total: number;
+  totalPages: number;
+  appliedQuery: Record<string, unknown>;
+};
+
+async function list(search: string): Promise<{ status: number; body: ListBody }> {
+  const { status, json } = await call("GET", `/nfts${search}`);
+  return { status, body: json as unknown as ListBody };
+}
+
+describe("catálogo", () => {
+  it("pagina por 12, ordena por recente com desempate por id e devolve página vazia além do fim", async () => {
+    const first = await list("");
+    expect(first.body.total).toBe(24);
+    expect(first.body.totalPages).toBe(2);
+    expect(first.body.items).toHaveLength(12);
+    expect(first.body.items[0].id).toBe("nft_024");
+
+    const beyond = await list("?page=3");
+    expect(beyond.body.items).toEqual([]);
+    expect(beyond.body.total).toBe(24);
+  });
+
+  it("busca sem acento e sem caixa em nome, coleção e criador", async () => {
+    const byCreator = await list("?q=IRIS");
+    expect(byCreator.body.items.map((item) => item.name)).toContain("Pulso Neon");
+    const byCollection = await list("?q=analogica");
+    expect(byCollection.body.items.map((item) => item.id).sort()).toEqual(["nft_011", "nft_020"]);
+  });
+
+  it("combina filtros por AND, com OR dentro da lista, e ecoa a consulta normalizada", async () => {
+    const { body } = await list("?category=music,gaming&chain=ethereum&status=available");
+    expect(body.items.every((item) => ["music", "gaming"].includes(item.category))).toBe(true);
+    expect(body.items.every((item) => item.chain === "ethereum" && item.status === "available")).toBe(true);
+    expect(body.appliedQuery).toMatchObject({ category: ["music", "gaming"], chain: ["ethereum"], sort: "recent" });
+  });
+
+  it("filtra e ordena por preço com comparação exata", async () => {
+    const { body } = await list("?priceMin=0.01&priceMax=0.1&sort=price_asc&pageSize=48");
+    const prices = body.items.map((item) => item.priceFrom);
+    expect(prices[0]).toBe("0.0125");
+    expect(prices.at(-1)).toBe("0.075");
+    expect(prices).not.toContain("0.009");
+  });
+
+  it("responde 400 para parâmetro fora das listas ou preço mínimo acima do máximo", async () => {
+    expect((await list("?category=arte")).status).toBe(400);
+    expect((await list("?priceMin=5&priceMax=1")).status).toBe(400);
+  });
+
+  it("devolve vazio no empty-catalog, destaques até 6 e 404 para NFT inexistente", async () => {
+    const featured = await call("GET", "/nfts/featured");
+    expect((featured.json as unknown as unknown[]).length).toBeLessThanOrEqual(6);
+    expect((await call("GET", "/nfts/nft_001")).json).toMatchObject({ id: "nft_001" });
+    expect((await call("GET", "/nfts/nft_999")).status).toBe(404);
+
+    scenarioNames = ["fast", "empty-catalog"];
+    expect((await list("")).body.total).toBe(0);
+    expect((await call("GET", "/nfts/nft_001")).status).toBe(404);
+    const token = await login("ana@kurio.test");
+    expect((await call("PUT", "/me/favorites/nft_001", { token })).status).toBe(404);
+  });
+});
+
+describe("favoritos", () => {
+  it("favorita e desfavorita de forma idempotente, mexendo em likes só quando o estado muda", async () => {
+    const token = await login("ana@kurio.test");
+    const likes = () => db.read((tables) => tables.nfts.nft_001.likes);
+    const before = likes();
+
+    expect((await call("PUT", "/me/favorites/nft_001", { token })).status).toBe(204);
+    await call("PUT", "/me/favorites/nft_001", { token });
+    expect(likes()).toBe(before + 1);
+    expect((await call("GET", "/me/favorites", { token })).json).toEqual({ nftIds: ["nft_002", "nft_015", "nft_001"] });
+
+    await call("DELETE", "/me/favorites/nft_001", { token });
+    await call("DELETE", "/me/favorites/nft_001", { token });
+    expect(likes()).toBe(before);
+  });
+
+  it("exige sessão, responde 404 para NFT inexistente e não mistura usuários", async () => {
+    expect((await call("GET", "/me/favorites")).status).toBe(401);
+    const token = await login("bruno@kurio.test");
+    expect((await call("PUT", "/me/favorites/nft_999", { token })).status).toBe(404);
+    expect((await call("GET", "/me/favorites", { token })).json).toEqual({ nftIds: [] });
   });
 });
