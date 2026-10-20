@@ -5,6 +5,7 @@ import { useState, type FormEvent, type JSX } from "react";
 import { TextField } from "@/components/form/TextField";
 import { Button } from "@/components/ui/button";
 import type { Cart, CartItem, Quote } from "@/contracts/cart";
+import { purchaseLimit } from "@/contracts/nft";
 import { formatEth } from "@/lib/eth";
 import { getApiFieldError } from "@/lib/forms";
 import {
@@ -16,10 +17,8 @@ import {
   useUpdateQuantityMutation,
 } from "../queries";
 
-type CartProps = { owner: string };
-
 function itemLimit(item: CartItem): number {
-  return Math.min(item.available, item.maxPerOrder);
+  return purchaseLimit({ ...item, status: item.status === "sold_out" ? "sold_out" : "available" });
 }
 
 function ItemNotice({ item, quote }: { item: CartItem; quote: Quote | undefined }): JSX.Element | null {
@@ -58,9 +57,20 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
           {item.nftName}
         </Link>
         <span className="text-sm text-muted-foreground">
-          Edição {item.editionLabel} · {formatEth(item.unitPrice)} ETH cada
+          Edição {item.editionLabel} · {formatEth(line?.unitPrice ?? item.unitPrice)} ETH cada
         </span>
         <ItemNotice item={item} quote={quote} />
+        {item.status === "insufficient" && limit > 0 && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="self-start"
+            onClick={() => update.mutate({ itemId: item.id, quantity: limit })}
+          >
+            Ajustar para {limit}
+          </Button>
+        )}
       </div>
       <div className="flex items-center gap-2" role="group" aria-label={`Quantidade de ${item.nftName}`}>
         <Button
@@ -205,15 +215,24 @@ function Summary({ owner, cart }: { owner: string; cart: Cart }): JSX.Element {
   );
 }
 
-export function CartPage({ owner }: CartProps): JSX.Element {
+function EmptyCart(): JSX.Element {
+  return (
+    <div className="flex flex-col items-start gap-2">
+      <p>Seu carrinho está vazio.</p>
+      <Link to="/" className="underline underline-offset-4">
+        Explorar o catálogo
+      </Link>
+    </div>
+  );
+}
+
+function CartContent({ owner }: { owner: string }): JSX.Element {
   const cart = useQuery(cartQuery(owner));
   const quote = useQuery({ ...quoteQuery(owner, cart.data?.version ?? 0), enabled: false });
 
-  let content: JSX.Element;
-  if (cart.isPending) {
-    content = <p>Carregando o carrinho...</p>;
-  } else if (cart.isError) {
-    content = (
+  if (cart.isPending) return <p>Carregando o carrinho...</p>;
+  if (cart.isError) {
+    return (
       <div role="alert" className="flex flex-col items-start gap-2">
         <p>Não foi possível carregar o carrinho.</p>
         <Button variant="outline" onClick={() => void cart.refetch()}>
@@ -221,30 +240,24 @@ export function CartPage({ owner }: CartProps): JSX.Element {
         </Button>
       </div>
     );
-  } else if (cart.data.items.length === 0) {
-    content = (
-      <div className="flex flex-col items-start gap-2">
-        <p>Seu carrinho está vazio.</p>
-        <Link to="/" className="underline underline-offset-4">
-          Explorar o catálogo
-        </Link>
-      </div>
-    );
-  } else {
-    content = (
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-        <ul aria-label="Itens do carrinho" className="flex min-w-0 flex-1 flex-col gap-3">
-          {cart.data.items.map((item) => (
-            <CartLine key={item.id} owner={owner} item={item} quote={quote.data} />
-          ))}
-        </ul>
-        <div className="lg:w-96">
-          <Summary owner={owner} cart={cart.data} />
-        </div>
-      </div>
-    );
   }
+  if (cart.data.items.length === 0) return <EmptyCart />;
 
+  return (
+    <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+      <ul aria-label="Itens do carrinho" className="flex min-w-0 flex-1 flex-col gap-3">
+        {cart.data.items.map((item) => (
+          <CartLine key={item.id} owner={owner} item={item} quote={quote.data} />
+        ))}
+      </ul>
+      <div className="lg:w-96">
+        <Summary owner={owner} cart={cart.data} />
+      </div>
+    </div>
+  );
+}
+
+export function CartPage({ owner }: { owner: string | null }): JSX.Element {
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-6 p-4 md:p-6">
       <nav aria-label="Trilha" className="text-sm">
@@ -255,7 +268,7 @@ export function CartPage({ owner }: CartProps): JSX.Element {
         <span aria-current="page">Carrinho</span>
       </nav>
       <h1 className="text-2xl font-semibold md:text-3xl">Carrinho</h1>
-      {content}
+      {owner ? <CartContent owner={owner} /> : <EmptyCart />}
     </main>
   );
 }

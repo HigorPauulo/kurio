@@ -24,6 +24,11 @@ import {
 } from "./api";
 
 const ONE_MINUTE = 60_000;
+const MIN_QUOTE_REFRESH_MS = 1_000;
+
+function msUntilExpiry(quote: Quote | undefined): number {
+  return quote ? Math.max(Date.parse(quote.expiresAt) - Date.now(), 0) : 0;
+}
 
 export const CART_NETWORK: Chain = "ethereum";
 
@@ -47,22 +52,25 @@ export function quoteQuery(owner: string, cartVersion: number, network: Chain = 
   return queryOptions({
     queryKey: keys.priv(owner).quote(network, cartVersion),
     queryFn: ({ signal }) => createQuote(network, signal),
-    staleTime: 0,
+    staleTime: (query) => msUntilExpiry(query.state.data),
+    refetchInterval: (query) => (query.state.data ? Math.max(msUntilExpiry(query.state.data), MIN_QUOTE_REFRESH_MS) : false),
+    refetchOnWindowFocus: false,
     gcTime: ONE_MINUTE,
     placeholderData: keepPreviousData,
   });
 }
 
-function storeCart(queryClient: QueryClient, owner: string, cart: Cart): Promise<void> {
+function storeCart(queryClient: QueryClient, owner: string, cart: Cart): void {
   queryClient.setQueryData(cartQuery(owner).queryKey, cart);
-  return queryClient.invalidateQueries({ queryKey: keys.priv(owner).quotes });
 }
 
-export function useAddCartItemMutation(owner: string): UseMutationResult<Cart, Error, AddCartItemInput> {
+export type AddToCartInput = AddCartItemInput & { owner: string };
+
+export function useAddCartItemMutation(): UseMutationResult<Cart, Error, AddToCartInput> {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: addCartItem,
-    onSuccess: (cart) => storeCart(queryClient, owner, cart),
+    mutationFn: ({ nftId, editionId, quantity }: AddToCartInput) => addCartItem({ nftId, editionId, quantity }),
+    onSuccess: (cart, { owner }) => storeCart(queryClient, owner, cart),
   });
 }
 
@@ -97,7 +105,7 @@ export function useUpdateQuantityMutation(
     },
     onSuccess: (cart) => {
       if (queryClient.isMutating({ mutationKey }) > 1) return;
-      return storeCart(queryClient, owner, cart);
+      storeCart(queryClient, owner, cart);
     },
     onSettled: async () => {
       if (queryClient.isMutating({ mutationKey }) > 1) return;
@@ -112,7 +120,7 @@ export function useRemoveCartItemMutation(owner: string): UseMutationResult<Cart
     mutationFn: removeCartItem,
     onSuccess: (cart) => {
       announce("Item removido do carrinho.");
-      return storeCart(queryClient, owner, cart);
+      storeCart(queryClient, owner, cart);
     },
     onError: () => announce("Não foi possível remover o item.", "assertive"),
   });
