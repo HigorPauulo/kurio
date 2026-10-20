@@ -387,7 +387,7 @@ mantido durante a implementação.
 | Pagamento (mobile) | Formulário do colecionador empilhado acima dos cards de carteira | O protótipo mobile não desenha o formulário, e os campos são exigidos |
 | Pagamento | Duas etapas na mesma rota (`step`): dados e revisão; subtotal, taxa e total ficam na revisão, cotados na rede escolhida | PAG-2 pede revisão antes do envio e novo aceite quando o valor muda; o protótipo mostra uma tela só |
 | Pagamento | "Carteira e rede" mostra os três provedores, só o da carteira escolhida com "Conectar"; os outros dizem qual é o escolhido | Conexão simulada por carteira cadastrada (API) |
-| Confirmação | Recibo é a página `/orders/$orderId`, não um modal; "Ver no Etherscan" vira "Ver no {explorador} (simulado)" | A URL do pedido sobrevive a refresh e reconexão (PED-1); o hash é simulado |
+| Confirmação | Recibo é a página `/orders/$orderId` em tela cheia (sem cabeçalho, rodapé e barra de abas), com o cartão do protótipo e um X que volta ao início, em vez de um modal sobre o pagamento; "Ver no Etherscan" vira "Ver no {explorador} (simulado)" | A URL do pedido sobrevive a refresh e reconexão (PED-1); o hash é simulado |
 | Início | Filtro de disponibilidade sem controle na coluna; continua aceito pela URL (`status`) | O protótipo não desenha o controle |
 | Início | Rede lista Ethereum, Polygon e Base, não Solana | Redes do escopo ([DECISIONS](DECISIONS.md)) |
 | Início | Filtro escolhido marcado também com ícone de seleção | Estado nunca só por cor (QUALITY §5) |

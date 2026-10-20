@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { Clock, XCircle } from "lucide-react";
+import { Clock, X, XCircle } from "lucide-react";
 import type { JSX } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import type { Chain } from "@/contracts/common";
@@ -20,32 +20,52 @@ const EXPLORER_LABELS: Record<Chain, string> = {
 
 const DATE_FORMAT = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 
+function formatReceiptDate(value: string): string {
+  const parts = DATE_FORMAT.formatToParts(new Date(value));
+  const part = (type: Intl.DateTimeFormatPartTypes): string => parts.find((item) => item.type === type)?.value ?? "";
+  const month = part("month").replace(".", "");
+  return `${part("day")} ${month.charAt(0).toUpperCase()}${month.slice(1)}, ${part("year")}`;
+}
+
 function shortHash(hash: string): string {
   return `${hash.slice(0, 6)}…${hash.slice(-4)}`;
 }
 
-const CARD = "mx-auto flex w-full max-w-145 flex-col border-b-10 border-primary bg-surface-card";
+const CARD = "relative mx-auto flex w-full max-w-145 flex-col border-b-10 border-primary bg-surface-card";
+const SCREEN = "flex min-h-dvh w-full items-center justify-center px-4 py-10";
+
+function CloseButton(): JSX.Element {
+  return (
+    <Link
+      to="/"
+      aria-label="Fechar e voltar ao início"
+      className="absolute top-4 right-4 flex size-9 items-center justify-center rounded-full text-text-accent hover:bg-surface-raised"
+    >
+      <X aria-hidden="true" className="size-5" />
+    </Link>
+  );
+}
 
 function Receipt({ order }: { order: Order }): JSX.Element {
   const { receipt, transaction } = order;
   return (
     <>
-      <dl className="grid grid-cols-2 gap-4 border-y border-primary px-6 py-4 text-text-secondary sm:grid-cols-4 sm:gap-0 sm:px-9">
-        <div className="sm:border-r sm:border-primary sm:pr-3">
+      <dl className="grid grid-cols-2 gap-4 border-y border-primary px-6 py-4 whitespace-nowrap text-text-secondary sm:flex sm:justify-between sm:gap-0 sm:px-8">
+        <div className="sm:border-r sm:border-primary sm:pr-4">
           <dt className="text-sm font-bold">ID da transação</dt>
           <dd title={transaction?.hash} className="text-body">
             {transaction ? shortHash(transaction.hash) : "-"}
           </dd>
         </div>
-        <div className="sm:border-r sm:border-primary sm:px-3">
+        <div className="sm:border-r sm:border-primary sm:px-4">
           <dt className="text-sm">Data</dt>
-          <dd className="text-body">{DATE_FORMAT.format(new Date(order.updatedAt))}</dd>
+          <dd className="text-body">{formatReceiptDate(order.updatedAt)}</dd>
         </div>
-        <div className="sm:border-r sm:border-primary sm:px-3">
+        <div className="sm:border-r sm:border-primary sm:px-4">
           <dt className="text-sm">Total</dt>
           <dd className="text-body">{formatEth(receipt.total)} ETH</dd>
         </div>
-        <div className="sm:pl-3">
+        <div className="sm:pl-4">
           <dt className="text-sm font-bold">Carteira</dt>
           <dd className="text-body">{PROVIDER_LABELS[receipt.wallet.provider]}</dd>
         </div>
@@ -54,7 +74,7 @@ function Receipt({ order }: { order: Order }): JSX.Element {
         <h2 id="receipt-title" className="text-body font-bold">
           Detalhes da transação
         </h2>
-        <div aria-hidden="true" className="flex justify-between border-b-[0.3px] border-primary pb-3 font-bold">
+        <div aria-hidden="true" className="flex justify-between border-b border-border-strong pb-3 font-bold">
           <span>NFTs</span>
           <span className="hidden gap-12 sm:flex">
             <span>Edições</span>
@@ -64,20 +84,23 @@ function Receipt({ order }: { order: Order }): JSX.Element {
         <ul aria-label="NFTs comprados" className="flex flex-col gap-3">
           {receipt.lines.map((line) => (
             <li key={line.itemId} className="flex items-center gap-3">
-              <img src={line.cover.url} alt={line.cover.alt} width={70} height={70} className="size-17.5 shrink-0 rounded-lg object-cover" />
+              <img src={line.cover.url} alt={line.cover.alt} width={70} height={70} className="size-14 shrink-0 rounded-lg object-cover sm:size-17.5" />
               <span className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <span className="truncate font-bold">{line.nftName}</span>
-                <span className="text-sm text-secondary-base">
-                  <span className="whitespace-nowrap">ID do token: {line.tokenId}</span>
-                  <span className="sm:hidden"> · (x {line.quantity})</span>
+                <span className="truncate text-sm text-secondary-base">ID do token: {line.tokenId}</span>
+                <span className="flex items-baseline gap-3 whitespace-nowrap sm:hidden">
+                  <span className="text-xs text-text-secondary">(x {line.quantity})</span>
+                  <span className="text-base font-bold text-text-accent">{formatEth(line.lineTotal)} ETH</span>
                 </span>
               </span>
-              <span className="hidden text-sm text-text-secondary sm:inline">(x {line.quantity})</span>
-              <span className="text-right text-lg font-bold whitespace-nowrap text-text-accent sm:w-28">{formatEth(line.lineTotal)} ETH</span>
+              <span className="hidden text-sm whitespace-nowrap text-text-secondary sm:inline">(x {line.quantity})</span>
+              <span className="hidden text-right text-lg font-bold whitespace-nowrap text-text-accent sm:inline sm:w-28">
+                {formatEth(line.lineTotal)} ETH
+              </span>
             </li>
           ))}
         </ul>
-        <dl className="ml-auto grid w-full max-w-80 grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-3 border-b-[0.3px] border-primary pb-3">
+        <dl className="ml-auto grid w-full max-w-80 grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-3 border-b border-border-strong pb-3">
           {receipt.coupon && (
             <>
               <dt className="text-body">Desconto ({receipt.coupon.code})</dt>
@@ -126,7 +149,7 @@ export function OrderPage({ userId, orderId }: { userId: string; orderId: string
 
   if (!order.data) {
     return (
-      <main aria-busy="true" className="w-full px-4 pt-10">
+      <main aria-busy="true" className={SCREEN}>
         <p className="sr-only">Carregando o pedido...</p>
         <div className={cn(CARD, "skeleton h-96")} />
       </main>
@@ -135,8 +158,9 @@ export function OrderPage({ userId, orderId }: { userId: string; orderId: string
   const { status, receipt, refusal } = order.data;
 
   return (
-    <main className="w-full px-4 pt-10">
+    <main className={SCREEN}>
       <div className={CARD}>
+        <CloseButton />
         {status === "pending" && (
           <>
             <StatusHeader icon={<Clock aria-hidden="true" className="size-16 text-primary motion-safe:animate-pulse" />} title="Pedido em processamento" />

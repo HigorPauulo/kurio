@@ -51,11 +51,15 @@ test("do carrinho ao recibo: campos do layout, revisão, pedido confirmado e rec
   const [order] = await serverOrders(page);
   expect(order.status).toBe("confirmed");
   expect(await serverCart(page, "usr_ana")).toMatchObject({ items: [] });
-  await expect(page.getByRole("link", { name: "Carrinho vazio" })).toBeVisible();
+  await expect(page.getByRole("banner")).toHaveCount(0);
 
   await page.evaluate(() => (window as unknown as PriceWindow).__kurio.catalog.setPrice("nft_004", "ed_004_1", "3"));
   await page.reload();
   await expect(page.getByText("0,8724 ETH").first()).toBeVisible();
+
+  await page.getByRole("link", { name: "Fechar e voltar ao início" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("link", { name: "Carrinho vazio" })).toBeVisible();
 });
 
 test("Carla sem Nome ENS nem carteira fica bloqueada com o erro no campo", async ({ page }) => {
@@ -79,6 +83,7 @@ test("Bruno na URL de um pedido da Ana vê a mesma tela de pedido inexistente", 
   await expect(page).toHaveURL(/\/orders\/ord_/);
   const orderUrl = new URL(page.url()).pathname;
 
+  await page.getByRole("link", { name: "Fechar e voltar ao início" }).click();
   await logout(page);
   await login(page, "bruno@kurio.test");
   await page.goto(orderUrl);

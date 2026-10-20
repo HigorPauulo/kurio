@@ -1,11 +1,12 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router";
+import { createRootRouteWithContext, Link, Outlet, useLocation } from "@tanstack/react-router";
 import { buttonVariants } from "@/components/ui/button";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { LiveRegion } from "@/components/layout/LiveRegion";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { ExpiredSessionDialog } from "@/features/auth/components/ExpiredSessionDialog";
+import { cn } from "@/lib/utils";
 
 export type RouterContext = {
   queryClient: QueryClient;
@@ -17,14 +18,17 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 });
 
 function RootLayout() {
+  const location = useLocation();
+  const isFullScreen = location.pathname.startsWith("/orders/");
+
   return (
-    <div className="flex min-h-dvh flex-col pb-20 md:pb-0">
-      <Header />
+    <div className={cn("flex min-h-dvh flex-col", !isFullScreen && "pb-20 md:pb-0")}>
+      {!isFullScreen && <Header />}
       <div className="flex flex-1 flex-col">
         <Outlet />
       </div>
-      <Footer />
-      <MobileTabBar />
+      {!isFullScreen && <Footer />}
+      {!isFullScreen && <MobileTabBar />}
       <ExpiredSessionDialog />
       <LiveRegion />
     </div>
