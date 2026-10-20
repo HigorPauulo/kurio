@@ -9,7 +9,7 @@ export function NftCard({ nft }: { nft: NftSummary }): JSX.Element {
 
   return (
     <article className="group relative flex flex-col gap-3 rounded-md focus-within:ring-3 focus-within:ring-ring/60">
-      <div className="relative bg-surface-card px-1 pt-6 pb-7">
+      <div className="relative">
         <img
           src={nft.cover.url}
           alt={nft.cover.alt}
@@ -20,7 +20,7 @@ export function NftCard({ nft }: { nft: NftSummary }): JSX.Element {
           className="aspect-square w-full rounded-2xl bg-surface-raised object-cover transition-transform group-hover:scale-[1.02]"
         />
         {isSoldOut && (
-          <p className="absolute top-0 left-0 flex items-center gap-1 bg-primary px-2 py-1 text-xs font-bold text-primary-foreground uppercase">
+          <p className="absolute top-2 left-2 flex items-center gap-1 rounded-sm bg-primary px-2 py-1 text-xs font-bold text-primary-foreground uppercase">
             <CircleOff aria-hidden="true" className="size-3.5" />
             Esgotado
           </p>
@@ -32,10 +32,7 @@ export function NftCard({ nft }: { nft: NftSummary }): JSX.Element {
             {nft.name}
           </Link>
         </h3>
-        <p className="flex flex-wrap items-baseline gap-x-2 gap-y-1 text-xs text-secondary-base">
-          A partir de{" "}
-          <strong className="text-lg leading-4 font-bold whitespace-nowrap text-text-accent">{formatEth(nft.priceFrom)} ETH</strong>
-        </p>
+        <p className="text-lg leading-4 font-bold whitespace-nowrap text-text-accent">{formatEth(nft.priceFrom)} ETH</p>
       </div>
     </article>
   );
@@ -44,9 +41,7 @@ export function NftCard({ nft }: { nft: NftSummary }): JSX.Element {
 export function NftCardSkeleton(): JSX.Element {
   return (
     <div aria-hidden="true" className="flex flex-col gap-3">
-      <div className="bg-surface-card px-1 pt-6 pb-7">
-        <div className="skeleton aspect-square w-full rounded-2xl" />
-      </div>
+      <div className="skeleton aspect-square w-full rounded-2xl" />
       <div className="skeleton h-4 w-3/4 rounded-sm" />
       <div className="skeleton h-4 w-1/2 rounded-sm" />
     </div>
