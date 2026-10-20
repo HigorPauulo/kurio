@@ -1,6 +1,7 @@
 import type { QueryClient } from "@tanstack/react-query";
 import { createRootRouteWithContext, Link, Outlet } from "@tanstack/react-router";
 import { Header } from "@/components/layout/Header";
+import { LiveRegion } from "@/components/layout/LiveRegion";
 import { ExpiredSessionDialog } from "@/features/auth/components/ExpiredSessionDialog";
 
 export type RouterContext = {
@@ -18,6 +19,7 @@ function RootLayout() {
       <Header />
       <Outlet />
       <ExpiredSessionDialog />
+      <LiveRegion />
     </>
   );
 }
