@@ -15,12 +15,48 @@ export async function login(page: Page, email: string, redirect?: string): Promi
   await dialog.getByLabel("E-mail").fill(email);
   await dialog.getByLabel("Senha").fill(PASSWORD);
   await dialog.getByRole("button", { name: "Entrar" }).click();
-  await expect(page.getByRole("button", { name: "Sair" })).toBeVisible();
+  await expectLoggedIn(page);
+}
+
+export function isCompactViewport(page: Page): boolean {
+  return (page.viewportSize()?.width ?? 0) < 768;
+}
+
+export async function expectLoggedIn(page: Page): Promise<void> {
+  await expect(page.getByRole("dialog", { name: "Entrar" })).toHaveCount(0);
+  if (isCompactViewport(page)) {
+    await expect.poll(() => page.evaluate(() => localStorage.getItem("kurio:session"))).not.toBeNull();
+  } else {
+    await expect(page.getByRole("button", { name: "Sair" })).toBeVisible();
+  }
+}
+
+export async function openAccount(page: Page): Promise<void> {
+  if (isCompactViewport(page)) {
+    await page.getByRole("navigation", { name: "Atalhos" }).getByRole("link", { name: "Minha conta" }).click();
+  } else {
+    await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Perfil" }).click();
+  }
+}
+
+export async function openLogin(page: Page): Promise<void> {
+  if (isCompactViewport(page)) {
+    await page.getByRole("navigation", { name: "Atalhos" }).getByRole("link", { name: "Minha conta" }).click();
+  } else {
+    await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Entrar" }).click();
+  }
+  await expect(page.getByRole("dialog", { name: "Entrar" })).toBeVisible();
 }
 
 export async function logout(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "Sair" }).click();
-  await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible();
+  if (isCompactViewport(page)) {
+    await openAccount(page);
+    await page.getByRole("navigation", { name: "Conta" }).getByRole("button", { name: "Sair" }).click();
+    await expect.poll(() => page.evaluate(() => localStorage.getItem("kurio:session"))).toBeNull();
+  } else {
+    await page.getByRole("button", { name: "Sair" }).click();
+    await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible();
+  }
 }
 
 export async function expectNoA11yViolations(page: Page): Promise<void> {

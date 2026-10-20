@@ -45,7 +45,7 @@ export function Header(): JSX.Element {
   }
 
   return (
-    <header className="mx-auto w-full max-w-300 border-b border-primary/37 px-4">
+    <header className="mx-auto hidden w-full max-w-300 border-b border-primary/37 px-4 md:block">
       <nav aria-label="Principal" className="flex flex-wrap items-center gap-x-4 pt-4 lg:flex-nowrap lg:items-start lg:justify-between lg:pt-6">
         <Link to="/" activeOptions={EXACT} className="flex h-10 w-40 items-center text-sm font-bold tracking-brand lg:h-auto lg:pt-2">
           KURIO

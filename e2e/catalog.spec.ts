@@ -204,11 +204,12 @@ test("abas filtram em alta e novos lançamentos, e filtrar não volta ao topo da
   await startFresh(page);
   await expect(results(page)).toHaveCount(12);
 
-  await page.evaluate(() => window.scrollTo(0, 400));
+  const trending = page.getByRole("link", { name: "Em alta" });
+  await trending.evaluate((tab) => window.scrollBy(0, tab.getBoundingClientRect().top - 80));
   const scrollBefore = await page.evaluate(() => window.scrollY);
   expect(scrollBefore).toBeGreaterThan(0);
 
-  await page.getByRole("link", { name: "Em alta" }).click();
+  await trending.click();
   await expect(page).toHaveURL(/view=trending/);
   await expect(results(page)).toHaveCount(6);
   expect(await lastListQuery(page)).toMatchObject({ view: "trending" });

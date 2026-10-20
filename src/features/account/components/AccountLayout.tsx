@@ -1,6 +1,8 @@
-import { Link } from "@tanstack/react-router";
-import { Download, Heart, LifeBuoy, MapPin, ShoppingCart, Sparkles, UserRound } from "lucide-react";
+import { Link, useNavigate } from "@tanstack/react-router";
+import { Download, Heart, LifeBuoy, LogOut, MapPin, ShoppingCart, Sparkles, UserRound } from "lucide-react";
 import type { JSX, ReactNode } from "react";
+import { cn } from "@/lib/utils";
+import { useLogoutMutation } from "../../auth/queries";
 
 const ITEM =
   "flex h-11 items-center gap-3 border-l-4 border-transparent px-4 text-base text-text-accent hover:bg-surface-raised aria-[current=page]:border-primary";
@@ -12,6 +14,23 @@ const UNAVAILABLE_ITEMS = [
   { label: "Arquivos baixados", from: "arquivos", icon: Download },
   { label: "Suporte", from: "suporte", icon: LifeBuoy },
 ];
+
+function LogoutItem(): JSX.Element {
+  const logout = useLogoutMutation();
+  const navigate = useNavigate();
+
+  async function handleLogout(): Promise<void> {
+    await logout.mutateAsync();
+    await navigate({ to: "/" });
+  }
+
+  return (
+    <button type="button" className={cn(ITEM, "w-full")} onClick={() => void handleLogout()}>
+      <LogOut aria-hidden="true" className="size-4.5" />
+      Sair
+    </button>
+  );
+}
 
 export function AccountLayout({ title, children }: { title: string; children: ReactNode }): JSX.Element {
   return (
@@ -39,6 +58,9 @@ export function AccountLayout({ title, children }: { title: string; children: Re
               </Link>
             </li>
           ))}
+          <li className="shrink-0 md:hidden">
+            <LogoutItem />
+          </li>
         </ul>
       </nav>
       <div className="flex min-w-0 flex-col gap-10">

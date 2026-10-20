@@ -117,8 +117,8 @@ test("subscriptions são liberadas ao sair das telas com NFT", async ({ page }) 
   await startFresh(page, "fast", "/nft/nft_001");
   await waitForSubscriptions(page, 1);
 
-  await page.getByRole("link", { name: "Criadores" }).click();
-  await expect(page.getByRole("heading", { level: 1, name: /Criadores em cunhagem/ })).toBeVisible();
+  await page.getByRole("contentinfo").getByRole("link", { name: "Lista de interesse" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: /Lista de interesse em cunhagem/ })).toBeVisible();
   await expect.poll(async () => (await stats(page)).subscriptions).toBe(0);
   expect((await stats(page)).sockets).toBe(1);
 });

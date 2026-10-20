@@ -82,7 +82,7 @@ MSW de pé mas o armazenamento indisponível ou cheio, o `MockDb` roda só em me
 não existe mais depois de um deploy (aba aberta antes da publicação) dispara `vite:preloadError`, e a
 página recarrega com a versão nova, no máximo uma vez a cada 10 s, para uma falha repetida não virar
 loop de recarga. `index.html` traz, dentro de `#root`, o casco estático do cabeçalho com as mesmas
-classes e a mesma altura do cabeçalho real (105 px abaixo de 1024, 73 px acima), e faz preload da arte
+classes e a mesma altura do cabeçalho real (oculto abaixo de 768, 105 px até 1024, 73 px acima), e faz preload da arte
 do hero, para que CLS e LCP não dependam do bootstrap. Um `<style>` inline mínimo pinta o fundo e
 esconde o casco (`visibility`, que mantém a altura) até o `index.css` carregar e revelá-lo; sem isso, no
 dev, onde o CSS chega por JavaScript, o casco aparecia sem estilo por um instante.
@@ -408,7 +408,7 @@ mantido durante a implementação.
 | Todas | Tema escuro único, sem alternância claro e escuro | O protótipo só desenha o tema escuro |
 | Todas | Borda dos campos em `secondary-base` (#B39463) em vez de `border-soft` (#55321F); busca e newsletter ganham borda; foco com contorno sólido de 2 px | #55321F dá 1,7:1 com o fundo; limite de campo e foco pedem 3:1 (WCAG 1.4.11) |
 | Carrinho | Resumo abaixo dos itens até 1280 px, lado a lado a partir dele | Entre 1024 e 1280 as colunas fixas da tabela espremeriam o nome do NFT |
-| Todas (mobile) | Cabeçalho compacto mantido acima da busca, com a navegação principal em linha rolável; a barra de abas leva a início, lista de interesse (fora de escopo), carrinho e conta, sem o botão central | Criadores, Aprenda, Perfil, Carteiras e Sair precisam existir em 390; o botão central do protótipo não tem função no escopo |
+| Todas (mobile) | Sem cabeçalho abaixo de 768, como no protótipo; a barra de abas leva a início, lista de interesse (fora de escopo), carrinho e conta (que abre o login sem sessão), sem o botão central; "Sair" fica no menu da conta | Entrar, Perfil, Carteiras e Sair continuam alcançáveis em 390; Criadores e Aprenda são seções fora de escopo; o botão central do protótipo não tem função no escopo |
 | Todas | Rodapé com links para `/unavailable`, coleções levando ao filtro da categoria e "Enviar" da newsletter levando a `/unavailable` | Páginas editoriais e newsletter estão fora de escopo; nada aparenta sucesso funcional |
 | Início | Seções "Lançamentos" e "Diário da Cunhagem" com links para `/unavailable` | Conteúdo editorial fora de escopo |
 | Início | Hero é um carrossel de 3 slides que gira a cada 6 s e troca ao arrastar (mouse ou toque, 50 px), com botão de pausar ao lado dos pontos centralizados; para ao passar o mouse, ao focar e com movimento reduzido; o título visível de cada slide é `h2`, e o `h1` da rota fica só para leitor de tela | WCAG 2.2.2 exige pausar movimento automático acima de 5 s; um `h1` estável por rota (QUALITY §5) |
@@ -419,7 +419,7 @@ mantido durante a implementação.
 | Detalhe | Galeria com setas, contador, arrastar e setas do teclado; miniaturas sempre visíveis (inclusive com uma imagem), na altura da imagem principal, arrastáveis e com degradê na borda quando há mais; a lupa abre o mesmo carrossel ampliado | O protótipo mostra miniaturas e lupa sem definir a navegação; com até 6 imagens a coluna precisa rolar sem barra nativa |
 | Detalhe (mobile) | Barra de compra fixa vira bloco no fluxo da página | A barra de abas ocupa a base da tela |
 | Login e cadastro | Rótulos dos campos só para leitor de tela, com o texto do protótipo no placeholder; o botão de olho da senha se chama "Mostrar o texto digitado" | O protótipo não desenha rótulo visível; o nome do botão não repete "senha" para não competir com o rótulo do campo |
-| Perfil | "Alterar senha" com botão próprio; "Sair" fica só no cabeçalho, fora do menu lateral | Perfil e senha são formulários e endpoints separados; uma ação de saída por tela |
+| Perfil | "Alterar senha" com botão próprio; "Sair" fica no cabeçalho a partir de 768 e no menu da conta abaixo disso | Perfil e senha são formulários e endpoints separados; uma ação de saída por tela |
 | Carteiras | "Igual à carteira principal" ausente | O contrato exige endereço próprio na secundária |
 
 ## 16. Limitações
