@@ -21,6 +21,14 @@ export type CatalogSearch = {
 
 export type CatalogFilters = Omit<CatalogSearch, "q" | "sort" | "page">;
 
+export const CLEARED_FILTERS: { [Key in keyof Required<CatalogFilters>]: undefined } = {
+  category: undefined,
+  chain: undefined,
+  status: undefined,
+  priceMin: undefined,
+  priceMax: undefined,
+};
+
 function commaParam<Options extends z.ZodEnum>(options: Options): z.ZodType<string | undefined, unknown> {
   return z
     .string()

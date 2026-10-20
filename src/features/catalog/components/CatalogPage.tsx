@@ -10,7 +10,7 @@ import { useDelayedFlag } from "@/lib/useDelayedFlag";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { SORT_LABELS } from "../labels";
 import { catalogListQuery, featuredNftsQuery } from "../queries";
-import { CATALOG_PAGE_SIZE, hasActiveFilters, type CatalogFilters, type CatalogSearch, type CatalogSort } from "../search";
+import { CATALOG_PAGE_SIZE, CLEARED_FILTERS, hasActiveFilters, type CatalogFilters, type CatalogSearch, type CatalogSort } from "../search";
 import { CatalogFiltersPanel } from "./CatalogFilters";
 import { NftCard, NftCardSkeleton } from "./NftCard";
 
@@ -28,16 +28,23 @@ const COMPACT_QUERY = "(max-width: 767px)";
 function SearchBox({ value, onSearchChange }: { value: string | undefined; onSearchChange: SearchChange }): JSX.Element {
   const [draft, setDraft] = useState(value ?? "");
   const [syncedValue, setSyncedValue] = useState(value);
+  const [sentValue, setSentValue] = useState(value);
 
   if (value !== syncedValue) {
     setSyncedValue(value);
-    if (draft.trim() !== (value ?? "")) setDraft(value ?? "");
+    if (value !== sentValue) {
+      setSentValue(value);
+      setDraft(value ?? "");
+    }
   }
 
   useEffect(() => {
     const next = draft.trim() || undefined;
     if (next === value) return;
-    const timer = setTimeout(() => onSearchChange({ q: next }, { replace: true }), SEARCH_DEBOUNCE_MS);
+    const timer = setTimeout(() => {
+      setSentValue(next);
+      onSearchChange({ q: next }, { replace: true });
+    }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
   }, [draft, value, onSearchChange]);
 
@@ -125,6 +132,20 @@ function Pagination({ page, totalPages }: { page: number; totalPages: number }):
 
 function FeaturedNfts(): JSX.Element | null {
   const featured = useQuery(featuredNftsQuery());
+
+  if (featured.isError && !featured.data) {
+    return (
+      <section aria-labelledby="featured-title" className="flex flex-col items-start gap-2">
+        <h2 id="featured-title" className="text-xl font-semibold">
+          Em destaque
+        </h2>
+        <p role="alert">Não foi possível carregar os destaques.</p>
+        <Button variant="outline" onClick={() => void featured.refetch()}>
+          Tentar de novo
+        </Button>
+      </section>
+    );
+  }
   if (!featured.data?.length) return null;
 
   return (
@@ -178,9 +199,7 @@ function CatalogResults({ search, onSearchChange }: CatalogPageProps): JSX.Eleme
         {hasActiveFilters(search) ? (
           <Button
             variant="outline"
-            onClick={() =>
-              onSearchChange({ q: undefined, category: undefined, chain: undefined, status: undefined, priceMin: undefined, priceMax: undefined })
-            }
+            onClick={() => onSearchChange({ ...CLEARED_FILTERS, q: undefined })}
           >
             Limpar filtros
           </Button>

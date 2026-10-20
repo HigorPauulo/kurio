@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { categorySchema, chainSchema, type Category, type Chain } from "@/contracts/common";
 import { compareEth, formatEthInput, parseEthInput } from "@/lib/eth";
+import { toggleItem } from "@/lib/list";
 import { CATEGORY_LABELS, CHAIN_LABELS } from "../labels";
-import { joinParam, splitParam, type CatalogFilters, type CatalogStatus } from "../search";
+import { CLEARED_FILTERS, joinParam, splitParam, type CatalogFilters, type CatalogStatus } from "../search";
 
 type FilterFormProps = {
   filters: CatalogFilters;
@@ -18,13 +19,6 @@ const STATUS_OPTIONS: { value: CatalogStatus | ""; label: string }[] = [
   { value: "available", label: "Disponíveis" },
   { value: "sold_out", label: "Esgotados" },
 ];
-
-const EMPTY_FILTERS: CatalogFilters = {};
-
-function toggle<Item>(values: readonly Item[], value: Item, isChecked: boolean): Item[] {
-  const others = values.filter((item) => item !== value);
-  return isChecked ? [...others, value] : others;
-}
 
 function FilterForm({ filters, onApply }: FilterFormProps): JSX.Element {
   const [categories, setCategories] = useState(splitParam<Category>(filters.category));
@@ -68,7 +62,7 @@ function FilterForm({ filters, onApply }: FilterFormProps): JSX.Element {
             <input
               type="checkbox"
               checked={categories.includes(category)}
-              onChange={(event) => setCategories(toggle(categories, category, event.target.checked))}
+              onChange={(event) => setCategories(toggleItem(categories, category, event.target.checked))}
             />
             {CATEGORY_LABELS[category]}
           </label>
@@ -102,7 +96,7 @@ function FilterForm({ filters, onApply }: FilterFormProps): JSX.Element {
             <input
               type="checkbox"
               checked={chains.includes(chain)}
-              onChange={(event) => setChains(toggle(chains, chain, event.target.checked))}
+              onChange={(event) => setChains(toggleItem(chains, chain, event.target.checked))}
             />
             {CHAIN_LABELS[chain]}
           </label>
@@ -126,7 +120,7 @@ function FilterForm({ filters, onApply }: FilterFormProps): JSX.Element {
 
       <div className="flex flex-wrap gap-2">
         <Button type="submit">Aplicar filtros</Button>
-        <Button type="button" variant="outline" onClick={() => onApply(EMPTY_FILTERS)}>
+        <Button type="button" variant="outline" onClick={() => onApply(CLEARED_FILTERS)}>
           Limpar filtros
         </Button>
       </div>
