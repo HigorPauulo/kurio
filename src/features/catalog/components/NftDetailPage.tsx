@@ -320,7 +320,7 @@ function EditionPicker({ nft, selected, onChange }: { nft: Nft; selected: Editio
           return (
             <label
               key={edition.id}
-              className="group/edition relative inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border border-input px-3 text-caption text-text-secondary hover:border-primary has-checked:border-primary has-checked:bg-surface-raised has-checked:font-bold has-checked:text-text-accent has-disabled:cursor-not-allowed has-disabled:line-through has-disabled:opacity-60 has-focus-visible:ring-2 has-focus-visible:ring-ring"
+              className="group/edition relative inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border border-input px-2.5 text-caption text-text-secondary hover:border-primary has-checked:border-primary has-checked:bg-surface-raised has-checked:font-bold has-checked:text-text-accent has-disabled:cursor-not-allowed has-disabled:line-through has-disabled:opacity-60 has-focus-visible:ring-2 has-focus-visible:ring-ring"
             >
               <input
                 type="radio"
@@ -328,12 +328,13 @@ function EditionPicker({ nft, selected, onChange }: { nft: Nft; selected: Editio
                 value={edition.id}
                 checked={edition.id === selected.id}
                 disabled={isBlocked}
+                aria-label={`${edition.label} · ${formatEth(edition.price)} ETH`}
                 aria-describedby={isBlocked ? `${edition.id}-reason` : undefined}
                 onChange={() => onChange(edition.id)}
                 className="absolute inset-0 size-full cursor-pointer appearance-none rounded-full opacity-0 disabled:cursor-not-allowed"
               />
               <Check aria-hidden="true" className="hidden size-3.5 group-has-checked/edition:block" />
-              {edition.label} · {formatEth(edition.price)} ETH
+              {edition.label}
             </label>
           );
         })}
@@ -355,9 +356,11 @@ function EditionPicker({ nft, selected, onChange }: { nft: Nft; selected: Editio
   );
 }
 
-type QuantityFieldProps = { nftId: string; edition: Edition; renderPurchase: PurchaseAction };
+type QuantityFieldProps = { nftId: string; edition: Edition; renderPurchase: PurchaseAction; favorite: ReactNode };
 
-function QuantityField({ nftId, edition, renderPurchase }: QuantityFieldProps): JSX.Element {
+const QUANTITY_BUTTON = "h-12 w-8 rounded-full border border-ink shadow-md [&_svg:not([class*='size-'])]:size-5";
+
+function QuantityField({ nftId, edition, renderPurchase, favorite }: QuantityFieldProps): JSX.Element {
   const inputId = useId();
   const hintId = `${inputId}-hint`;
   const limit = purchaseLimit(edition);
@@ -365,9 +368,12 @@ function QuantityField({ nftId, edition, renderPurchase }: QuantityFieldProps): 
 
   if (edition.status !== "available" || limit < 1) {
     return (
-      <p role="alert" className="text-sm font-medium text-destructive">
-        {getBlockReason(edition)}
-      </p>
+      <div className="flex flex-col items-start gap-4">
+        <p role="alert" className="text-sm font-medium text-destructive">
+          {getBlockReason(edition)}
+        </p>
+        {favorite}
+      </div>
     );
   }
 
@@ -379,38 +385,36 @@ function QuantityField({ nftId, edition, renderPurchase }: QuantityFieldProps): 
   const quantity = clamp(Number.parseInt(draft, 10));
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <label htmlFor={inputId} className="text-sm font-bold">
-          Quantidade
-        </label>
-        <div className="flex items-center gap-2">
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <label htmlFor={inputId} className="sr-only">
+            Quantidade
+          </label>
           <Button
             type="button"
-            size="icon-sm"
-            className="rounded-full"
+            className={QUANTITY_BUTTON}
             aria-label="Diminuir quantidade"
-          disabled={quantity <= 1}
+            disabled={quantity <= 1}
             onClick={() => setDraft(String(clamp(quantity - 1)))}
           >
             <Minus aria-hidden="true" />
           </Button>
           <input
-          id={inputId}
-          type="number"
-          inputMode="numeric"
-          min={1}
-          max={limit}
-          value={draft}
-          aria-describedby={hintId}
-          onChange={(event) => setDraft(event.target.value)}
+            id={inputId}
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={limit}
+            value={draft}
+            aria-describedby={hintId}
+            onChange={(event) => setDraft(event.target.value)}
             onBlur={() => setDraft(String(quantity))}
-            className="h-8 w-12 appearance-none rounded-md bg-transparent text-center text-lg [-moz-appearance:textfield] focus-visible:outline-2 focus-visible:outline-ring [&::-webkit-inner-spin-button]:appearance-none"
+            className="h-8 w-8 appearance-none rounded-md bg-transparent text-center text-xl [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
           />
           <Button
             type="button"
-            size="icon-sm"
-            className="rounded-full"
+            className={QUANTITY_BUTTON}
             aria-label="Aumentar quantidade"
             disabled={quantity >= limit}
             onClick={() => setDraft(String(clamp(quantity + 1)))}
@@ -418,11 +422,14 @@ function QuantityField({ nftId, edition, renderPurchase }: QuantityFieldProps): 
             <Plus aria-hidden="true" />
           </Button>
         </div>
-        <p id={hintId} className="text-xs text-secondary-base">
-          Até {limit} {limit === 1 ? "unidade" : "unidades"} por pedido nesta edição.
-        </p>
+        <div className="flex flex-wrap items-start gap-2">
+          {renderPurchase({ nftId, editionId: edition.id, quantity })}
+          {favorite}
+        </div>
       </div>
-      {renderPurchase({ nftId, editionId: edition.id, quantity })}
+      <p id={hintId} className="text-xs text-secondary-base">
+        Até {limit} {limit === 1 ? "unidade" : "unidades"} por pedido nesta edição.
+      </p>
     </div>
   );
 }
@@ -447,6 +454,7 @@ function FavoriteButton({ nftId, userId }: { nftId: string; userId: string }): J
     <Button
       type="button"
       variant="outline"
+      className="h-10 min-w-32.5 text-sm font-medium"
       aria-pressed={isFavorite}
       disabled={!favorites.data}
       onClick={() => toggle.mutate({ nftId, isFavorite: !isFavorite })}
@@ -465,10 +473,51 @@ function FavoriteAction({ nftId }: { nftId: string }): JSX.Element {
     return <FavoriteButton nftId={nftId} userId={session.session.user.id} />;
   }
   return (
-    <Link to="/login" search={{ redirect: location.href }} className={buttonVariants({ variant: "outline" })}>
+    <Link
+      to="/login"
+      search={{ redirect: location.href }}
+      className={cn(buttonVariants({ variant: "outline" }), "h-10 min-w-32.5 text-sm font-medium")}
+    >
       <Heart aria-hidden="true" />
-      Entrar para favoritar
+      Favoritar
+      <span className="sr-only"> (entre na sua conta)</span>
     </Link>
+  );
+}
+
+function ShareLinks({ name }: { name: string }): JSX.Element {
+  const location = useLocation();
+  const url = `${window.location.origin}${location.pathname}`;
+  const encodedUrl = encodeURIComponent(url);
+  const links = [
+    { label: "LinkedIn", icon: "/images/icons/share-linkedin.svg", href: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}` },
+    {
+      label: "e-mail",
+      icon: "/images/icons/share-email.svg",
+      href: `mailto:?subject=${encodeURIComponent(name)}&body=${encodedUrl}`,
+    },
+    { label: "X", icon: "/images/icons/share-x.svg", href: `https://x.com/intent/post?url=${encodedUrl}&text=${encodeURIComponent(name)}` },
+  ];
+
+  return (
+    <div className="flex items-center gap-3 text-sm font-bold">
+      <span>Compartilhar este NFT:</span>
+      <ul className="flex items-center gap-1">
+        {links.map((link) => (
+          <li key={link.label}>
+            <a
+              href={link.href}
+              target="_blank"
+              rel="noreferrer"
+              aria-label={`Compartilhar por ${link.label}`}
+              className="flex size-6 items-center justify-center rounded-sm hover:opacity-80"
+            >
+              <img src={link.icon} alt="" width={16} height={16} className="h-3.5 w-auto" />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -536,16 +585,20 @@ export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchas
               <p className="text-sm leading-[1.375rem] text-text-secondary">{nft.description}</p>
             </section>
             <EditionPicker nft={nft} selected={edition} onChange={onEditionChange} />
-            <QuantityField key={edition.id} nftId={nft.id} edition={edition} renderPurchase={renderPurchase} />
-            <div>
-              <FavoriteAction nftId={nft.id} />
-            </div>
-            <dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-2 text-sm text-secondary-base">
+            <QuantityField
+              key={edition.id}
+              nftId={nft.id}
+              edition={edition}
+              renderPurchase={renderPurchase}
+              favorite={<FavoriteAction nftId={nft.id} />}
+            />
+            <dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-3 text-sm leading-5 text-secondary-base">
               <dt>Coleção:</dt>
               <dd>{nft.collection.name}</dd>
               <dt>Criador:</dt>
               <dd>{nft.creator.name}</dd>
             </dl>
+            <ShareLinks name={nft.name} />
           </div>
         </div>
       </div>
