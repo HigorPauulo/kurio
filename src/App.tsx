@@ -4,11 +4,11 @@ import type { JSX } from "react";
 import { queryClient } from "@/lib/query/queryClient";
 import { router } from "@/router";
 import { configureHttp } from "@/lib/http/client";
-import { sessionStore } from "@/lib/session/instance";
+import { guestCart, sessionStore } from "@/lib/session/instance";
 
 configureHttp({
   getToken: () => sessionStore.getToken(),
-  getGuestCartId: () => null,
+  getGuestCartId: () => guestCart.peek(),
   onSessionExpired: () => sessionStore.expire(),
 });
 

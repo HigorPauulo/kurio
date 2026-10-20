@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import type { JSX } from "react";
 import { Button } from "@/components/ui/button";
 import { useLogoutMutation } from "@/features/auth/queries";
+import { CartLink } from "@/features/cart/components/CartLink";
 import { useSession } from "@/lib/session/instance";
 
 export function Header(): JSX.Element {
@@ -32,14 +33,22 @@ export function Header(): JSX.Element {
           <>
             <Link to="/account/profile">Perfil</Link>
             <Link to="/account/wallets">Carteiras</Link>
-            <Button variant="outline" className="ml-auto" onClick={() => void handleLogout()}>
+            <span className="ml-auto">
+              <CartLink />
+            </span>
+            <Button variant="outline" onClick={() => void handleLogout()}>
               Sair
             </Button>
           </>
         ) : (
-          <Link to="/login" search={{ redirect: location.href }} className="ml-auto">
-            Entrar
-          </Link>
+          <>
+            <span className="ml-auto">
+              <CartLink />
+            </span>
+            <Link to="/login" search={{ redirect: location.href }}>
+              Entrar
+            </Link>
+          </>
         )}
       </nav>
     </header>

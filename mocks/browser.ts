@@ -4,6 +4,7 @@ import { toSocketIo } from "@mswjs/socket.io-binding";
 import { isConnectPacket, readConnectToken } from "./handshake";
 import { createControl } from "./control";
 import { authHandlers } from "./handlers/auth";
+import { cartHandlers } from "./handlers/cart";
 import { favoriteHandlers } from "./handlers/favorites";
 import { meHandlers } from "./handlers/me";
 import { nftHandlers } from "./handlers/nfts";
@@ -117,6 +118,7 @@ export function start(): Promise<unknown> {
     ...authHandlers(deps),
     ...nftHandlers(deps),
     ...favoriteHandlers(deps),
+    ...cartHandlers(deps),
     ...meHandlers(deps),
     ...walletHandlers(deps),
     ...handlers,
