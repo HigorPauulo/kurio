@@ -9,6 +9,7 @@ type TextFieldProps = ComponentProps<"input"> & {
   hint?: ReactNode;
   suffix?: string;
   editIn?: { to: "/account/profile" | "/account/wallets"; label: string };
+  isLabelHidden?: boolean;
 };
 
 export function TextField({
@@ -19,6 +20,7 @@ export function TextField({
   editIn,
   readOnly,
   required,
+  isLabelHidden,
   ...inputProps
 }: TextFieldProps): JSX.Element {
   const id = useId();
@@ -28,7 +30,7 @@ export function TextField({
 
   return (
     <div className="flex min-w-0 flex-col gap-2">
-      <Label htmlFor={id}>
+      <Label htmlFor={id} className={isLabelHidden ? "sr-only" : undefined}>
         {label}
         {required && (
           <span aria-hidden="true" className="text-lg leading-none text-destructive">

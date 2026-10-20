@@ -4,18 +4,11 @@ import type { JSX } from "react";
 import { useForm } from "react-hook-form";
 import { FormError, TextField } from "@/components/form/TextField";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { loginBodySchema, type LoginBody } from "@/contracts/user";
 import { applyApiError } from "@/lib/forms";
-import { getDismissTarget } from "@/lib/session/guards";
 import { safeRedirect } from "@/lib/url/safeRedirect";
 import { useLoginMutation } from "../queries";
+import { AuthDialog } from "./AuthDialog";
 
 export function LoginDialog({ redirect }: { redirect?: string }): JSX.Element {
   const navigate = useNavigate();
@@ -37,42 +30,34 @@ export function LoginDialog({ redirect }: { redirect?: string }): JSX.Element {
   }
 
   return (
-    <Dialog open onOpenChange={(open) => !open && void navigate({ href: getDismissTarget(redirect) })}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Entrar</DialogTitle>
-          <DialogDescription>Acesse sua conta de colecionador.</DialogDescription>
-        </DialogHeader>
-        <form noValidate className="flex flex-col gap-4" onSubmit={(event) => void form.handleSubmit(handleSubmit)(event)}>
-          <TextField
-            label="E-mail"
-            type="email"
-            autoComplete="email"
-            error={errors.email?.message}
-            {...form.register("email")}
-          />
-          <TextField
-            label="Senha"
-            type="password"
-            autoComplete="current-password"
-            error={errors.password?.message}
-            {...form.register("password")}
-          />
-          <FormError message={errors.root?.server?.message} />
-          <Button type="submit" disabled={isSubmitting} aria-busy={isSubmitting}>
-            Entrar
-          </Button>
-        </form>
-        <p className="text-sm">
-          Ainda não tem conta?{" "}
-          <Link to="/register" search={{ redirect }} className="underline underline-offset-4">
-            Criar conta
-          </Link>
-        </p>
-        <Link to="/unavailable" search={{ from: "login-social" }} className="text-sm underline underline-offset-4">
-          Ou continue com
+    <AuthDialog mode="login" redirect={redirect} description="Entre para gerenciar sua carteira, coleção e perfil de criador.">
+      <form noValidate className="flex flex-col gap-4" onSubmit={(event) => void form.handleSubmit(handleSubmit)(event)}>
+        <TextField
+          label="E-mail"
+          isLabelHidden
+          placeholder="contato@email.com"
+          type="email"
+          autoComplete="email"
+          error={errors.email?.message}
+          {...form.register("email")}
+        />
+        <TextField
+          label="Senha"
+          isLabelHidden
+          placeholder="Senha"
+          type="password"
+          autoComplete="current-password"
+          error={errors.password?.message}
+          {...form.register("password")}
+        />
+        <Link to="/unavailable" search={{ from: "esqueci-senha" }} className="self-end text-caption text-text-accent hover:underline">
+          Esqueceu a senha?
         </Link>
-      </DialogContent>
-    </Dialog>
+        <FormError message={errors.root?.server?.message} />
+        <Button type="submit" size="lg" disabled={isSubmitting} aria-busy={isSubmitting} className="mt-2 w-full max-sm:h-15">
+          Entrar
+        </Button>
+      </form>
+    </AuthDialog>
   );
 }
