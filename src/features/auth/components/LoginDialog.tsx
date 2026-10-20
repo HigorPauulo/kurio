@@ -12,6 +12,14 @@ import { AuthDialog } from "./AuthDialog";
 type LoginDialogProps = { open: boolean; onClose: () => void; onDone: () => Promise<void> };
 
 export function LoginDialog({ open, onClose, onDone }: LoginDialogProps): JSX.Element {
+  return (
+    <AuthDialog mode="login" open={open} onClose={onClose} description="Entre para gerenciar sua carteira, coleção e perfil de criador.">
+      <LoginForm onDone={onDone} />
+    </AuthDialog>
+  );
+}
+
+function LoginForm({ onDone }: { onDone: () => Promise<void> }): JSX.Element {
   const login = useLoginMutation();
   const form = useForm<LoginBody>({
     resolver: zodResolver(loginBodySchema),
@@ -29,34 +37,32 @@ export function LoginDialog({ open, onClose, onDone }: LoginDialogProps): JSX.El
   }
 
   return (
-    <AuthDialog mode="login" open={open} onClose={onClose} description="Entre para gerenciar sua carteira, coleção e perfil de criador.">
-      <form noValidate className="flex flex-col gap-4" onSubmit={(event) => void form.handleSubmit(handleSubmit)(event)}>
-        <TextField
-          label="E-mail"
-          isLabelHidden
-          placeholder="contato@email.com"
-          type="email"
-          autoComplete="email"
-          error={errors.email?.message}
-          {...form.register("email")}
-        />
-        <TextField
-          label="Senha"
-          isLabelHidden
-          placeholder="Senha"
-          type="password"
-          autoComplete="current-password"
-          error={errors.password?.message}
-          {...form.register("password")}
-        />
-        <Link to="/unavailable" search={{ from: "esqueci-senha" }} className="self-end text-caption text-text-accent hover:underline">
-          Esqueceu a senha?
-        </Link>
-        <FormError message={errors.root?.server?.message} />
-        <Button type="submit" size="lg" disabled={isSubmitting} aria-busy={isSubmitting} className="mt-2 w-full max-sm:h-15">
-          Entrar
-        </Button>
-      </form>
-    </AuthDialog>
+    <form noValidate className="flex flex-col gap-4" onSubmit={(event) => void form.handleSubmit(handleSubmit)(event)}>
+      <TextField
+        label="E-mail"
+        isLabelHidden
+        placeholder="contato@email.com"
+        type="email"
+        autoComplete="email"
+        error={errors.email?.message}
+        {...form.register("email")}
+      />
+      <TextField
+        label="Senha"
+        isLabelHidden
+        placeholder="Senha"
+        type="password"
+        autoComplete="current-password"
+        error={errors.password?.message}
+        {...form.register("password")}
+      />
+      <Link to="/unavailable" search={{ from: "esqueci-senha" }} className="self-end text-caption text-text-accent hover:underline">
+        Esqueceu a senha?
+      </Link>
+      <FormError message={errors.root?.server?.message} />
+      <Button type="submit" size="lg" disabled={isSubmitting} aria-busy={isSubmitting} className="mt-2 w-full max-sm:h-15">
+        Entrar
+      </Button>
+    </form>
   );
 }
