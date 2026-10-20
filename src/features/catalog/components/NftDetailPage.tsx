@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "@tanstack/react-router";
-import { Check, ChevronLeft, ChevronRight, CircleOff, Heart, Minus, Plus } from "lucide-react";
+import { ArrowLeft, Check, ChevronLeft, ChevronRight, CircleOff, Heart, Minus, Plus, Star } from "lucide-react";
 import {
   useEffect,
   useId,
@@ -89,11 +89,11 @@ function Gallery({ nft }: { nft: Nft }): JSX.Element {
         role="group"
         aria-roledescription="galeria"
         aria-label={`Imagens de ${nft.name}`}
-        className="relative min-w-0 bg-surface-card p-4 md:order-2 lg:p-5"
+        className="relative min-w-0 md:order-2 md:bg-surface-card md:p-4 lg:p-5"
         onKeyDown={handleKeyDown}
       >
         <div
-          className={cn("h-full overflow-hidden rounded-3xl", hasMany && "touch-pan-y select-none", swipe.offset !== null && "cursor-grabbing")}
+          className={cn("h-full overflow-hidden rounded-3xl max-md:shadow-lg", hasMany && "touch-pan-y select-none", swipe.offset !== null && "cursor-grabbing")}
           {...(hasMany ? swipe.handlers : {})}
         >
           <img
@@ -115,13 +115,13 @@ function Gallery({ nft }: { nft: Nft }): JSX.Element {
         <ZoomButton nft={nft} index={index} onIndexChange={setIndex} />
         {hasMany && (
           <>
-            <button type="button" aria-label="Imagem anterior" onClick={() => go(-1)} className={cn(GALLERY_ARROW, "left-6 lg:left-7")}>
+            <button type="button" aria-label="Imagem anterior" onClick={() => go(-1)} className={cn(GALLERY_ARROW, "left-2 md:left-6 lg:left-7")}>
               <ChevronLeft aria-hidden="true" className="size-5" />
             </button>
-            <button type="button" aria-label="Próxima imagem" onClick={() => go(1)} className={cn(GALLERY_ARROW, "right-6 lg:right-7")}>
+            <button type="button" aria-label="Próxima imagem" onClick={() => go(1)} className={cn(GALLERY_ARROW, "right-2 md:right-6 lg:right-7")}>
               <ChevronRight aria-hidden="true" className="size-5" />
             </button>
-            <p aria-live="polite" className="absolute bottom-7 left-1/2 z-10 -translate-x-1/2 rounded-full bg-ink/80 px-3 py-1 text-xs">
+            <p aria-live="polite" className="absolute bottom-3 left-1/2 md:bottom-7 z-10 -translate-x-1/2 rounded-full bg-ink/80 px-3 py-1 text-xs">
               {index + 1} / {count}
             </p>
           </>
@@ -223,7 +223,7 @@ function ZoomButton({ nft, index, onIndexChange }: ZoomButtonProps): JSX.Element
           <button
             type="button"
             aria-label="Ampliar a imagem"
-            className="absolute top-6 right-6 z-10 flex size-9 items-center justify-center rounded-full bg-ink text-foreground hover:text-text-accent lg:top-7 lg:right-7"
+            className="absolute top-3 right-3 z-10 flex size-9 items-center justify-center rounded-full bg-ink text-foreground hover:text-text-accent md:top-6 md:right-6 lg:top-7 lg:right-7"
           />
         }
       >
@@ -313,7 +313,8 @@ function EditionPicker({ nft, selected, onChange }: { nft: Nft; selected: Editio
 
 type QuantityFieldProps = { nftId: string; edition: Edition; renderPurchase: PurchaseAction; favorite: ReactNode };
 
-const QUANTITY_BUTTON = "h-12 w-8 rounded-full border border-ink shadow-md [&_svg:not([class*='size-'])]:size-5";
+const QUANTITY_BUTTON =
+  "h-7.5 w-5 rounded-full border border-ink p-0 shadow-md md:h-12 md:w-8 [&_svg:not([class*='size-'])]:size-3.5 md:[&_svg:not([class*='size-'])]:size-5";
 
 function QuantityField({ nftId, edition, renderPurchase, favorite }: QuantityFieldProps): JSX.Element {
   const inputId = useId();
@@ -327,7 +328,7 @@ function QuantityField({ nftId, edition, renderPurchase, favorite }: QuantityFie
         <p role="alert" className="text-sm font-medium text-destructive">
           {getBlockReason(edition)}
         </p>
-        {favorite}
+        <div className="hidden md:block">{favorite}</div>
       </div>
     );
   }
@@ -343,6 +344,9 @@ function QuantityField({ nftId, edition, renderPurchase, favorite }: QuantityFie
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-3">
+          <span aria-hidden="true" className="text-body font-medium text-text-secondary md:hidden">
+            Qtd.
+          </span>
           <label htmlFor={inputId} className="sr-only">
             Quantidade
           </label>
@@ -365,7 +369,7 @@ function QuantityField({ nftId, edition, renderPurchase, favorite }: QuantityFie
             aria-describedby={hintId}
             onChange={(event) => setDraft(event.target.value)}
             onBlur={() => setDraft(String(quantity))}
-            className="h-8 w-8 appearance-none rounded-md bg-transparent text-center text-xl [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+            className="h-8 w-8 appearance-none rounded-md bg-transparent text-center text-lg md:text-xl [-moz-appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
           />
           <Button
             type="button"
@@ -377,9 +381,10 @@ function QuantityField({ nftId, edition, renderPurchase, favorite }: QuantityFie
             <Plus aria-hidden="true" />
           </Button>
         </div>
-        <div className="flex flex-wrap items-start gap-2">
+        <p className="self-center text-xl font-bold text-text-accent md:hidden">{formatEth(edition.price)} ETH</p>
+        <div className="flex flex-wrap items-start gap-2 max-md:w-full">
           {renderPurchase({ nftId, editionId: edition.id, quantity })}
-          {favorite}
+          <div className="hidden md:block">{favorite}</div>
         </div>
       </div>
       <p id={hintId} className="text-xs text-secondary-base">
@@ -389,7 +394,12 @@ function QuantityField({ nftId, edition, renderPurchase, favorite }: QuantityFie
   );
 }
 
-function FavoriteButton({ nftId, userId }: { nftId: string; userId: string }): JSX.Element {
+const FAVORITE_ICON =
+  "size-9 rounded-full border border-border-strong bg-surface-raised p-0 text-text-accent hover:bg-surface-raised hover:text-foreground";
+
+type FavoriteProps = { nftId: string; isCompact?: boolean };
+
+function FavoriteButton({ nftId, userId, isCompact = false }: FavoriteProps & { userId: string }): JSX.Element {
   const favorites = useQuery(favoritesQuery(userId));
   const toggle = useToggleFavoriteMutation(userId);
   const isFavorite = favorites.data?.includes(nftId) ?? false;
@@ -402,6 +412,22 @@ function FavoriteButton({ nftId, userId }: { nftId: string; userId: string }): J
           Tentar de novo
         </Button>
       </div>
+    );
+  }
+
+  if (isCompact) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        className={FAVORITE_ICON}
+        aria-label="Favoritar"
+        aria-pressed={isFavorite}
+        disabled={!favorites.data}
+        onClick={() => toggle.mutate({ nftId, isFavorite: !isFavorite })}
+      >
+        <Heart aria-hidden="true" className={cn("size-4", isFavorite && "fill-current")} />
+      </Button>
     );
   }
 
@@ -420,11 +446,24 @@ function FavoriteButton({ nftId, userId }: { nftId: string; userId: string }): J
   );
 }
 
-function FavoriteAction({ nftId }: { nftId: string }): JSX.Element {
+function FavoriteAction({ nftId, isCompact = false }: FavoriteProps): JSX.Element {
   const session = useSession();
 
   if (session.status === "authenticated") {
-    return <FavoriteButton nftId={nftId} userId={session.session.user.id} />;
+    return <FavoriteButton nftId={nftId} userId={session.session.user.id} isCompact={isCompact} />;
+  }
+  if (isCompact) {
+    return (
+      <Link
+        to="."
+        search={(previous) => ({ ...previous, auth: "login" })}
+        resetScroll={false}
+        aria-label="Favoritar (entre na sua conta)"
+        className={cn(buttonVariants({ variant: "ghost" }), FAVORITE_ICON)}
+      >
+        <Heart aria-hidden="true" className="size-4" />
+      </Link>
+    );
   }
   return (
     <Link
@@ -437,6 +476,37 @@ function FavoriteAction({ nftId }: { nftId: string }): JSX.Element {
       Favoritar
       <span className="sr-only"> (entre na sua conta)</span>
     </Link>
+  );
+}
+
+function RatingPill({ average, count }: Nft["rating"]): JSX.Element {
+  return (
+    <p className="flex h-7 shrink-0 items-center gap-1 rounded-full border border-primary px-2 text-sm">
+      <Star aria-hidden="true" className="size-3.5 fill-current text-text-accent" />
+      <span className="sr-only">Nota </span>
+      <span className="font-medium">{formatRating(average)}</span>
+      <span className="sr-only"> de 5, </span>
+      <span className="text-text-secondary">
+        ({count}
+        <span className="sr-only"> {count === 1 ? "avaliação" : "avaliações"}</span>)
+      </span>
+    </p>
+  );
+}
+
+function MobileTopBar({ nftId }: { nftId: string }): JSX.Element {
+  return (
+    <div className="flex items-center justify-between md:hidden">
+      <Link
+        to="/"
+        hash="mercado"
+        aria-label="Voltar ao mercado"
+        className="flex size-9 items-center justify-center rounded-full border border-border-strong bg-surface-raised hover:text-text-accent"
+      >
+        <ArrowLeft aria-hidden="true" className="size-4" />
+      </Link>
+      <FavoriteAction nftId={nftId} isCompact />
+    </div>
   );
 }
 
@@ -524,7 +594,7 @@ export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchas
   return (
     <main className="mx-auto flex w-full max-w-300 flex-col gap-16 px-4 pt-6 lg:gap-24 lg:pt-8">
       <div className="flex flex-col gap-4">
-        <nav aria-label="Trilha" className="text-sm font-bold">
+        <nav aria-label="Trilha" className="hidden text-sm font-bold md:block">
           <ol className="flex flex-wrap gap-1">
             <li>
               <Link to="/" className="hover:text-text-accent">
@@ -543,30 +613,40 @@ export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchas
             </li>
           </ol>
         </nav>
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-[1fr_33rem] lg:gap-8">
-          <Gallery nft={nft} />
-          <div className="flex min-w-0 flex-col gap-5">
-            <div className="flex flex-col gap-3 border-b border-border-strong pb-4">
-              <h1 className="text-2xl font-bold lg:text-3xl">{nft.name}</h1>
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <div className="grid md:grid-cols-2 md:gap-8 lg:grid-cols-[1fr_33rem]">
+          <div className="flex flex-col gap-2 max-md:-mx-4 max-md:-mt-6 max-md:bg-linear-to-br max-md:from-surface-card max-md:to-surface-raised max-md:px-7 max-md:pt-6 max-md:pb-14 md:self-start">
+            <MobileTopBar nftId={nft.id} />
+            <Gallery nft={nft} />
+          </div>
+          <div className="flex min-w-0 flex-col gap-5 max-md:relative max-md:-mx-4 max-md:-mt-8 max-md:rounded-t-[1.9375rem] max-md:bg-surface-card max-md:px-6 max-md:pt-8 max-md:pb-6">
+            <div className="flex flex-col gap-3 md:border-b md:border-border-strong md:pb-4">
+              <div className="flex items-center justify-between gap-3">
+                <h1 className="text-xl font-bold md:text-2xl lg:text-3xl">{nft.name}</h1>
+                <div className="md:hidden">
+                  <RatingPill average={nft.rating.average} count={nft.rating.count} />
+                </div>
+              </div>
+              <div className="hidden flex-wrap items-baseline justify-between gap-2 md:flex">
                 <p className="text-title font-bold text-text-accent">{formatEth(edition.price)} ETH</p>
                 <Rating average={nft.rating.average} count={nft.rating.count} />
               </div>
             </div>
             <section aria-labelledby="about-title" className="flex flex-col gap-3">
-              <h2 id="about-title" className="text-sm font-bold">
+              <h2 id="about-title" className="text-sm font-bold max-md:sr-only">
                 Sobre este NFT:
               </h2>
               <p className="text-sm leading-[1.375rem] text-text-secondary">{nft.description}</p>
             </section>
             <EditionPicker nft={nft} selected={edition} onChange={onEditionChange} />
-            <QuantityField
-              key={edition.id}
-              nftId={nft.id}
-              edition={edition}
-              renderPurchase={renderPurchase}
-              favorite={<FavoriteAction nftId={nft.id} />}
-            />
+            <div className="max-md:order-last max-md:-mx-6 max-md:-mb-6 max-md:rounded-t-[2.5rem] max-md:bg-surface-card max-md:px-6 max-md:pt-5 max-md:pb-9 max-md:shadow-[0_0_10px_var(--color-ink)]">
+              <QuantityField
+                key={edition.id}
+                nftId={nft.id}
+                edition={edition}
+                renderPurchase={renderPurchase}
+                favorite={<FavoriteAction nftId={nft.id} />}
+              />
+            </div>
             <dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-3 text-sm leading-5 text-secondary-base">
               <dt className="whitespace-nowrap">ID do token:</dt>
               <dd>{nft.tokenId}</dd>

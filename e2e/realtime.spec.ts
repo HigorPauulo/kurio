@@ -37,7 +37,7 @@ test("evento de preço atualiza detalhe e catálogo abertos", async ({ page }) =
 
   await setPrice(page, "nft_001", "ed_001_1", "2.5");
   await expect(page.getByLabel(/^Padrão · 2,5 ETH/)).toBeVisible();
-  await expect(page.getByText("2,5 ETH", { exact: true })).toBeVisible();
+  await expect(page.getByText("2,5 ETH", { exact: true }).filter({ visible: true })).toBeVisible();
 
   await page.goto("/");
   await expect(page.getByRole("list", { name: "Resultados" }).getByRole("link").first()).toHaveText("Ivory Atlas #512");

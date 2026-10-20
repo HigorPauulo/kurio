@@ -284,7 +284,7 @@ test("mais desta coleção mostra os outros NFTs da coleção e leva ao detalhe"
 
 test("aba de avaliações mostra o resumo igual à nota do NFT e carrega mais avaliações", async ({ page }) => {
   await startFresh(page, "fast", "/nft/nft_001");
-  await expect(page.getByText("19 avaliações de colecionadores")).toBeVisible();
+  await expect(page.getByText(/19 avaliações/).filter({ visible: true }).first()).toBeAttached();
   await expect(page.getByRole("tabpanel")).toContainText("Descrição:");
 
   await page.getByRole("tab", { name: "Avaliações de colecionadores (19)" }).click();
