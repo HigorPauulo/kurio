@@ -18,7 +18,7 @@ export function AuthOverlay(): JSX.Element {
   }
 
   async function handleDone(): Promise<void> {
-    if (redirect) await navigate({ href: safeRedirect(redirect) });
+    if (redirect) await navigate({ href: safeRedirect(redirect), replace: true });
     else await handleClose();
   }
 

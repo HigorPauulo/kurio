@@ -53,6 +53,24 @@ test("rota privada sem sessão leva ao login e volta ao destino", async ({ page 
   await expect(page.getByRole("heading", { name: "Perfil do colecionador" })).toBeVisible();
 });
 
+test("voltar depois de entrar não reabre o login e sair não deixa dados no formulário", async ({ page }) => {
+  await page.goto("/account/profile");
+  const dialog = page.getByRole("dialog", { name: "Entrar" });
+  await dialog.getByLabel("E-mail").fill("ana@kurio.test");
+  await dialog.getByLabel("Senha").fill(PASSWORD);
+  await dialog.getByRole("button", { name: "Entrar" }).click();
+  await expect(page.getByRole("heading", { name: "Perfil do colecionador" })).toBeVisible();
+
+  await page.goBack();
+  await expect(page.getByRole("button", { name: "Sair" })).toBeVisible();
+  await expect(dialog).toHaveCount(0);
+
+  await logout(page);
+  await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Entrar" }).click();
+  await expect(dialog.getByLabel("E-mail")).toHaveValue("");
+  await expect(dialog.getByLabel("Senha")).toHaveValue("");
+});
+
 test("entrar por uma página pública mantém a página por trás e fechar volta para ela", async ({ page }) => {
   await page.goto("/nft/nft_001");
   await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Entrar" }).click();

@@ -8,6 +8,7 @@ import { MobileTabBar } from "@/components/layout/MobileTabBar";
 import { z } from "zod";
 import { AuthOverlay } from "@/features/auth/components/AuthOverlay";
 import { ExpiredSessionDialog } from "@/features/auth/components/ExpiredSessionDialog";
+import { dropAuthDialogIfAuthenticated } from "@/lib/session/guards";
 import { cn } from "@/lib/utils";
 
 export type RouterContext = {
@@ -19,6 +20,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     auth: z.enum(["login", "register"]).optional().catch(undefined),
     redirect: z.string().optional().catch(undefined),
   }),
+  beforeLoad: ({ location, search }) => dropAuthDialogIfAuthenticated(location, search.auth),
   component: RootLayout,
   notFoundComponent: NotFound,
 });
