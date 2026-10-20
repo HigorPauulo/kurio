@@ -68,7 +68,7 @@ function SearchBox({ value, onSearchChange }: { value: string | undefined; onSea
           type="search"
           maxLength={80}
           placeholder="Explorar coleções, NFTs ou criadores"
-          className="h-11 scroll-mt-6 border-transparent bg-surface-card pl-10 text-body"
+          className="h-11 scroll-mt-6 bg-surface-card pl-10 text-body"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
         />

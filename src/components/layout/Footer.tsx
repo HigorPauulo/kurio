@@ -68,7 +68,7 @@ function Newsletter(): JSX.Element {
       <h2 id={`${inputId}-title`} className={COLUMN_TITLE}>
         Antecipe-se ao próximo lançamento
       </h2>
-      <div className="mt-1 flex h-10 overflow-hidden rounded-md bg-surface-dark">
+      <div className="mt-1 flex h-10 overflow-hidden rounded-md border border-input bg-surface-dark">
         <label htmlFor={inputId} className="sr-only">
           Endereço para receber lançamentos
         </label>
