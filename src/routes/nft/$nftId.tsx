@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound, useRouter, type ErrorComponentProps } from "@tanstack/react-router";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { AddToCartButton } from "@/features/cart/components/AddToCartButton";
 import { NftDetailPage } from "@/features/catalog/components/NftDetailPage";
 import { ensureNft } from "@/features/catalog/queries";
 
@@ -25,6 +26,7 @@ function NftRoute() {
       nftId={nftId}
       editionId={edition}
       onEditionChange={(next) => void navigate({ search: { edition: next }, replace: true })}
+      renderPurchase={(selection) => <AddToCartButton key={selection.editionId} {...selection} />}
     />
   );
 }
