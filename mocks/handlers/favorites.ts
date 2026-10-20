@@ -20,7 +20,7 @@ export function favoriteHandlers(deps: HandlerDeps): HttpHandler[] {
         const auth = authenticate(deps, request);
         if (auth.response) return auth.response;
         const nftId = String(params.nftId);
-        if (!db.read((tables) => tables.nfts[nftId])) {
+        if (deps.getScenario().flags.emptyCatalog || !db.read((tables) => tables.nfts[nftId])) {
           return apiError(request, 404, "NOT_FOUND", "NFT não encontrado.");
         }
 

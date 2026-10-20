@@ -319,6 +319,9 @@ describe("catálogo", () => {
 
     scenarioNames = ["fast", "empty-catalog"];
     expect((await list("")).body.total).toBe(0);
+    expect((await call("GET", "/nfts/nft_001")).status).toBe(404);
+    const token = await login("ana@kurio.test");
+    expect((await call("PUT", "/me/favorites/nft_001", { token })).status).toBe(404);
   });
 });
 
