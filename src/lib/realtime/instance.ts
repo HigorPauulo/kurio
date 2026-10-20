@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { queryClient } from "@/lib/query/queryClient";
 import { applyRealtimeEvent, reconcileAfterReconnect } from "./bridge";
 import { eventStore } from "./eventStore";
@@ -12,6 +12,8 @@ type RealtimeConfig = { onSessionExpired: () => void };
 
 let config: RealtimeConfig = { onSessionExpired: () => undefined };
 const nftCounts = new Map<string, number>();
+const statusListeners = new Set<() => void>();
+let isConnectedNow = false;
 const orderCounts = new Map<string, number>();
 
 export function configureRealtime(next: RealtimeConfig): void {
@@ -41,6 +43,11 @@ const manager = createSocketManager({
     if (nftIds.length > 0) void subscribeNfts(nftIds);
     for (const orderId of orderCounts.keys()) void manager.request("order.subscribe", { orderId });
     if (isReconnect) reconcileAfterReconnect(queryClient);
+  },
+  onStatusChange: (isConnected) => {
+    if (isConnected === isConnectedNow) return;
+    isConnectedNow = isConnected;
+    for (const listener of statusListeners) listener();
   },
   onSessionExpired: () => config.onSessionExpired(),
 });
@@ -77,8 +84,13 @@ export function useNftSubscription(nftIds: readonly string[]): void {
   useEffect(() => (signature ? retainNfts(signature.split(",")) : undefined), [signature]);
 }
 
-export function isRealtimeConnected(): boolean {
-  return manager.isConnected();
+function subscribeStatus(listener: () => void): () => void {
+  statusListeners.add(listener);
+  return () => statusListeners.delete(listener);
+}
+
+export function useRealtimeConnected(): boolean {
+  return useSyncExternalStore(subscribeStatus, () => isConnectedNow);
 }
 
 function retainOrder(orderId: string): () => void {

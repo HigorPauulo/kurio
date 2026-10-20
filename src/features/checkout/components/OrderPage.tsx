@@ -5,9 +5,9 @@ import type { JSX } from "react";
 import type { Chain } from "@/contracts/common";
 import type { Order } from "@/contracts/order";
 import { formatEth } from "@/lib/eth";
-import { useOrderSubscription } from "@/lib/realtime/instance";
+import { useOrderSubscription, useRealtimeConnected } from "@/lib/realtime/instance";
 import { CHAIN_LABELS } from "../../catalog/labels";
-import { orderQuery } from "../queries";
+import { ORDER_POLL_MS, orderQuery } from "../queries";
 import { PROVIDER_LABELS } from "../labels";
 
 const EXPLORER_LABELS: Record<Chain, string> = {
@@ -83,7 +83,11 @@ function Receipt({ order }: { order: Order }): JSX.Element {
 }
 
 export function OrderPage({ userId, orderId }: { userId: string; orderId: string }): JSX.Element {
-  const order = useQuery(orderQuery(userId, orderId));
+  const isConnected = useRealtimeConnected();
+  const order = useQuery({
+    ...orderQuery(userId, orderId),
+    refetchInterval: (query) => (query.state.data?.status === "pending" && !isConnected ? ORDER_POLL_MS : false),
+  });
   useOrderSubscription(order.data?.status === "pending" ? orderId : null);
 
   if (!order.data) return <main className="p-6">Carregando o pedido...</main>;
