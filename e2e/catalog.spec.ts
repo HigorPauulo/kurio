@@ -14,6 +14,13 @@ async function openFilters(page: Page): Promise<Locator> {
   return page.getByRole("form", { name: "Filtros" });
 }
 
+async function searchFor(page: Page, text: string): Promise<void> {
+  const toggle = page.getByRole("button", { name: "Abrir a busca" });
+  if (await toggle.isVisible()) await toggle.click();
+  await page.getByLabel("Buscar NFTs").fill(text);
+  await page.getByLabel("Buscar NFTs").press("Enter");
+}
+
 function results(page: Page): Locator {
   return page.getByRole("list", { name: "Resultados" }).getByRole("link");
 }
@@ -55,9 +62,11 @@ test("filtros, ordenação e página vivem na URL e sobrevivem a refresh, voltar
   await page.goForward();
   await expect(page.getByLabel("Ordenar por")).toHaveValue("price_asc");
 
-  await page.getByLabel("Buscar NFTs").fill("vinil");
+  await searchFor(page, "vinil");
   await expect(page).toHaveURL(/q=vinil/);
   await expect(results(page)).toHaveText(["Vinil Raro"]);
+  await page.getByRole("button", { name: "Limpar a busca por vinil" }).click();
+  await expect(page).not.toHaveURL(/q=/);
 });
 
 test("faixa de preço pelo controle deslizante vai à URL em ETH com ponto, e o mínimo não passa do máximo", async ({ page }) => {
@@ -189,4 +198,27 @@ test("carrossel do hero gira sozinho, pausa e troca de slide ao arrastar", async
   await page.mouse.up();
   await expect(current).toHaveAccessibleName("Mostrar o slide 3 de 3");
   await expect(page).not.toHaveURL(/#mercado/);
+});
+
+test("abas filtram em alta e novos lançamentos, e filtrar não volta ao topo da página", async ({ page }) => {
+  await startFresh(page);
+  await expect(results(page)).toHaveCount(12);
+
+  await page.evaluate(() => window.scrollTo(0, 400));
+  const scrollBefore = await page.evaluate(() => window.scrollY);
+  expect(scrollBefore).toBeGreaterThan(0);
+
+  await page.getByRole("link", { name: "Em alta" }).click();
+  await expect(page).toHaveURL(/view=trending/);
+  await expect(results(page)).toHaveCount(6);
+  expect(await lastListQuery(page)).toMatchObject({ view: "trending" });
+  expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
+
+  await page.getByRole("link", { name: "Novos lançamentos" }).click();
+  await expect(page).toHaveURL(/view=new/);
+  await expect(results(page)).toHaveCount(8);
+
+  await page.getByRole("link", { name: "Todos os NFTs" }).click();
+  await expect(page).not.toHaveURL(/view=/);
+  await expect(results(page)).toHaveCount(12);
 });

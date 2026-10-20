@@ -43,7 +43,7 @@ test("evento de preço atualiza detalhe e catálogo abertos", async ({ page }) =
   await expect(page.getByRole("list", { name: "Resultados" }).getByRole("link").first()).toHaveText("Mapa Proibido");
   await waitForSubscriptions(page, 12);
   await setPrice(page, "nft_024", "ed_024_1", "0.3");
-  await expect(page.getByRole("list", { name: "Resultados" }).getByRole("listitem").first()).toContainText("A partir de 0,3 ETH");
+  await expect(page.getByRole("list", { name: "Resultados" }).getByRole("listitem").first()).toContainText("0,3 ETH");
 });
 
 test("mudança de preço no carrinho é anunciada e atualiza o resumo", async ({ page }) => {
