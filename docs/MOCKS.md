@@ -70,7 +70,7 @@ com `VALIDATION_FAILED`; `QuotaExceededError` vai ao console como erro, nunca é
 `nft_001` não muda: é a página de detalhe auditada pelo Lighthouse. O `priceFrom` é calculado a partir
 das edições, nunca escrito à mão. As imagens são as quatro artes do protótipo em WebP de 640 px
 (`public/images/nfts/`), distribuídas em ciclo pela ordem das fixtures; a mudança de URL subiu o
-snapshot para `v2`, e o snapshot `v1` antigo é descartado no boot.
+snapshot para `v2`, e o boot apaga do `localStorage` o snapshot de versões anteriores.
 
 ## 5. Condições de rede
 

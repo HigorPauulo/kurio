@@ -386,6 +386,8 @@ mantido durante a implementação.
 | Carrinho | "Colecionadores também viram" ausente | Exigiria assinar em tempo real mais NFTs na tela do carrinho, sem requisito que peça a seção |
 | Carrinho | "Resumo da carteira" vira "Resumo do pedido" | O bloco mostra a cotação do pedido, não a carteira |
 | Todas | Tema escuro único, sem alternância claro e escuro | O protótipo só desenha o tema escuro |
+| Todas | Borda dos campos em `secondary-base` (#B39463) em vez de `border-soft` (#55321F); busca e newsletter ganham borda; foco com contorno sólido de 2 px | #55321F dá 1,7:1 com o fundo; limite de campo e foco pedem 3:1 (WCAG 1.4.11) |
+| Carrinho | Resumo abaixo dos itens até 1280 px, lado a lado a partir dele | Entre 1024 e 1280 as colunas fixas da tabela espremeriam o nome do NFT |
 | Todas (mobile) | Cabeçalho compacto mantido acima da busca, com a navegação principal em linha rolável; a barra de abas leva a início, lista de interesse (fora de escopo), carrinho e conta, sem o botão central | Criadores, Aprenda, Perfil, Carteiras e Sair precisam existir em 390; o botão central do protótipo não tem função no escopo |
 | Todas | Rodapé com links para `/unavailable`, coleções levando ao filtro da categoria e "Enviar" da newsletter levando a `/unavailable` | Páginas editoriais e newsletter estão fora de escopo; nada aparenta sucesso funcional |
 | Início | Seções "Lançamentos" e "Diário da Cunhagem" com links para `/unavailable`; indicador de carrossel do hero ausente | Conteúdo editorial fora de escopo; o hero não é um carrossel |
