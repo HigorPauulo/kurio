@@ -5,6 +5,7 @@ import { createSeed } from "../db/seed";
 import { createNetworkConditions } from "../network/conditions";
 import { buildScenario, type PresetName } from "../scenarios/presets";
 import { authHandlers } from "./auth";
+import { cartHandlers } from "./cart";
 import { favoriteHandlers } from "./favorites";
 import { meHandlers } from "./me";
 import { nftHandlers } from "./nfts";
@@ -32,6 +33,7 @@ const server = setupServer(
   ...authHandlers(deps),
   ...nftHandlers(deps),
   ...favoriteHandlers(deps),
+  ...cartHandlers(deps),
   ...meHandlers(deps),
   ...walletHandlers(deps),
 );
@@ -45,7 +47,7 @@ beforeEach(() => {
 });
 afterEach(() => server.resetHandlers());
 
-type CallOptions = { token?: string; body?: unknown; form?: FormData };
+type CallOptions = { token?: string; guest?: string; body?: unknown; form?: FormData };
 
 type ResponseBody = {
   [key: string]: unknown;
@@ -57,9 +59,10 @@ type ResponseBody = {
   connection: unknown;
 };
 
-async function call(method: string, path: string, { token, body, form }: CallOptions = {}) {
+async function call(method: string, path: string, { token, guest, body, form }: CallOptions = {}) {
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
+  if (guest) headers["X-Guest-Cart-Id"] = guest;
   if (body !== undefined) headers["Content-Type"] = "application/json";
   const response = await fetch(`http://localhost/api${path}`, {
     method,
@@ -346,5 +349,119 @@ describe("favoritos", () => {
     const token = await login("bruno@kurio.test");
     expect((await call("PUT", "/me/favorites/nft_999", { token })).status).toBe(404);
     expect((await call("GET", "/me/favorites", { token })).json).toEqual({ nftIds: [] });
+  });
+});
+
+const GUEST = "6f1d2c3b-4a5e-4f60-8a7b-9c0d1e2f3a4b";
+
+type CartBody = {
+  id: string;
+  version: number;
+  coupon: { code: string } | null;
+  items: { id: string; editionId: string; quantity: number; status: string; available: number }[];
+};
+
+type QuoteBody = {
+  subtotal: string;
+  discount: string;
+  networkFee: string;
+  total: string;
+  purchasable: boolean;
+  issues: { kind: string }[];
+  lines: { lineTotal: string }[];
+};
+
+describe("carrinho", () => {
+  it("exige identificador do visitante e cria o carrinho vazio no primeiro GET", async () => {
+    expect((await call("GET", "/cart")).status).toBe(400);
+    const { status, json } = await call("GET", "/cart", { guest: GUEST });
+    expect(status).toBe(200);
+    expect((json as unknown as CartBody).items).toEqual([]);
+  });
+
+  it("soma a mesma edição e recusa passar de min(available, maxPerOrder) com os detalhes", async () => {
+    await call("POST", "/cart/items", { guest: GUEST, body: { nftId: "nft_001", editionId: "ed_001_1", quantity: 2 } });
+    const added = await call("POST", "/cart/items", { guest: GUEST, body: { nftId: "nft_001", editionId: "ed_001_1", quantity: 1 } });
+    const cart = added.json as unknown as CartBody;
+    expect(cart.items).toHaveLength(1);
+    expect(cart.items[0].quantity).toBe(3);
+
+    const over = await call("POST", "/cart/items", { guest: GUEST, body: { nftId: "nft_001", editionId: "ed_001_1", quantity: 1 } });
+    expect(over.status).toBe(409);
+    expect(over.json.error).toMatchObject({ code: "AVAILABILITY_CONFLICT", details: { editionId: "ed_001_1", available: 8, maxPerOrder: 3 } });
+
+    const blocked = await call("POST", "/cart/items", { guest: GUEST, body: { nftId: "nft_004", editionId: "ed_004_2", quantity: 1 } });
+    expect(blocked.status).toBe(409);
+  });
+
+  it("altera e remove itens, com remoção idempotente e versão crescente", async () => {
+    const created = (await call("POST", "/cart/items", { guest: GUEST, body: { nftId: "nft_012", editionId: "ed_012_1", quantity: 1 } }))
+      .json as unknown as CartBody;
+    const itemId = created.items[0].id;
+
+    expect((await call("PATCH", `/cart/items/${itemId}`, { guest: GUEST, body: { quantity: 7 } })).status).toBe(409);
+    const patched = (await call("PATCH", `/cart/items/${itemId}`, { guest: GUEST, body: { quantity: 6 } })).json as unknown as CartBody;
+    expect(patched.items[0].quantity).toBe(6);
+    expect(patched.version).toBeGreaterThan(created.version);
+
+    expect(((await call("DELETE", `/cart/items/${itemId}`, { guest: GUEST })).json as unknown as CartBody).items).toEqual([]);
+    expect((await call("DELETE", `/cart/items/${itemId}`, { guest: GUEST })).status).toBe(200);
+  });
+
+  it("recusa cupom inválido, expirado e abaixo do mínimo com códigos distintos", async () => {
+    await call("POST", "/cart/items", { guest: GUEST, body: { nftId: "nft_014", editionId: "ed_014_1", quantity: 1 } });
+    const codes = [];
+    for (const code of ["NADA", "expirado", "FIXO005"]) {
+      const { status, json } = await call("PUT", "/cart/coupon", { guest: GUEST, body: { code } });
+      expect(status).toBe(422);
+      codes.push(json.error.code);
+    }
+    expect(codes).toEqual(["COUPON_INVALID", "COUPON_EXPIRED", "COUPON_MINIMUM_NOT_MET"]);
+  });
+
+  it("cota em wei exato: subtotal, desconto percentual com floor, taxa por item e total", async () => {
+    const token = await login("ana@kurio.test");
+    const plain = (await call("POST", "/quotes", { token, body: { network: "ethereum" } })).json as unknown as QuoteBody;
+    expect(plain).toMatchObject({ subtotal: "0.87", discount: "0", networkFee: "0.0024", total: "0.8724", purchasable: true });
+
+    await call("PUT", "/cart/coupon", { token, body: { code: "kurio10" } });
+    const discounted = (await call("POST", "/quotes", { token, body: { network: "polygon" } })).json as unknown as QuoteBody;
+    expect(discounted).toMatchObject({ discount: "0.087", networkFee: "0.00016", total: "0.78316" });
+  });
+
+  it("aponta preço alterado e esgotado na cotação e bloqueia a compra", async () => {
+    const token = await login("ana@kurio.test");
+    db.commit((draft) => {
+      draft.nfts.nft_004.editions[0].price = "0.8" as never;
+      draft.nfts.nft_012.editions[0].available = 0;
+    });
+    const quote = (await call("POST", "/quotes", { token, body: { network: "ethereum" } })).json as unknown as QuoteBody;
+    expect(quote.issues.map((issue) => issue.kind).sort()).toEqual(["PRICE_CHANGED", "SOLD_OUT"]);
+    expect(quote.purchasable).toBe(false);
+    const cart = (await call("GET", "/cart", { token })).json as unknown as CartBody;
+    expect(cart.items.map((item) => item.status)).toEqual(["price_changed", "sold_out"]);
+  });
+
+  it("recusa cotar carrinho vazio", async () => {
+    expect((await call("POST", "/quotes", { guest: GUEST, body: { network: "ethereum" } })).status).toBe(422);
+  });
+
+  it("une o carrinho do visitante no login: limita, ajusta, leva o cupom e apaga o do visitante", async () => {
+    await call("POST", "/cart/items", { guest: GUEST, body: { nftId: "nft_012", editionId: "ed_012_1", quantity: 6 } });
+    await call("POST", "/cart/items", { guest: GUEST, body: { nftId: "nft_001", editionId: "ed_001_1", quantity: 1 } });
+    await call("PUT", "/cart/coupon", { guest: GUEST, body: { code: "KURIO10" } });
+    const token = await login("ana@kurio.test");
+
+    const { json } = await call("POST", "/cart/merge", { token, body: { guestCartId: GUEST } });
+    const merged = json as unknown as { cart: CartBody; adjustments: unknown[] };
+    expect(merged.adjustments).toEqual([{ editionId: "ed_012_1", requested: 8, kept: 6 }]);
+    expect(merged.cart.items.map((item) => [item.editionId, item.quantity])).toEqual([
+      ["ed_004_1", 1],
+      ["ed_012_1", 6],
+      ["ed_001_1", 1],
+    ]);
+    expect(merged.cart.coupon).toEqual({ code: "KURIO10" });
+    expect(db.read((tables) => tables.carts[`guest:${GUEST}`])).toBeUndefined();
+    expect((await call("POST", "/cart/merge")).status).toBe(401);
   });
 });
