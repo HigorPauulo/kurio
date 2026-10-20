@@ -47,7 +47,7 @@ export function RegisterDialog({ redirect }: { redirect?: string }): JSX.Element
           label="Nome de usuário"
           isLabelHidden
           placeholder="Nome de usuário"
-          autoComplete="username"
+          autoComplete="off"
           error={errors.username?.message}
           {...form.register("username")}
         />

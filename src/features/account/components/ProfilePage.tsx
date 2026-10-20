@@ -80,7 +80,7 @@ function ProfileForm({ user, primaryWallet, avatar }: ProfileFormProps): JSX.Ele
       <h2 className="sr-only">Dados do perfil</h2>
       <div className="grid gap-x-7 gap-y-6 sm:grid-cols-2">
         <TextField label="Nome de exibição" autoComplete="name" required error={errors.name?.message} {...form.register("name")} />
-        <TextField label="Nome de usuário" autoComplete="username" required error={errors.username?.message} {...form.register("username")} />
+        <TextField label="Nome de usuário" autoComplete="off" required error={errors.username?.message} {...form.register("username")} />
         <TextField label="E-mail" type="email" autoComplete="email" required error={errors.email?.message} {...form.register("email")} />
         <TextField label="Nome ENS" suffix=".eth" error={errors.ensName?.message} {...form.register("ensName")} />
         <TextField
