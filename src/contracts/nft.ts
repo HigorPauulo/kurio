@@ -77,6 +77,7 @@ export const nftListQuerySchema = z
     chain: commaList(chainSchema),
     status: catalogStatusSchema.optional(),
     view: catalogViewSchema.optional(),
+    collection: z.string().trim().min(1).max(80).optional(),
     priceMin: ethAmountSchema.optional(),
     priceMax: ethAmountSchema.optional(),
     sort: catalogSortSchema.default("recent"),

@@ -365,10 +365,9 @@ describe("seed", () => {
     }
   });
 
-  it("gera IDs de coleção sem acento", () => {
+  it("agrupa as fixtures em quatro coleções com ID em slug", () => {
     const collectionIds = new Set(nfts.map((nft) => nft.collection.id));
-    expect(collectionIds).toContain("col_nomades");
-    expect(collectionIds).toContain("col_baroes");
+    expect(collectionIds).toEqual(new Set(["col_kurio-apes", "col_kurio-nomads", "col_kurio-barons", "col_kurio-golden"]));
     expect([...collectionIds].every((id) => /^col_[a-z0-9]+(-[a-z0-9]+)*$/.test(id))).toBe(true);
   });
 

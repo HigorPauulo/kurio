@@ -302,8 +302,15 @@ describe("catálogo", () => {
   it("busca sem acento e sem caixa em nome, coleção e criador", async () => {
     const byCreator = await list("?q=IRIS");
     expect(byCreator.body.items.map((item) => item.name)).toContain("Neon Vessel #552");
-    const byCollection = await list("?q=analogica");
-    expect(byCollection.body.items.map((item) => item.id).sort()).toEqual(["nft_011", "nft_020"]);
+    const byCollection = await list("?q=barons");
+    expect(byCollection.body.items.map((item) => item.id).sort()).toEqual([
+      "nft_003",
+      "nft_004",
+      "nft_011",
+      "nft_015",
+      "nft_019",
+      "nft_024",
+    ]);
   });
 
   it("combina filtros por AND, com OR dentro da lista, e ecoa a consulta normalizada", async () => {
@@ -319,6 +326,17 @@ describe("catálogo", () => {
     expect(prices[0]).toBe("0.0125");
     expect(prices.at(-1)).toBe("0.075");
     expect(prices).not.toContain("0.009");
+  });
+
+  it("filtra por coleção", async () => {
+    const { body } = await list("?collection=col_kurio-apes&pageSize=48");
+    expect(body.items.map((item) => item.name).sort()).toEqual([
+      "Emerald Ape #042",
+      "Emerald Cube #880",
+      "Emerald Drift #215",
+      "Emerald Pass #303",
+      "Emerald Relic #198",
+    ]);
   });
 
   it("filtra a vista em alta pelos destaques e a de novos pelos 7 dias antes do lançamento mais recente", async () => {

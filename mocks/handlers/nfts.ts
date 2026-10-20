@@ -40,6 +40,7 @@ function matchesQuery(summary: NftSummary, query: NftListQuery, context: ListCon
     const haystack = [summary.name, summary.collection.name, summary.creator.name].map(normalizeSearchText);
     if (!haystack.some((text) => text.includes(needle))) return false;
   }
+  if (query.collection && summary.collection.id !== query.collection) return false;
   if (query.category && !query.category.includes(summary.category)) return false;
   if (query.chain && !query.chain.includes(summary.chain)) return false;
   if (query.status && summary.status !== query.status) return false;
