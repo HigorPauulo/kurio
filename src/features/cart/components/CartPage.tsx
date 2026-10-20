@@ -346,7 +346,7 @@ export function CartPage({ owner }: { owner: string | null }): JSX.Element {
       </nav>
       <h1 className="text-2xl font-bold md:sr-only">Carrinho de NFTs</h1>
       {owner ? <CartContent owner={owner} /> : <EmptyCart />}
-      <div className="mt-16 lg:mt-24">
+      <div className="mt-6 lg:mt-10">
         <AlsoViewedRail owner={owner} />
       </div>
     </main>
