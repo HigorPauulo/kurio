@@ -84,8 +84,17 @@ export const nftListQuerySchema = z
     { message: "O preço mínimo não pode passar do máximo.", path: ["priceMax"] },
   );
 
+const countSchema = z.number().int().min(0);
+
+export const catalogFacetsSchema = z.object({
+  category: z.record(categorySchema, countSchema),
+  chain: z.record(chainSchema, countSchema),
+  price: z.object({ min: ethAmountSchema, max: ethAmountSchema }).nullable(),
+});
+
 export const nftListResponseSchema = pageSchema(nftSummarySchema).extend({
   appliedQuery: z.record(z.string(), z.unknown()),
+  facets: catalogFacetsSchema,
 });
 
 export const featuredNftsResponseSchema = z.array(nftSummarySchema).max(6);
@@ -100,6 +109,7 @@ export type NftSummary = z.infer<typeof nftSummarySchema>;
 export type NftListQuery = z.infer<typeof nftListQuerySchema>;
 export type NftListQueryInput = z.input<typeof nftListQuerySchema>;
 export type NftListResponse = z.infer<typeof nftListResponseSchema>;
+export type CatalogFacets = z.infer<typeof catalogFacetsSchema>;
 
 export function purchaseLimit(edition: Pick<Edition, "available" | "maxPerOrder" | "status">): number {
   if (edition.status !== "available") return 0;

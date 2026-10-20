@@ -1,5 +1,7 @@
 import { http, HttpResponse, type HttpHandler } from "msw";
+import { categorySchema, chainSchema } from "@/contracts/common";
 import {
+  type CatalogFacets,
   nftListQuerySchema,
   nftSchema,
   nftSummarySchema,
@@ -7,7 +9,7 @@ import {
   type NftListQuery,
   type NftSummary,
 } from "@/contracts/nft";
-import { compareEth } from "@/lib/eth";
+import { compareEth, maxEth, minEth } from "@/lib/eth";
 import { stripAccents } from "../text";
 import { API, apiError, withConditions, type HandlerDeps } from "./shared";
 
@@ -34,6 +36,25 @@ function matchesQuery(summary: NftSummary, query: NftListQuery): boolean {
   if (query.priceMin && compareEth(summary.priceFrom, query.priceMin) < 0) return false;
   if (query.priceMax && compareEth(summary.priceFrom, query.priceMax) > 0) return false;
   return true;
+}
+
+function countBy<Key extends string>(keys: readonly Key[], values: Key[]): Record<Key, number> {
+  const counts = Object.fromEntries(keys.map((key) => [key, 0])) as Record<Key, number>;
+  for (const value of values) counts[value] += 1;
+  return counts;
+}
+
+function buildFacets(summaries: NftSummary[], query: NftListQuery): CatalogFacets {
+  const byCategory = summaries.filter((summary) => matchesQuery(summary, { ...query, category: undefined }));
+  const byChain = summaries.filter((summary) => matchesQuery(summary, { ...query, chain: undefined }));
+  const byPrice = summaries.filter((summary) => matchesQuery(summary, { ...query, priceMin: undefined, priceMax: undefined }));
+  const prices = byPrice.map((summary) => summary.priceFrom);
+
+  return {
+    category: countBy(categorySchema.options, byCategory.map((summary) => summary.category)),
+    chain: countBy(chainSchema.options, byChain.map((summary) => summary.chain)),
+    price: prices.length ? { min: prices.reduce(minEth), max: prices.reduce(maxEth) } : null,
+  };
 }
 
 function compareBySort(sort: NftListQuery["sort"], createdAt: Map<string, string>) {
@@ -69,8 +90,8 @@ export function nftHandlers(deps: HandlerDeps): HttpHandler[] {
 
         const nfts = allNfts();
         const createdAt = new Map(nfts.map((nft) => [nft.id, nft.createdAt]));
-        const matching = nfts
-          .map(toNftSummary)
+        const summaries = nfts.map(toNftSummary);
+        const matching = summaries
           .filter((summary) => matchesQuery(summary, query))
           .sort(compareBySort(query.sort, createdAt));
         const start = (query.page - 1) * query.pageSize;
@@ -82,6 +103,7 @@ export function nftHandlers(deps: HandlerDeps): HttpHandler[] {
           total: matching.length,
           totalPages: Math.ceil(matching.length / query.pageSize),
           appliedQuery: query,
+          facets: buildFacets(summaries, query),
         });
       }),
     ),

@@ -274,6 +274,11 @@ type ListBody = {
   total: number;
   totalPages: number;
   appliedQuery: Record<string, unknown>;
+  facets: {
+    category: Record<string, number>;
+    chain: Record<string, number>;
+    price: { min: string; max: string } | null;
+  };
 };
 
 async function list(search: string): Promise<{ status: number; body: ListBody }> {
@@ -314,6 +319,21 @@ describe("catálogo", () => {
     expect(prices[0]).toBe("0.0125");
     expect(prices.at(-1)).toBe("0.075");
     expect(prices).not.toContain("0.009");
+  });
+
+  it("conta cada faceta sem o próprio filtro e dá a faixa de preço sem o filtro de preço", async () => {
+    const { body } = await list("?category=music&priceMax=1");
+    expect(body.total).toBe(1);
+    expect(body.facets.category).toMatchObject({ music: 1, "digital-art": 1, gaming: 3 });
+    expect(Object.keys(body.facets.category)).toHaveLength(9);
+
+    const music = await list("?category=music");
+    expect(music.body.facets.chain).toEqual({ ethereum: 1, polygon: 1, base: 1 });
+    expect(music.body.facets.price).toEqual({ min: "0.06", max: "12.5" });
+    expect((await list("?category=music&priceMax=1")).body.facets.price).toEqual({ min: "0.06", max: "12.5" });
+
+    scenarioNames = ["fast", "empty-catalog"];
+    expect((await list("")).body.facets.price).toBeNull();
   });
 
   it("responde 400 para parâmetro fora das listas ou preço mínimo acima do máximo", async () => {

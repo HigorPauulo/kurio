@@ -49,6 +49,22 @@ export function minEth(left: EthAmount, right: EthAmount): EthAmount {
   return compareEth(left, right) <= 0 ? left : right;
 }
 
+export function maxEth(left: EthAmount, right: EthAmount): EthAmount {
+  return compareEth(left, right) >= 0 ? left : right;
+}
+
+export function toEthSteps(amount: EthAmount, step: EthAmount, rounding: "floor" | "ceil"): number {
+  const stepWei = toWei(step);
+  const wei = toWei(amount);
+  const steps = wei / stepWei + (rounding === "ceil" && wei % stepWei !== 0n ? 1n : 0n);
+  return Number(steps);
+}
+
+export function fromEthSteps(steps: number, step: EthAmount): EthAmount {
+  if (!Number.isSafeInteger(steps) || steps < 0) throw new RangeError(`Passo inválido: ${steps}`);
+  return fromWei(BigInt(steps) * toWei(step));
+}
+
 export function formatEth(amount: EthAmount): string {
   const [integer, fraction] = fromWei(toWei(amount)).split(".");
   const grouped = integer.replace(THOUSANDS, ".");

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { EthAmount } from "@/contracts/common";
 import {
+  fromEthSteps,
+  toEthSteps,
   addEth,
   compareEth,
   formatEth,
@@ -96,5 +98,21 @@ describe("parseEthInput", () => {
     expect(parseEthInput("abc")).toBeNull();
     expect(parseEthInput("0,0000000000000000001")).toBeNull();
     expect(parseEthInput("")).toBeNull();
+  });
+});
+
+describe("toEthSteps e fromEthSteps", () => {
+  it("converte em passos exatos de wei, arredondando para baixo ou para cima", () => {
+    const step = eth("0.001");
+    expect(toEthSteps(eth("12.5"), step, "floor")).toBe(12_500);
+    expect(toEthSteps(eth("0.0125"), step, "floor")).toBe(12);
+    expect(toEthSteps(eth("0.0125"), step, "ceil")).toBe(13);
+    expect(fromEthSteps(13, step)).toBe("0.013");
+    expect(fromEthSteps(0, step)).toBe("0");
+  });
+
+  it("recusa passo negativo ou fracionário", () => {
+    expect(() => fromEthSteps(-1, eth("0.001"))).toThrow(RangeError);
+    expect(() => fromEthSteps(1.5, eth("0.001"))).toThrow(RangeError);
   });
 });
