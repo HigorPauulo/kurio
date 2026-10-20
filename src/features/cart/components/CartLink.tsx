@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import type { JSX } from "react";
+import type { ComponentType, JSX, SVGProps } from "react";
 import { CartIcon } from "@/components/icons/KurioIcons";
 import { useCartOwner } from "@/lib/session/instance";
 import { cartQuery } from "../queries";
 
-export function CartLink({ className }: { className?: string }): JSX.Element {
+type CartLinkProps = { className?: string; icon?: ComponentType<SVGProps<SVGSVGElement>> };
+
+export function CartLink({ className, icon: Icon = CartIcon }: CartLinkProps): JSX.Element {
   const owner = useCartOwner();
   const cart = useQuery({ ...cartQuery(owner ?? ""), enabled: owner !== null });
   const count = cart.data?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;
@@ -18,7 +20,7 @@ export function CartLink({ className }: { className?: string }): JSX.Element {
       aria-label={label}
       className={cn("relative inline-flex size-10 items-center justify-center rounded-md hover:text-text-accent", className)}
     >
-      <CartIcon className="size-6" />
+      <Icon className="size-6" />
       {count > 0 && (
         <span
           aria-hidden="true"
