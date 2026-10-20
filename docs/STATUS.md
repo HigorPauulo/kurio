@@ -16,7 +16,7 @@
 |---|---|
 | **Repositório** | github.com/HigorPauulo/kurio |
 | **`develop` / `main`** | Existem; `main` é a padrão e só recebe publicação |
-| **Deploy** | Produção pública em `kurio-beta.vercel.app`, com as fatias 1 a 6 (`b41063a`); preview por branch, protegido por login |
+| **Deploy** | Produção pública em `kurio-beta.vercel.app`, com as fatias 1 a 7 (`70a3074`); preview por branch, protegido por login |
 | **Protótipo** | Figma do desafio; campos já mapeados em [API](API.md#campos-do-layout) |
 
 ## O que fazer agora, nesta ordem
