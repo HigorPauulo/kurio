@@ -5,6 +5,7 @@ import { refreshNft, nftUpdatedData } from "./db/nftUpdates";
 import type { MockDb } from "./db/mockDb";
 import type { Tables } from "./db/tables";
 import type { LoggedRequest, NetworkConditions } from "./network/conditions";
+import type { RealtimeServer, RealtimeStats } from "./realtime/server";
 import { parseScenario } from "./scenarios/selection";
 import type { PresetName } from "./scenarios/presets";
 
@@ -16,6 +17,10 @@ export type KurioControl = {
     setAvailable: (nftId: string, editionId: string, available: number) => void;
   };
   sessions: { expire: (userId?: string) => void };
+  realtime: {
+    dropConnections: (options?: { reconnectAfterMs?: number }) => void;
+    stats: () => RealtimeStats;
+  };
   inspect: {
     orders: () => Order[];
     cart: (owner: string) => Cart | null;
@@ -36,6 +41,7 @@ export type KurioControlDeps = {
   getScenarioNames: () => PresetName[];
   setScenarioNames: (names: PresetName[]) => void;
   defaultScenarioNames: PresetName[];
+  realtime: Pick<RealtimeServer, "dropConnections" | "stats">;
   build: string;
 };
 
@@ -52,6 +58,7 @@ export function createControl({
   getScenarioNames,
   setScenarioNames,
   defaultScenarioNames,
+  realtime,
   build,
 }: KurioControlDeps): KurioControl {
   function updateEdition(nftId: string, editionId: string, apply: (edition: ReturnType<typeof findEdition>["edition"]) => void): void {
@@ -106,6 +113,11 @@ export function createControl({
           }
         });
       },
+    },
+
+    realtime: {
+      dropConnections: (options) => realtime.dropConnections(options),
+      stats: () => realtime.stats(),
     },
 
     inspect: {
