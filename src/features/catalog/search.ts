@@ -4,6 +4,7 @@ import { catalogSortSchema, catalogStatusSchema, catalogViewSchema } from "@/con
 import { compareEth } from "@/lib/eth";
 
 export const CATALOG_PAGE_SIZE = 12;
+export const COLLECTION_PAGE_SIZE = 16;
 
 export type CatalogSort = z.infer<typeof catalogSortSchema>;
 export type CatalogStatus = z.infer<typeof catalogStatusSchema>;

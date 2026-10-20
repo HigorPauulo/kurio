@@ -8,8 +8,6 @@ import {
   useState,
   type JSX,
   type KeyboardEvent,
-  type MouseEvent,
-  type PointerEvent,
   type ReactNode,
 } from "react";
 import { SearchIcon } from "@/components/icons/KurioIcons";
@@ -19,10 +17,12 @@ import { purchaseLimit, type Edition, type Nft } from "@/contracts/nft";
 import { formatEth } from "@/lib/eth";
 import { useNftSubscription } from "@/lib/realtime/instance";
 import { useSession } from "@/lib/session/instance";
+import { isVerticalScroller, useDragScroll } from "@/lib/useDragScroll";
 import { useSwipe } from "@/lib/useSwipe";
 import { cn } from "@/lib/utils";
 import { CATEGORY_LABELS, CHAIN_LABELS } from "../labels";
 import { favoritesQuery, nftQuery, useToggleFavoriteMutation } from "../queries";
+import { CollectionRail } from "./CollectionRail";
 
 export type PurchaseAction = (selection: { nftId: string; editionId: string; quantity: number }) => ReactNode;
 
@@ -131,12 +131,8 @@ function Gallery({ nft }: { nft: Nft }): JSX.Element {
 
 type StripEdges = { start: boolean; end: boolean };
 
-function isVertical(list: HTMLElement): boolean {
-  return getComputedStyle(list).flexDirection === "column";
-}
-
 function measureEdges(list: HTMLElement): StripEdges {
-  const [position, size, client] = isVertical(list)
+  const [position, size, client] = isVerticalScroller(list)
     ? [list.scrollTop, list.scrollHeight, list.clientHeight]
     : [list.scrollLeft, list.scrollWidth, list.clientWidth];
   return { start: position > 1, end: position + client < size - 1 };
@@ -146,8 +142,7 @@ type ThumbnailStripProps = { images: Nft["images"]; index: number; onSelect: (in
 
 function ThumbnailStrip({ images, index, onSelect }: ThumbnailStripProps): JSX.Element {
   const listRef = useRef<HTMLUListElement>(null);
-  const dragRef = useRef<{ start: number; scroll: number; moved: boolean } | null>(null);
-  const suppressNextClick = useRef(false);
+  const dragScroll = useDragScroll<HTMLUListElement>();
   const [edges, setEdges] = useState<StripEdges>({ start: false, end: false });
 
   useEffect(() => {
@@ -158,56 +153,13 @@ function ThumbnailStrip({ images, index, onSelect }: ThumbnailStripProps): JSX.E
     setEdges(measureEdges(list));
   }, [index]);
 
-  function handlePointerDown(event: PointerEvent<HTMLUListElement>): void {
-    if (event.pointerType !== "mouse" || event.button !== 0) return;
-    const list = event.currentTarget;
-    const vertical = isVertical(list);
-    dragRef.current = {
-      start: vertical ? event.clientY : event.clientX,
-      scroll: vertical ? list.scrollTop : list.scrollLeft,
-      moved: false,
-    };
-  }
-
-  function handlePointerMove(event: PointerEvent<HTMLUListElement>): void {
-    const drag = dragRef.current;
-    if (!drag) return;
-    const list = event.currentTarget;
-    const vertical = isVertical(list);
-    const delta = (vertical ? event.clientY : event.clientX) - drag.start;
-    if (Math.abs(delta) > 5 && !drag.moved) {
-      drag.moved = true;
-      list.setPointerCapture(event.pointerId);
-    }
-    if (!drag.moved) return;
-    if (vertical) list.scrollTop = drag.scroll - delta;
-    else list.scrollLeft = drag.scroll - delta;
-  }
-
-  function handlePointerUp(): void {
-    const drag = dragRef.current;
-    dragRef.current = null;
-    if (drag?.moved) suppressNextClick.current = true;
-  }
-
-  function handleClickCapture(event: MouseEvent<HTMLUListElement>): void {
-    if (!suppressNextClick.current) return;
-    suppressNextClick.current = false;
-    event.preventDefault();
-    event.stopPropagation();
-  }
-
   return (
     <div className="relative min-w-0 md:order-1">
       <ul
         ref={listRef}
         aria-label="Galeria"
         onScroll={(event) => setEdges(measureEdges(event.currentTarget))}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={handlePointerUp}
-        onClickCapture={handleClickCapture}
+        {...dragScroll}
         className="flex cursor-grab gap-3 overflow-x-auto select-none [scrollbar-width:none] md:absolute md:inset-0 md:flex-col md:overflow-x-hidden md:overflow-y-auto lg:gap-4 [&::-webkit-scrollbar]:hidden"
       >
         {images.map((thumbnail, thumbnailIndex) => (
@@ -640,6 +592,7 @@ export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchas
           <dd className="text-text-secondary">Cunhado na {CHAIN_LABELS[nft.chain]}.</dd>
         </dl>
       </section>
+      <CollectionRail nftId={nft.id} collectionId={nft.collection.id} />
     </main>
   );
 }

@@ -69,7 +69,8 @@ com `VALIDATION_FAILED`; `QuotaExceededError` vai ao console como erro, nunca é
 
 `nft_001` não muda: é a página de detalhe auditada pelo Lighthouse. O `priceFrom` é calculado a partir
 das edições, nunca escrito à mão. As imagens são as quatro artes do protótipo em WebP de 640 px
-(`public/images/nfts/`), escolhidas pela primeira palavra do nome (Emerald, Sage, Ivory, Golden). Os
+(`public/images/nfts/`), escolhidas pela primeira palavra do nome (Emerald, Sage, Ivory, Golden). Os NFTs se agrupam em quatro coleções pelo mesmo prefixo: Kurio Apes (Emerald), Kurio Nomads (Sage,
+Violet, Cosmic), Kurio Barons (Ivory, Neon) e Kurio Golden. Os
 nomes são os 9 do protótipo (Emerald Ape #042, Sage Nomad #009, Neon Vessel #552, Cosmic Bloom #118,
 Violet Nomad #314, Ivory Baron #088, Golden Beat #207, Golden Frequency #071, Golden Signal #160) e
 outros 15 no mesmo padrão. A troca de nomes subiu o snapshot para `v7`, e o boot apaga do

@@ -15,7 +15,7 @@ import { toggleItem } from "@/lib/list";
 import { ensureDespiteCancel } from "@/lib/query/ensure";
 import { keys } from "@/lib/query/keys";
 import { seedNftVersions } from "@/lib/query/versions";
-import { addFavorite, getFavorites, getFeaturedNfts, getNft, getNfts, removeFavorite } from "./api";
+import { addFavorite, getCollectionNfts, getFavorites, getFeaturedNfts, getNft, getNfts, removeFavorite } from "./api";
 import type { CatalogSearch } from "./search";
 
 const THIRTY_SECONDS = 30_000;
@@ -36,6 +36,17 @@ export function catalogListQuery(search: CatalogSearch): TaggedQueryOptions<NftL
     staleTime: THIRTY_SECONDS,
     gcTime: FIVE_MINUTES,
     placeholderData: keepPreviousData,
+  });
+}
+
+type CollectionKey = ReturnType<typeof keys.catalog.list<{ collection: string }>>;
+
+export function collectionNftsQuery(collectionId: string): TaggedQueryOptions<NftListResponse, CollectionKey> {
+  return queryOptions({
+    queryKey: keys.catalog.list({ collection: collectionId }),
+    queryFn: ({ signal }) => seedNftVersions(() => getCollectionNfts(collectionId, signal), (list) => list.items),
+    staleTime: ONE_MINUTE,
+    gcTime: FIVE_MINUTES,
   });
 }
 

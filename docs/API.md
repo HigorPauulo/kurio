@@ -150,7 +150,7 @@ refresh token.
 
 Parâmetros de `GET /nfts`: `q` (1 a 80 caracteres, sem acento e sem caixa, em nome, coleção e
 criador); `category` e `chain` (listas separadas por vírgula, OR dentro do filtro); `status`
-(`available`, `sold_out`); `view` (`trending`: só os destaques, `featured`; `new`: listados nos 7 dias
+(`available`, `sold_out`); `collection` (ID da coleção); `view` (`trending`: só os destaques, `featured`; `new`: listados nos 7 dias
 anteriores ao `createdAt` mais recente do catálogo); `priceMin` e `priceMax` (`EthAmount`, sobre `priceFrom`, min ≤ max ou 400);
 `sort` (`recent` por `createdAt` decrescente, padrão; `price_asc`; `price_desc`; `popular` por `likes`
 decrescente; desempate sempre por `id`); `page` (≥ 1); `pageSize` (1 a 48, padrão 12). Filtros

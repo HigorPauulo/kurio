@@ -9,10 +9,18 @@ import {
 } from "@/contracts/nft";
 import { parseResponse } from "@/lib/http/apiError";
 import { http } from "@/lib/http/client";
-import { CATALOG_PAGE_SIZE, type CatalogSearch } from "./search";
+import { CATALOG_PAGE_SIZE, COLLECTION_PAGE_SIZE, type CatalogSearch } from "./search";
 
 export async function getNfts(search: CatalogSearch, signal?: AbortSignal): Promise<NftListResponse> {
   const { data } = await http.get<unknown>("/nfts", { params: { ...search, pageSize: CATALOG_PAGE_SIZE }, signal });
+  return parseResponse(nftListResponseSchema, data);
+}
+
+export async function getCollectionNfts(collectionId: string, signal?: AbortSignal): Promise<NftListResponse> {
+  const { data } = await http.get<unknown>("/nfts", {
+    params: { collection: collectionId, pageSize: COLLECTION_PAGE_SIZE },
+    signal,
+  });
   return parseResponse(nftListResponseSchema, data);
 }
 

@@ -8,8 +8,8 @@ export function NftCard({ nft }: { nft: NftSummary }): JSX.Element {
   const isSoldOut = nft.status === "sold_out";
 
   return (
-    <article className="group relative flex flex-col gap-3 rounded-md focus-within:ring-3 focus-within:ring-ring/60">
-      <div className="relative">
+    <article className="group relative flex flex-col gap-3 rounded-md has-focus-visible:ring-3 has-focus-visible:ring-ring/60">
+      <div className="relative overflow-hidden rounded-2xl">
         <img
           src={nft.cover.url}
           alt={nft.cover.alt}
@@ -17,7 +17,8 @@ export function NftCard({ nft }: { nft: NftSummary }): JSX.Element {
           height={nft.cover.height}
           loading="lazy"
           decoding="async"
-          className="aspect-square w-full rounded-2xl bg-surface-raised object-cover transition-transform group-hover:scale-[1.02]"
+          draggable={false}
+          className="aspect-square w-full bg-surface-raised object-cover transition-transform duration-300 group-hover:scale-105"
         />
         {isSoldOut && (
           <p className="absolute top-2 left-2 flex items-center gap-1 rounded-sm bg-primary px-2 py-1 text-xs font-bold text-primary-foreground uppercase">

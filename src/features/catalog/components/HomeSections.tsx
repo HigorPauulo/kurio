@@ -108,7 +108,7 @@ function Journal(): JSX.Element {
       <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {POSTS.map((post) => (
           <li key={post.from}>
-            <article className="relative flex h-full flex-col overflow-hidden rounded-md bg-surface-card focus-within:ring-3 focus-within:ring-ring/60">
+            <article className="relative flex h-full flex-col overflow-hidden rounded-md bg-surface-card has-focus-visible:ring-3 has-focus-visible:ring-ring/60">
               <img
                 src={post.image}
                 alt=""

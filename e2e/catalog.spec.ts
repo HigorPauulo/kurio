@@ -249,3 +249,17 @@ test("galeria navega por setas, miniatura e teclado, e a lupa abre o mesmo carro
   await expect(page.getByRole("list", { name: "Galeria" }).getByRole("button")).toHaveCount(1);
   await expect(page.getByRole("button", { name: "Próxima imagem" })).toHaveCount(0);
 });
+
+test("mais desta coleção mostra os outros NFTs da coleção e leva ao detalhe", async ({ page }) => {
+  await startFresh(page, "fast", "/nft/nft_001");
+  const rail = page.getByRole("region", { name: "Mais desta coleção" });
+  const cards = rail.getByRole("list", { name: "NFTs da mesma coleção" }).getByRole("link");
+  await expect(cards).toHaveText(["Emerald Cube #880", "Emerald Pass #303", "Emerald Relic #198", "Emerald Drift #215"]);
+  expect(await page.evaluate(() => (window as unknown as KurioWindow).__kurio.inspect.lastRequest("^/api/nfts\\?")?.query)).toMatchObject({
+    collection: "col_kurio-apes",
+  });
+
+  await cards.filter({ hasText: "Emerald Pass #303" }).click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Emerald Pass #303");
+  await expect(rail.getByRole("link").filter({ hasText: "Emerald Ape #042" })).toBeVisible();
+});
