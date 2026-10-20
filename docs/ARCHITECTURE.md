@@ -396,6 +396,7 @@ mantido durante a implementação.
 | Início | Filtro escolhido marcado também com ícone de seleção | Estado nunca só por cor (QUALITY §5) |
 | Início | Faixa de preço sem digitação; alças movem em passos de 0,001 ETH | O protótipo desenha um controle deslizante; a precisão de 18 casas segue no fio e no cálculo |
 | Detalhe | Conteúdo da aba "Avaliações de colecionadores" composto com os tokens: resumo com nota, estrelas e distribuição de 5 a 1, e lista paginada (5 por vez, "Ver mais avaliações"); só leitura, sem envio de avaliação | O protótipo desenha só o rótulo da aba; enviar avaliação exigiria compra prévia, fora do escopo |
+| Carrinho e pagamento | Carrinho vazio como galeria à espera da primeira obra: moldura vazia sob um spot, plaqueta de museu e atalhos para o mercado e para "Em alta"; o mesmo componente serve o pagamento sem itens | O protótipo não desenha o estado vazio |
 | Detalhe | "Mais desta coleção" sem assinatura de tempo real; o preço dos cards segue o `staleTime` da lista (60 s) | Assinar até 15 NFTs a mais por tela para cards secundários não paga o custo; o detalhe aberto segue ao vivo |
 | Detalhe | Para o visitante, "Favoritar" leva ao login e volta ao NFT (o nome acessível avisa que exige entrar) | Favorito é dado de pessoa (`['u', owner]`) e exige sessão |
 | Detalhe | "Comprar" adiciona ao carrinho a quantidade escolhida e mostra "Adicionado. Ver carrinho"; o nome acessível diz "(adiciona ao carrinho)" | A compra passa pelo carrinho e pela cotação; não há compra direta no contrato |

@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useEffect, useId, useRef, useState, type JSX } from "react";
 import { FormError, TextField } from "@/components/form/TextField";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import type { Cart, Quote } from "@/contracts/cart";
 import type { Chain, EthAmount } from "@/contracts/common";
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { keys } from "@/lib/query/keys";
 import { useNftSubscription } from "@/lib/realtime/instance";
 import { meQuery, useConnectWalletMutation, walletsQuery } from "../../account/queries";
+import { EmptyCart } from "../../cart/components/EmptyCart";
 import { CART_NETWORK, cartQuery, quoteQuery } from "../../cart/queries";
 import { CHAIN_LABELS } from "../../catalog/labels";
 import { PROVIDER_LABELS } from "../labels";
@@ -607,14 +608,7 @@ export function CheckoutPage({ userId, step, onStepChange, onOrderPlaced }: Chec
       </div>
     );
   } else if (cart.data.items.length === 0) {
-    content = (
-      <div className="flex flex-col items-start gap-4 bg-surface-card p-6">
-        <p className="text-lg font-bold">Seu carrinho está vazio.</p>
-        <Link to="/" className={buttonVariants()}>
-          Explorar o catálogo
-        </Link>
-      </div>
-    );
+    content = <EmptyCart />;
   } else {
     const choice = selectWallet(wallets.data, draft);
     const { wallet, network } = choice;

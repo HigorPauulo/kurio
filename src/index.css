@@ -52,6 +52,7 @@
 
     --animate-shimmer: shimmer 1.6s linear infinite;
     --animate-construction: construction-stripes 1s linear infinite;
+    --animate-spotlight: spotlight-sway 6s ease-in-out infinite alternate;
 
     @keyframes construction-stripes {
         from {
@@ -59,6 +60,15 @@
         }
         to {
             background-position: 28px 0;
+        }
+    }
+
+    @keyframes spotlight-sway {
+        from {
+            rotate: -4deg;
+        }
+        to {
+            rotate: 4deg;
         }
     }
 

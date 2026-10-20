@@ -21,6 +21,7 @@ import {
   useRemoveCouponMutation,
   useUpdateQuantityMutation,
 } from "../queries";
+import { EmptyCart } from "./EmptyCart";
 
 const QUANTITY_BUTTON = "h-7.5 w-5 rounded-full border border-ink p-0 shadow-md [&_svg:not([class*='size-'])]:size-3.5";
 const ROW = "grid grid-cols-[auto_1fr] md:grid-cols-[minmax(0,1fr)_7.5rem_8rem_7.5rem_2.5rem]";
@@ -244,16 +245,6 @@ function Summary({ owner, cart }: { owner: string; cart: Cart }): JSX.Element {
   );
 }
 
-function EmptyCart(): JSX.Element {
-  return (
-    <div className="flex flex-col items-start gap-4 bg-surface-card p-6">
-      <p className="text-lg font-bold">Seu carrinho está vazio.</p>
-      <Link to="/" className={buttonVariants()}>
-        Explorar o catálogo
-      </Link>
-    </div>
-  );
-}
 
 function CartContent({ owner }: { owner: string }): JSX.Element {
   const cart = useQuery(cartQuery(owner));
