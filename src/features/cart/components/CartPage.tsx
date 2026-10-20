@@ -8,6 +8,7 @@ import type { Cart, CartItem, Quote } from "@/contracts/cart";
 import { purchaseLimit } from "@/contracts/nft";
 import { formatEth } from "@/lib/eth";
 import { getApiFieldError } from "@/lib/forms";
+import { useNftSubscription } from "@/lib/realtime/instance";
 import {
   cartQuery,
   quoteQuery,
@@ -83,9 +84,7 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
         >
           <Minus aria-hidden="true" />
         </Button>
-        <output aria-live="polite" className="w-8 text-center">
-          {item.quantity}
-        </output>
+        <span className="w-8 text-center">{item.quantity}</span>
         <Button
           type="button"
           variant="outline"
@@ -229,6 +228,7 @@ function EmptyCart(): JSX.Element {
 function CartContent({ owner }: { owner: string }): JSX.Element {
   const cart = useQuery(cartQuery(owner));
   const quote = useQuery({ ...quoteQuery(owner, cart.data?.version ?? 0), enabled: false });
+  useNftSubscription(cart.data?.items.map((item) => item.nftId) ?? []);
 
   if (cart.isPending) return <p>Carregando o carrinho...</p>;
   if (cart.isError) {

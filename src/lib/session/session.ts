@@ -2,6 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 import type { MergeCartResponse } from "@/contracts/cart";
 import type { Session } from "@/contracts/user";
 import { keys } from "@/lib/query/keys";
+import { realtime } from "@/lib/realtime/instance";
 import type { GuestCart } from "./guestCart";
 import type { SessionStore } from "./sessionStore";
 
@@ -32,6 +33,7 @@ export async function switchIdentity(
   guestCart: GuestCart | null = null,
 ): Promise<CartAdjustment[]> {
   await queryClient.cancelQueries({ queryKey: keys.privRoot() });
+  realtime.reset(next?.user.id ?? null);
   queryClient.removeQueries({ queryKey: keys.privRoot() });
 
   if (!next) {

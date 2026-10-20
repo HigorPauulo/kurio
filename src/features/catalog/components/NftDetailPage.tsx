@@ -5,6 +5,7 @@ import { useId, useState, type JSX, type ReactNode } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { purchaseLimit, type Edition, type Nft } from "@/contracts/nft";
 import { formatEth } from "@/lib/eth";
+import { useNftSubscription } from "@/lib/realtime/instance";
 import { useSession } from "@/lib/session/instance";
 import { CATEGORY_LABELS, CHAIN_LABELS } from "../labels";
 import { favoritesQuery, nftQuery, useToggleFavoriteMutation } from "../queries";
@@ -230,6 +231,7 @@ function FavoriteAction({ nftId }: { nftId: string }): JSX.Element {
 
 export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchase }: NftDetailPageProps): JSX.Element {
   const { data: nft } = useQuery(nftQuery(nftId));
+  useNftSubscription([nftId]);
   if (!nft) return <main className="p-6">Carregando o NFT...</main>;
   const edition = pickEdition(nft, editionId);
 
