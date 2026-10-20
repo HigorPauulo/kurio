@@ -105,7 +105,7 @@ test("sessão que o servidor esqueceu leva ao aviso de expiração, não a uma t
 });
 
 test("troca de Ana para Bruno sem recarregar não deixa nenhum dado da Ana na tela", async ({ page }) => {
-  const nav = page.getByRole("navigation");
+  const nav = page.getByRole("navigation", { name: "Principal" });
   await login(page, "ana@kurio.test", "/account/profile");
   await expect(page.getByLabel("Apelido da carteira")).toHaveValue("Principal");
   await nav.getByRole("link", { name: "Carteiras" }).click();
