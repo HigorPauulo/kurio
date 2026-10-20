@@ -32,13 +32,15 @@ test("rotas privadas não estouram a largura", async ({ page }) => {
   await visitAll(page, PRIVATE_ROUTES);
 });
 
-test("em 768 nenhuma rota estoura a largura", async ({ page }) => {
-  await page.setViewportSize({ width: 768, height: 1024 });
-  await startFresh(page);
-  await visitAll(page, PUBLIC_ROUTES);
-  await login(page, "ana@kurio.test", "/account/wallets");
-  await visitAll(page, PRIVATE_ROUTES);
-});
+for (const width of [768, 1024]) {
+  test(`em ${width} nenhuma rota estoura a largura`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 1024 });
+    await startFresh(page);
+    await visitAll(page, PUBLIC_ROUTES);
+    await login(page, "ana@kurio.test", "/account/wallets");
+    await visitAll(page, PRIVATE_ROUTES);
+  });
+}
 
 test("skeleton tem dimensões finais e para o shimmer com movimento reduzido", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
