@@ -42,8 +42,8 @@ flowchart LR
 | `src/lib/eth` | Aritmética de wei, padrão do `EthAmount`, `formatEth`, `formatEthInput`, `parseEthInput` | só tipos de `contracts` |
 | `src/lib/url` | `safeRedirect`; busca da URL em texto puro (`parsePlainSearch`, `stringifyPlainSearch`) | nada |
 | `src/lib/a11y` | `announce()` e a live region única | nada |
-| `src/lib/query` | `queryClient`, `keys.ts`, política de retry, wrapper de `queryFn` que semeia versões | `contracts`, `lib/realtime/eventStore` (módulo puro: não há ciclo) |
-| `src/lib/realtime` | `socketManager`, `eventStore`, `useNftSubscription`, ponte com o cache | `contracts`, `lib/query` |
+| `src/lib/query` | `queryClient`, `keys.ts`, política de retry, wrapper de `queryFn` que semeia versões (`versions.ts`) | `contracts`, `lib/realtime/eventStore` (módulo puro: não há ciclo) |
+| `src/lib/realtime` | `socketManager`, `eventStore`, `useNftSubscription`, ponte com o cache (`bridge.ts`) | `contracts`, `lib/query`, `lib/a11y` |
 | `src/lib/session` | `sessionStore`, `switchIdentity`, `completeLogin`, carrinho de visitante (`guestCart`, `getCartOwner`, `useCartOwner`), guards de rota (`requireUserId`, `redirectIfAuthenticated`) | `http`, `realtime`, `query`, `url`, `contracts` |
 | `src/lib/forms` | `applyApiError`: `fieldErrors` da API no campo, o resto na mensagem do formulário | `http` |
 | `src/features/<domínio>/api.ts` | Uma função por endpoint: Axios + `schema.parse` | `lib/http`, `contracts` |
@@ -204,7 +204,8 @@ anuncia os ajustes.
 
 Entre os passos 3 e 6 nenhuma key guarda dado do usuário anterior.
 
-**Expiração não é troca de identidade:** desconecta o socket e suspende as requisições privadas, mas
+**Expiração não é troca de identidade:** troca o socket pelo de visitante (o dado público segue ao vivo,
+o privado não chega) e suspende as requisições privadas, mas
 mantém cache, rascunho e tentativa de pedido. O mesmo `userId` retoma; outro usuário ou o descarte
 passam pelo `switchIdentity`. `completeLogin` faz essa escolha. A sessão salva é carregada no boot sem
 `GET /auth/session`: o `expiresAt` local arma o timer, e o servidor confirma na primeira requisição
@@ -256,20 +257,30 @@ preserva `redirect=/checkout?step=...`; o rascunho só volta para o mesmo `userI
 
 ## 10. Tempo real
 
-- Um socket por sessão, criado no `switchIdentity`, só transporte WebSocket, `autoConnect: false`,
-  token em `auth`. `connect_error` com `SESSION_EXPIRED` expira a sessão e não reconecta.
+- Um socket por sessão, só transporte WebSocket, `autoConnect: false`, `forceNew`, token em `auth`
+  (visitante com `auth` vazia). O `switchIdentity` derruba o socket e chama `eventStore.reset` no passo
+  2; o bootstrap (`App.tsx`) escuta o `sessionStore` e cria o socket do estado novo: autenticado com o
+  token, visitante sem token, expirado sem socket. `connect_error` com `SESSION_EXPIRED` expira a sessão
+  e não reconecta.
 - `connect_error` é terminal: depois dele o app não consulta `socket.connected`, que fica `true`
   porque o cliente se destrói antes de atualizar a flag. Com token inválido, `connect` dispara antes
-  do `connect_error` (o binding aceita antes de ler o token), então o app só assina NFTs com sessão
-  válida, nunca no `connect` puro.
+  do `connect_error` (o binding aceita antes de ler o token); o app reassina no `connect`, e o servidor
+  ignora pedido de conexão recusada, sem ack nem evento.
 - `useNftSubscription(ids)` conta referências por id: assina na transição 0 → 1, cancela na 1 → 0, e o
   cleanup remove os listeners que registrou.
 - `eventStore.accept(evento)` descarta, nesta ordem: `id` já aplicado (LRU de 500), versão menor ou
   igual à maior conhecida do recurso, `audience` de outro usuário, pedido já terminal. As respostas
   REST semeiam a maior versão pelo wrapper de `queryFn`, então evento anterior a um GET aplicado é
-  descartado. Só evento aceito vira anúncio na live region.
-- Reconexão: reassina as subscriptions ativas e invalida `catalog`, `nft`, `cart`, `quote` e `order`
-  pendente. O REST volta a ser a verdade e ressemeia as versões.
+  descartado; GET que volta com versão menor que a de um evento já aplicado é relido uma vez, para a
+  resposta atrasada não sobrescrever o cache. Só evento aceito vira anúncio na live region.
+- `eventStore.reset` na troca de identidade esquece só usuário e pedidos: as versões dos NFTs seguem,
+  porque o cache público também segue, e um evento antigo reentregue não pode regredir o preço.
+- Assinatura sem ack (`null` ou `ok: false`) é repetida até 3 vezes, 1 s entre elas, enquanto o id seguir
+  em uso. A assinatura acontece depois do GET; o que mudar nesse intervalo chega pela reentrega do
+  último evento do NFT, que o servidor faz a cada assinatura nova ([MOCKS](MOCKS.md#7-socketio-simulado)).
+- `nft.updated` invalida `cart` e `quote` só do dono cujo carrinho contém o NFT, e só então anuncia.
+- Reconexão, inclusive com socket novo depois de expiração, login ou logout: reassina as subscriptions
+  ativas e invalida `catalog`, `nft`, `cart`, `quote` e `order` pendente. O REST volta a ser a verdade e ressemeia as versões.
 
 ## 11. Erros na interface
 

@@ -87,7 +87,7 @@ para até o teste avançar o tempo, inclusive o `delay(0)` do `fast`.
 
 ## 6. Cenários
 
-Composição de presets da esquerda para a direita (`?scenario=slow+payment-refused`); regra posterior
+Composição de presets da esquerda para a direita (`?scenario=slow+payment-refused`; o `+` chega como espaço na URL, e os dois separam); regra posterior
 vence na mesma rota. Precedência no boot: `?scenario`, depois `kurio:scenario`, depois
 `VITE_MOCK_DEFAULT_SCENARIO`. Troca vale a partir da próxima requisição; `&reset=1` ou `reset()`
 restauram as fixtures antes. O app tira `scenario` e `reset` da URL depois de aplicar.
@@ -110,16 +110,25 @@ restauram as fixtures antes. O app tira `scenario` e `reset` da URL depois de ap
 
 ## 7. Socket.IO simulado
 
-- `ws.link('wss://realtime.kurio.mock/*')` com o `toSocketIo` do binding.
+- `mocks/realtime/server.ts`: `ws.link('wss://realtime.kurio.mock/*')` com o `toSocketIo` do binding,
+  inscrito no `db.subscribe`.
+- Visitante conecta com `auth` vazia e recebe `nft.updated`; token de sessão válida identifica o
+  usuário; os demais são recusados. Conexão recusada não recebe ack nem evento.
 - Subscriptions por conexão; `order.subscribe` valida o dono.
 - `nft.updated` vai a quem assinou o NFT; `order.updated`, ao dono que assinou o pedido.
+- Assinatura nova de um NFT reentrega a ela o último `nft.updated` daquele NFT, se houver. O evento
+  nasceu de um commit, então o invariante 2 vale; o cliente descarta pela versão se já tinha o dado.
+- `socket-duplicates` entrega cada evento duas vezes e reentrega o evento anterior do mesmo recurso 1 s
+  depois. `dropConnections({ reconnectAfterMs })` fecha as conexões e, durante a janela, fecha cada nova
+  conexão no pacote CONNECT: fechar antes do `open` do Engine.IO deixa o `socket.io-client` parado, sem
+  nova tentativa.
 
 O binding 0.2.0 cobre eventos, mas não ack, recusa nem heartbeat. O mock completa o protocolo com
 pacotes crus na conexão ([DECISIONS](DECISIONS.md)), todos cobertos pela spec E2E de tempo real:
 
 | Caso | Contorno |
 |---|---|
-| Handshake | o binding aceita sozinho; o mock lê `auth.token` do pacote `40{...}` do cliente (com ou sem namespace); token ausente, que não é texto ou JSON ilegível contam como inválido, e o mock envia `44{"message":"SESSION_EXPIRED","data":{"code":"SESSION_EXPIRED"}}` sem fechar a conexão (fechar descarta o `44` e o cliente reconecta em loop) |
+| Handshake | o binding aceita sozinho; o mock lê `auth` do pacote `40{...}` do cliente (com ou sem namespace); `auth` ausente ou sem `token` é visitante; token que não é texto, JSON ilegível ou sessão inexistente ou vencida contam como inválido, e o mock envia `44{"message":"SESSION_EXPIRED","data":{"code":"SESSION_EXPIRED"}}` sem fechar a conexão (fechar descarta o `44` e o cliente reconecta em loop) |
 | Ack | o mock lê o id do pacote `42<id>[...]` e responde `43<id>[resposta]` |
 | Heartbeat | o mock envia `2` (ping do Engine.IO) a cada 25 s pelo relógio da página; sem isso o cliente derruba a conexão a cada 30 s |
 
@@ -131,7 +140,7 @@ pacotes crus na conexão ([DECISIONS](DECISIONS.md)), todos cobertos pela spec E
 | `scenario.get()`, `scenario.set(presets)` | lê e troca o cenário |
 | `catalog.setPrice(nft, edição, preço)`, `catalog.setAvailable(nft, edição, n)` | muda o dado e emite `nft.updated` |
 | `orders.settle(id, 'confirmed' \| 'refused')` | resolve um pedido pendente (chega com os pedidos, fatia 7) |
-| `realtime.dropConnections({ reconnectAfterMs })`, `realtime.stats()` | derruba sockets; conta sockets e subscriptions (chega com o tempo real, fatia 6) |
+| `realtime.dropConnections({ reconnectAfterMs })`, `realtime.stats()` | derruba sockets; conta sockets autorizados, subscriptions e eventos entregues (`delivered`) |
 | `sessions.expire(userId?)` | vence o token |
 | `inspect.orders()`, `inspect.cart(owner)`, `inspect.lastRequest(padrão)` | leitura do estado do servidor |
 | `build` | SHA do build, conferido no smoke de publicação |

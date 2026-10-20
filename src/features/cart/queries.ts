@@ -74,7 +74,7 @@ export function useAddCartItemMutation(): UseMutationResult<Cart, Error, AddToCa
   });
 }
 
-export type UpdateQuantityInput = { itemId: string; quantity: number };
+export type UpdateQuantityInput = { itemId: string; quantity: number; nftName: string };
 
 type UpdateQuantityContext = { previousQuantity: number | undefined };
 
@@ -103,7 +103,8 @@ export function useUpdateQuantityMutation(
       queryClient.setQueryData(cartKey, (cart) => withQuantity(cart, itemId, context?.previousQuantity));
       announce(error.message || "Não foi possível alterar a quantidade.", "assertive");
     },
-    onSuccess: (cart) => {
+    onSuccess: (cart, { nftName, quantity }) => {
+      announce(`Quantidade de ${nftName}: ${quantity}.`);
       if (queryClient.isMutating({ mutationKey }) > 1) return;
       storeCart(queryClient, owner, cart);
     },
