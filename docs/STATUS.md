@@ -2,14 +2,14 @@
 
 **Este é o único documento que declara estado.** Voltou de uma pausa? Leia só este.
 
-**Atualizado em 2026-10-19: fatias 1 a 3 concluídas; entrega em até 24 h.**
+**Atualizado em 2026-10-19: fatias 1 a 4 concluídas; entrega em até 24 h.**
 
 ## Onde estou
 
-> **Fatia 3 de 9, concluída.** Login e cadastro em diálogo, sessão persistida com expiração no meio do
-> fluxo, `switchIdentity` sem resíduo entre usuários, perfil (dados, avatar, senha) e as duas carteiras
-> com os campos do layout, sobre os primeiros handlers REST. As specs `auth` e `account` passam com axe
-> sem violação séria.
+> **Fatia 4 de 9, concluída.** Catálogo com destaques, busca, filtros, ordenação e página na URL
+> (refresh, voltar e avançar), resposta fora de ordem descartada; detalhe com galeria, edição na URL,
+> edição esgotada ou indisponível bloqueada com motivo e quantidade limitada; favoritos otimistas com
+> rollback e anúncio na live region. A spec `catalog` passa em 1440 e 390 com axe sem violação séria.
 
 | | |
 |---|---|
@@ -20,7 +20,8 @@
 
 ## O que fazer agora, nesta ordem
 
-1. **Fatia 4:** catálogo e detalhe, em `feature/catalog`.
+1. **Fatia 5:** carrinho e cotação, em `feature/cart`. O botão de compra do detalhe nasce aqui, sobre a
+   quantidade que a fatia 4 já limita.
 
 ## O que trava
 
@@ -37,9 +38,9 @@ Nenhuma. O gate **G1** (GitHub e Vercel) foi resolvido.
 
 | | |
 |---|---|
-| Fatias | 3 de 9; a fatia 3 levou cerca de 3 h contra 2,5 h estimadas |
+| Fatias | 4 de 9; a fatia 4 levou cerca de 2 h, dentro do estimado |
 | Requisitos | 45 funcionais e 7 não funcionais em [REQUIREMENTS](REQUIREMENTS.md) |
-| Verificação | 9 specs E2E planejadas (4 escritas, mais a do spike), 12 arquivos de unidade (112 casos) e o roteiro manual em [QUALITY](QUALITY.md) |
+| Verificação | 9 specs E2E planejadas (5 escritas, mais a do spike), 14 arquivos de unidade (127 casos) e o roteiro manual em [QUALITY](QUALITY.md) |
 | Decisões | 31 em [DECISIONS](DECISIONS.md) |
 
 Contados em 2026-10-19. Mudou um documento, atualize esta tabela no mesmo commit.

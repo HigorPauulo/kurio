@@ -40,14 +40,15 @@ flowchart LR
 | `src/contracts` | Schemas Zod e tipos inferidos | `zod`, `lib/eth` |
 | `src/lib/http` | Axios, interceptors, `normalizeError`, `configureHttp` | `contracts` |
 | `src/lib/eth` | Aritmética de wei, padrão do `EthAmount`, `formatEth`, `formatEthInput`, `parseEthInput` | só tipos de `contracts` |
-| `src/lib/url` | `safeRedirect` | nada |
+| `src/lib/url` | `safeRedirect`; busca da URL em texto puro (`parsePlainSearch`, `stringifyPlainSearch`) | nada |
+| `src/lib/a11y` | `announce()` e a live region única | nada |
 | `src/lib/query` | `queryClient`, `keys.ts`, política de retry, wrapper de `queryFn` que semeia versões | `contracts`, `lib/realtime/eventStore` (módulo puro: não há ciclo) |
 | `src/lib/realtime` | `socketManager`, `eventStore`, `useNftSubscription`, ponte com o cache | `contracts`, `lib/query` |
 | `src/lib/session` | `sessionStore`, `switchIdentity`, `completeLogin`, guards de rota (`requireUserId`, `redirectIfAuthenticated`) | `http`, `realtime`, `query`, `url`, `contracts` |
 | `src/lib/forms` | `applyApiError`: `fieldErrors` da API no campo, o resto na mensagem do formulário | `http` |
 | `src/features/<domínio>/api.ts` | Uma função por endpoint: Axios + `schema.parse` | `lib/http`, `contracts` |
 | `src/features/<domínio>/queries.ts` | `queryOptions` e mutations, com `lib/query/keys` | `api.ts`, `lib/query` |
-| `src/features/<domínio>/components` | UI | `queries.ts`, `components/ui`, `components/form`, `lib/eth`, `lib/forms`, `lib/realtime`, `lib/session`, `lib/url` |
+| `src/features/<domínio>/components` | UI | `queries.ts`, `components/ui`, `components/form`, `lib/eth`, `lib/forms`, `lib/realtime`, `lib/session`, `lib/url`, `lib/a11y` |
 | `src/routes` | Rotas, `beforeLoad`, `loader`, composição das telas | `features/*`, `lib/session`, `lib/url` |
 | `mocks/` | Backend simulado | `src/contracts`, `src/lib/eth` (só isso) |
 
@@ -166,7 +167,8 @@ refetch: mantém o conteúdo com indicador, nunca volta ao skeleton. Vazio é su
 | `/checkout`, `/orders/$orderId`, `/account/*` | `requireUserId`: sem sessão ativa, login com `redirect`; com sessão, `userId` no contexto | `ensureQueryData` da rota |
 | `/login`, `/register` | `redirectIfAuthenticated`: com sessão, vai a `safeRedirect(redirect)` | |
 
-Search params validados por Zod com `.catch` (inválido degrada ao default, nunca lança) e defaults
+A busca da URL é texto puro, sem JSON (`?priceMin=0.10`, não `?priceMin=%220.10%22`): o parser padrão do
+router converte `0.10` em número e perde casas do `EthAmount`. Search params validados por Zod com `.catch` (inválido degrada ao default, nunca lança) e defaults
 removidos da URL. `q` usa `replace` após debounce de 300 ms; filtro, ordenação e página usam `push`;
 mudar qualquer coisa que não seja `page` volta a `page=1`. Preço vai à URL com ponto (§14).
 
@@ -315,7 +317,9 @@ Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lan�
 
 ## 14. Comportamento de interface
 
-- Filtros abaixo de 768: drawer com "Aplicar", uma requisição por aplicação.
+- Filtros: um formulário com "Aplicar filtros" e "Limpar filtros", uma requisição por aplicação; a partir
+  de 768 fica na coluna lateral, abaixo dele num diálogo aberto por "Filtros". Busca e ordenação
+  aplicam sozinhas (busca com debounce).
 - `prefers-reduced-motion` remove shimmer e transições.
 - Login e cadastro são rotas próprias renderizadas como diálogo sobre o layout. Entrar vai ao `redirect`;
   fechar sem entrar volta a ele só se for público, senão vai a `/` (`getDismissTarget`), para o guard não
@@ -339,6 +343,11 @@ mantido durante a implementação.
 | Tela | Desvio | Motivo |
 |---|---|---|
 | Pagamento (mobile) | Formulário do colecionador empilhado acima dos cards de carteira | O protótipo mobile não desenha o formulário, e os campos são exigidos |
+| Início | Contagem por categoria e por rede na coluna de filtros ausente | `GET /nfts` não devolve facetas; contar no cliente exigiria baixar o catálogo inteiro |
+| Início | Abas "Todos os NFTs", "Novos lançamentos" e "Em alta" viram o "Ordenar por" (Mais recentes, Mais curtidos) | As abas e a ordenação do protótipo disputam o mesmo parâmetro `sort` |
+| Início | Faixa de preço por dois campos (mínimo e máximo) em vez de slider | Slider não digita valor exato em ETH; os campos aceitam vírgula e 18 casas |
+| Detalhe | Aba "Avaliações de colecionadores", estrelas e "Mais desta coleção" ausentes | Avaliações não existem no contrato; `GET /nfts` não filtra por coleção |
+| Detalhe | Visitante vê "Entrar para favoritar", que leva ao login e volta ao NFT | Favorito é dado de pessoa (`['u', owner]`) e exige sessão |
 
 ## 16. Limitações
 
