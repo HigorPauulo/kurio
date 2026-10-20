@@ -68,7 +68,9 @@ com `VALIDATION_FAILED`; `QuotaExceededError` vai ao console como erro, nunca é
 | Taxas | por rede, na [API](API.md#cotação-privado-no-checkout-público-no-carrinho) |
 
 `nft_001` não muda: é a página de detalhe auditada pelo Lighthouse. O `priceFrom` é calculado a partir
-das edições, nunca escrito à mão. As imagens usam um placeholder até a fatia 8.
+das edições, nunca escrito à mão. As imagens são as quatro artes do protótipo em WebP de 640 px
+(`public/images/nfts/`), distribuídas em ciclo pela ordem das fixtures; a mudança de URL subiu o
+snapshot para `v2`, e o snapshot `v1` antigo é descartado no boot.
 
 ## 5. Condições de rede
 

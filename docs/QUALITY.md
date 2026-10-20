@@ -56,6 +56,7 @@ declara o cenário. Regras:
 | `checkout` | `fast` | carrinho até o recibo com os campos do layout somente leitura e link; conexão exigida antes da revisão; Carla bloqueada sem Nome ENS nem carteira; `setPrice` depois não altera o recibo; carrinho perde o comprado (a remoção parcial é coberta em `handlers.test.ts`); Bruno na URL de um pedido da Ana vê a tela de pedido inexistente | PAG-4, PED-2..4, MOC-2, AUT-5 |
 | `checkout-failures` | `payment-refused`, `order-timeout`, `wallet-reject` | duplo clique gera um pedido só; reload no timeout recupera o mesmo pedido e apaga a tentativa; recusa preserva o carrinho; carteira que recusa mostra o motivo e não deixa revisar; carteira desconectada no servidor volta aos dados com o botão de conectar; sem resposta depois das tentativas, só "Tentar de novo" fica e recupera o pedido | PAG-1, PAG-3, PED-3 |
 | `realtime` | `fast`, `socket-duplicates`, `price-change-on-review`, `socket-drop` | evento atualiza detalhe e catálogo; anúncio e resumo novo no carrinho; valor não regride e anúncio único; queda reconecta, reassina e reconcilia; token recusado expira, não reconecta com ele e segue como visitante; `stats()` zera ao sair; heartbeat em 2 min de relógio; preço que muda na revisão mostra o diff e bloqueia "Confirmar" até aceite; reload no pendente mantém o pedido e a reconexão traz o desfecho; estoque que muda na revisão sem mudar valores não pede novo aceite | CRT-5, PAG-2, PED-1, RT, MOC-7 |
+| `layout` | `fast`, `slow` | nenhuma rota pública ou privada estoura a largura em 390, 768 e 1440; skeleton com dimensões finais e sem shimmer com movimento reduzido | NF-1, NF-2 |
 | `bootstrap` | Service Worker ou `localStorage` bloqueado | aviso no lugar da tela em branco, sem loop de recarga | NF-6 |
 | `mocks` | `fast` | cenário da URL aplicado e URL limpa; SHA do build exposto; cenário e banco persistem no reload; `reset()` apaga o snapshot e volta ao cenário padrão | MOC-3, MOC-8 |
 
@@ -85,7 +86,8 @@ Executado no build de produção antes da entrega, em 390, 768 e 1440:
 
 Metas de NF-4. Táticas: casco estático no `index.html` enquanto o MSW sobe antes do app
 ([ARCHITECTURE](ARCHITECTURE.md#4-bootstrap)); `autoCodeSplitting` com checkout e conta fora do
-bundle inicial; imagens WebP com `srcset`, dimensões explícitas e `fetchpriority="high"` na LCP;
+bundle inicial; imagens WebP de 640 px com dimensões explícitas, `fetchpriority="high"` e preload na
+LCP (sem `srcset`: são quatro artes reaproveitadas por todo o catálogo, baixadas uma vez só);
 fontes WOFF2 self-hosted com preload; `head` por rota e `lang="pt-BR"`. Nada é desligado só para a
 auditoria. O relatório (HTML) da URL pública vai em `lighthouse/` na entrega.
 

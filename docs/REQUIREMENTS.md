@@ -39,7 +39,7 @@ validade, e só ela vira pedido; o **recibo** é snapshot imutável do pedido.
 | **Fidelidade visual** | | |
 | VIS-1 | Cores e tipografia do tema (`@theme`) idênticas às variáveis do protótipo, salvo exceção registrada (VIS-4) | roteiro (tokens lidos pelo Figma MCP) |
 | VIS-2 | Tipografia, espaçamento, hierarquia, proporção de imagem e composição de cada tela conferidos contra o protótipo em 390 e 1440 | roteiro |
-| VIS-3 | Componentes shadcn/ui adaptados à identidade: nenhuma cor, fonte ou raio fora dos tokens | lint (valor arbitrário de cor proibido) |
+| VIS-3 | Componentes shadcn/ui adaptados à identidade: nenhuma cor, fonte ou raio fora dos tokens | lint (valor arbitrário de cor proibido); paleta padrão do Tailwind removida do tema |
 | VIS-4 | Substituição de asset, ajuste de acessibilidade e estado sem representação visual registrados com motivo na ARCHITECTURE | checklist de entrega |
 | **Navegação** | | |
 | NAV-1 | Acesso direto e refresh em qualquer rota prevista; rota inexistente com tela de não encontrado | `catalog`, smoke de publicação |
@@ -95,8 +95,8 @@ validade, e só ela vira pedido; o **recibo** é snapshot imutável do pedido.
 
 | ID | Requisito | Verificação |
 |---|---|---|
-| NF-1 | 390, 768 e 1440 sem overflow horizontal, com zoom de 200%; perfil, carteiras e confirmação também em mobile, mesmo sem frame | roteiro |
-| NF-2 | Skeleton com shimmer sem deslocar layout; respeita movimento reduzido | roteiro |
+| NF-1 | 390, 768 e 1440 sem overflow horizontal, com zoom de 200%; perfil, carteiras e confirmação também em mobile, mesmo sem frame | `layout`, roteiro (zoom) |
+| NF-2 | Skeleton com shimmer sem deslocar layout; respeita movimento reduzido | `layout` (movimento reduzido), roteiro |
 | NF-3 | Teclado, foco visível, foco em diálogos, labels e erros associados, live region, contraste AA | axe em toda spec E2E, roteiro (teclado) |
 | NF-4 | Lighthouse na URL pública: Performance ≥ 90, A11y ≥ 95, Best Practices ≥ 95, SEO ≥ 90 | relatório na entrega |
 | NF-5 | Valores ETH em string decimal no fio, sem perda de precisão | `eth.test.ts` |

@@ -81,8 +81,9 @@ porque o próprio MSW usa o `localStorage`), a página mostra um aviso no lugar 
 MSW de pé mas o armazenamento indisponível ou cheio, o `MockDb` roda só em memória. Chunk antigo que
 não existe mais depois de um deploy (aba aberta antes da publicação) dispara `vite:preloadError`, e a
 página recarrega com a versão nova, no máximo uma vez a cada 10 s, para uma falha repetida não virar
-loop de recarga. `index.html` traz o
-casco estático (header e hero com dimensões finais), para que LCP e CLS não dependam do bootstrap.
+loop de recarga. `index.html` traz, dentro de `#root`, o casco estático do cabeçalho com as mesmas
+classes e a mesma altura do cabeçalho real (105 px abaixo de 1024, 73 px acima), e faz preload da arte
+do hero, para que CLS e LCP não dependam do bootstrap.
 
 ## 5. Transporte HTTP
 
@@ -382,7 +383,23 @@ mantido durante a implementação.
 | Detalhe | Visitante vê "Entrar para favoritar", que leva ao login e volta ao NFT | Favorito é dado de pessoa (`['u', owner]`) e exige sessão |
 | Detalhe | "Comprar" vira "Adicionar ao carrinho", com a quantidade escolhida | A compra passa pelo carrinho e pela cotação; não há compra direta no contrato |
 | Carrinho | "ID do token" ausente nas linhas; a linha mostra a edição | O contrato não tem ID de token, e a compra é por edição |
-| Carrinho | "Conectar e finalizar" ausente até a fatia 7 | O pagamento nasce com o checkout; até lá, só "Continuar explorando" |
+| Carrinho | "Colecionadores também viram" ausente | Exigiria assinar em tempo real mais NFTs na tela do carrinho, sem requisito que peça a seção |
+| Carrinho | "Resumo da carteira" vira "Resumo do pedido" | O bloco mostra a cotação do pedido, não a carteira |
+| Todas | Tema escuro único, sem alternância claro e escuro | O protótipo só desenha o tema escuro |
+| Todas (mobile) | Cabeçalho compacto mantido acima da busca, com a navegação principal em linha rolável; a barra de abas leva a início, lista de interesse (fora de escopo), carrinho e conta, sem o botão central | Criadores, Aprenda, Perfil, Carteiras e Sair precisam existir em 390; o botão central do protótipo não tem função no escopo |
+| Todas | Rodapé com links para `/unavailable`, coleções levando ao filtro da categoria e "Enviar" da newsletter levando a `/unavailable` | Páginas editoriais e newsletter estão fora de escopo; nada aparenta sucesso funcional |
+| Início | Seções "Lançamentos" e "Diário da Cunhagem" com links para `/unavailable`; indicador de carrossel do hero ausente | Conteúdo editorial fora de escopo; o hero não é um carrossel |
+| Início | "NFT em destaque" mostra o primeiro destaque da API com nome e preço sobre a arte | O destaque é dado do servidor; nome e preço tornam o bloco um link útil |
+| Início | Busca no topo da coluna de resultados no desktop (o protótipo só tem o ícone no cabeçalho, que leva a ela) | CAT-1 exige busca por texto |
+| Início | Contagem de resultados no lugar das abas | As abas viraram o "Ordenar por" (linha acima) |
+| Cards | "A partir de" antes do preço | `priceFrom` é o menor preço entre as edições |
+| Detalhe | Botões de quantidade com rótulo "Quantidade" visível e limite por pedido; disponibilidade da edição escolhida abaixo das pílulas | DET-2 pede o limite e o motivo do bloqueio na tela |
+| Detalhe | "ID do token", "Atributos", compartilhamento e zoom ausentes; "Detalhes do NFT" mostra descrição, categoria e rede | O contrato não tem esses campos |
+| Detalhe (mobile) | Barra de compra fixa vira bloco no fluxo da página | A barra de abas ocupa a base da tela |
+| Login e cadastro | Ícone de mostrar senha ausente; rótulos dos campos só para leitor de tela, com o texto do protótipo no placeholder | O protótipo não desenha rótulo visível; o ícone não tem função no escopo |
+| Perfil | "Alterar senha" com botão próprio; "Sair" fica só no cabeçalho, fora do menu lateral | Perfil e senha são formulários e endpoints separados; uma ação de saída por tela |
+| Carteiras | "Igual à carteira principal" ausente | O contrato exige endereço próprio na secundária |
+| Recibo | Linhas mostram a edição no lugar do ID do token | O contrato não tem ID de token |
 
 ## 16. Limitações
 
