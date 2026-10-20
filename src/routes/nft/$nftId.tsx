@@ -33,10 +33,10 @@ function NftRoute() {
 
 function NftNotFound() {
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-4 p-6">
-      <h1 className="text-2xl font-semibold">NFT não encontrado</h1>
+    <main className="mx-auto flex w-full max-w-300 flex-col items-start gap-4 px-4 pt-16">
+      <h1 className="text-2xl font-bold">NFT não encontrado</h1>
       <p>Este NFT não existe ou saiu do catálogo.</p>
-      <Link to="/" className="underline underline-offset-4">
+      <Link to="/" className="text-text-accent underline underline-offset-4">
         Voltar ao catálogo
       </Link>
     </main>
@@ -52,8 +52,8 @@ function NftLoadError({ reset }: ErrorComponentProps) {
   }
 
   return (
-    <main className="mx-auto flex max-w-2xl flex-col items-start gap-4 p-6">
-      <h1 className="text-2xl font-semibold">Não foi possível carregar o NFT</h1>
+    <main className="mx-auto flex w-full max-w-300 flex-col items-start gap-4 px-4 pt-16">
+      <h1 className="text-2xl font-bold">Não foi possível carregar o NFT</h1>
       <p role="alert">Verifique a conexão e tente de novo.</p>
       <Button onClick={handleRetry}>Tentar de novo</Button>
     </main>
