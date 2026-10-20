@@ -238,7 +238,8 @@ function CatalogResults({ search, onSearchChange }: CatalogPageProps): JSX.Eleme
 
   if (list.isPending) {
     return (
-      <div aria-busy="true" aria-label="Carregando NFTs" className={GRID}>
+      <div aria-busy="true" className={GRID}>
+        <p className="sr-only">Carregando NFTs...</p>
         {isSkeletonVisible &&
           Array.from({ length: CATALOG_PAGE_SIZE }, (_, index) => <NftCardSkeleton key={index} />)}
       </div>
