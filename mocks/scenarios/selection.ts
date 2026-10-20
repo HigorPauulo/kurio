@@ -5,7 +5,7 @@ export const DEFAULT_SCENARIO = "default";
 
 export function parseScenario(value: string | null | undefined): PresetName[] | null {
   if (!value) return null;
-  const names = value.split("+").map((name) => name.trim()).filter(Boolean);
+  const names = value.split(/[+\s]+/).filter(Boolean);
   if (names.length === 0 || !names.every(isPresetName)) return null;
   return names;
 }

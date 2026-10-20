@@ -7,6 +7,10 @@ describe("seleção de cenário", () => {
   it("lê presets combinados e recusa nome desconhecido", () => {
     expect(parseScenario("slow+payment-refused")).toEqual(["slow", "payment-refused"]);
     expect(parseScenario("slow+inexistente")).toBeNull();
+    expect(parseScenario(new URLSearchParams("scenario=fast+socket-duplicates").get("scenario"))).toEqual([
+      "fast",
+      "socket-duplicates",
+    ]);
     expect(parseScenario("")).toBeNull();
   });
 
