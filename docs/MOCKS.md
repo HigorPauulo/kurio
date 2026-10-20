@@ -73,7 +73,9 @@ das edições, nunca escrito à mão. As imagens são as quatro artes do protót
 Violet, Cosmic), Kurio Barons (Ivory, Neon) e Kurio Golden. Os
 nomes são os 9 do protótipo (Emerald Ape #042, Sage Nomad #009, Neon Vessel #552, Cosmic Bloom #118,
 Violet Nomad #314, Ivory Baron #088, Golden Beat #207, Golden Frequency #071, Golden Signal #160) e
-outros 15 no mesmo padrão. A troca de nomes subiu o snapshot para `v7`, e o boot apaga do
+outros 15 no mesmo padrão. As avaliações (`fixtures/reviews.ts`) saem de um gerador determinístico por
+NFT (autores, notas e comentários em ciclo); a nota agregada `Nft.rating` é calculada delas, e o
+Emerald Ape #042 tem 19 avaliações com média 4,5, como no protótipo. A troca de nomes subiu o snapshot para `v8`, e o boot apaga do
 `localStorage` o snapshot de versões anteriores.
 
 ## 5. Condições de rede

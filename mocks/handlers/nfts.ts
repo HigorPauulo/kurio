@@ -3,6 +3,7 @@ import { categorySchema, chainSchema } from "@/contracts/common";
 import {
   type CatalogFacets,
   nftListQuerySchema,
+  reviewsQuerySchema,
   nftSchema,
   nftSummarySchema,
   type Nft,
@@ -10,6 +11,7 @@ import {
   type NftSummary,
 } from "@/contracts/nft";
 import { compareEth, maxEth, minEth } from "@/lib/eth";
+import { buildReviews, summarizeReviews } from "../fixtures/reviews";
 import { stripAccents } from "../text";
 import { API, apiError, withConditions, type HandlerDeps } from "./shared";
 
@@ -137,6 +139,29 @@ export function nftHandlers(deps: HandlerDeps): HttpHandler[] {
             .map(toNftSummary),
         ),
       ),
+    ),
+
+    http.get(
+      `${API}/nfts/:nftId/reviews`,
+      withConditions(deps, ({ request, params }) => {
+        const nft = allNfts().find((candidate) => candidate.id === String(params.nftId));
+        if (!nft) return apiError(request, 404, "NOT_FOUND", "NFT não encontrado.");
+        const parsed = reviewsQuerySchema.safeParse(Object.fromEntries(new URL(request.url).searchParams));
+        if (!parsed.success) {
+          return apiError(request, 400, "BAD_REQUEST", parsed.error.issues[0]?.message ?? "Parâmetros inválidos.");
+        }
+        const { page, pageSize } = parsed.data;
+        const reviews = buildReviews(nft.id, nft.rating.count, nft.createdAt);
+        const start = (page - 1) * pageSize;
+        return HttpResponse.json({
+          items: reviews.slice(start, start + pageSize),
+          page,
+          pageSize,
+          total: reviews.length,
+          totalPages: Math.ceil(reviews.length / pageSize),
+          summary: summarizeReviews(reviews),
+        });
+      }),
     ),
 
     http.get(

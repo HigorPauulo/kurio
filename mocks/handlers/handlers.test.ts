@@ -328,6 +328,30 @@ describe("catálogo", () => {
     expect(prices).not.toContain("0.009");
   });
 
+  it("pagina as avaliações com resumo igual à nota agregada do NFT", async () => {
+    const first = await call("GET", "/nfts/nft_001/reviews");
+    const body = first.json as unknown as {
+      items: { rating: number }[];
+      total: number;
+      totalPages: number;
+      summary: { average: number; count: number; distribution: Record<string, number> };
+    };
+    expect(body.items).toHaveLength(5);
+    expect(body.total).toBe(19);
+    expect(body.totalPages).toBe(4);
+    expect(body.summary).toMatchObject({ average: 4.5, count: 19 });
+    expect(Object.values(body.summary.distribution).reduce((sum, count) => sum + count, 0)).toBe(19);
+
+    const nft = (await call("GET", "/nfts/nft_001")).json as unknown as { rating: { average: number; count: number } };
+    expect(nft.rating).toEqual({ average: 4.5, count: 19 });
+
+    const last = (await call("GET", "/nfts/nft_001/reviews?page=4")).json as unknown as { items: unknown[]; page: number };
+    expect(last.page).toBe(4);
+    expect(last.items).toHaveLength(4);
+    expect((await call("GET", "/nfts/nft_999/reviews")).status).toBe(404);
+    expect((await call("GET", "/nfts/nft_001/reviews?pageSize=99")).status).toBe(400);
+  });
+
   it("filtra por coleção", async () => {
     const { body } = await list("?collection=col_kurio-apes&pageSize=48");
     expect(body.items.map((item) => item.name).sort()).toEqual([

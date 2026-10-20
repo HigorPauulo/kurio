@@ -147,6 +147,7 @@ refresh token.
 | `GET /nfts` | 200 `Page<NftSummary> & { appliedQuery, facets }` | 400 |
 | `GET /nfts/featured` | 200 `NftSummary[]` (até 6) | |
 | `GET /nfts/:id` | 200 `Nft` | 404 |
+| `GET /nfts/:id/reviews` | 200 `Page<Review> & { summary }` (`pageSize` 1 a 20, padrão 5) | 400, 404 |
 
 Parâmetros de `GET /nfts`: `q` (1 a 80 caracteres, sem acento e sem caixa, em nome, coleção e
 criador); `category` e `chain` (listas separadas por vírgula, OR dentro do filtro); `status`
@@ -167,6 +168,10 @@ devolve `items: []` com o `total` real.
 | `GET /me/favorites` | 200 `{ nftIds: string[] }` | |
 | `PUT /me/favorites/:nftId` | 204, idempotente | 404 |
 | `DELETE /me/favorites/:nftId` | 204, idempotente | |
+
+`Review` é `{ id; author: { name }; rating: 1..5; comment; createdAt }`, da mais recente para a mais
+antiga. `summary` traz `average` (uma casa), `count` e `distribution` (contagem por nota de 1 a 5), e é
+sempre igual a `Nft.rating`, que vem do mesmo conjunto de avaliações.
 
 Favoritar soma 1 em `Nft.likes` e desfavoritar subtrai 1, só quando o estado muda. `likes` não é dado
 de tempo real: muda sem `nft.updated` e chega ao catálogo pelo `staleTime`.

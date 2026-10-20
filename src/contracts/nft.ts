@@ -103,6 +103,33 @@ export const nftListResponseSchema = pageSchema(nftSummarySchema).extend({
   facets: catalogFacetsSchema,
 });
 
+export const reviewSchema = z.object({
+  id: z.string(),
+  author: z.object({ name: z.string() }),
+  rating: z.literal([1, 2, 3, 4, 5]),
+  comment: z.string(),
+  createdAt: dateTimeSchema,
+});
+
+export const reviewSummarySchema = z.object({
+  average: z.number().min(0).max(5),
+  count: z.number().int().min(0),
+  distribution: z.object({
+    1: z.number().int().min(0),
+    2: z.number().int().min(0),
+    3: z.number().int().min(0),
+    4: z.number().int().min(0),
+    5: z.number().int().min(0),
+  }),
+});
+
+export const reviewsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(20).default(5),
+});
+
+export const reviewsResponseSchema = pageSchema(reviewSchema).extend({ summary: reviewSummarySchema });
+
 export const featuredNftsResponseSchema = z.array(nftSummarySchema).max(6);
 
 export const favoritesResponseSchema = z.object({
@@ -116,6 +143,9 @@ export type NftListQuery = z.infer<typeof nftListQuerySchema>;
 export type NftListQueryInput = z.input<typeof nftListQuerySchema>;
 export type NftListResponse = z.infer<typeof nftListResponseSchema>;
 export type CatalogFacets = z.infer<typeof catalogFacetsSchema>;
+export type Review = z.infer<typeof reviewSchema>;
+export type ReviewSummary = z.infer<typeof reviewSummarySchema>;
+export type ReviewsResponse = z.infer<typeof reviewsResponseSchema>;
 
 export function purchaseLimit(edition: Pick<Edition, "available" | "maxPerOrder" | "status">): number {
   if (edition.status !== "available") return 0;

@@ -3,6 +3,7 @@ import type { Image } from "@/contracts/common";
 import type { Edition, Nft } from "@/contracts/nft";
 import { refreshNft } from "../db/nftUpdates";
 import { stripAccents } from "../text";
+import { buildReviews, reviewCountFor, summarizeReviews } from "./reviews";
 
 const ARTWORKS = {
   emerald: "/images/nfts/emerald-ape.webp",
@@ -55,12 +56,11 @@ type NftRow = {
   likes: number;
   featured?: true;
   images?: number;
-  rating?: { average: number; count: number };
   editions: EditionRow[];
 };
 
 const ROWS: NftRow[] = [
-  { name: "Emerald Ape #042", collection: "Kurio Apes", creator: "lia", category: "digital-art", chain: "ethereum", likes: 412, featured: true, images: 2, rating: { average: 4.5, count: 19 }, editions: [["Padrão", "2.38", 8, 20, 3], ["Ouro", "4.5", 2, 5, 1]] },
+  { name: "Emerald Ape #042", collection: "Kurio Apes", creator: "lia", category: "digital-art", chain: "ethereum", likes: 412, featured: true, images: 2, editions: [["Padrão", "2.38", 8, 20, 3], ["Ouro", "4.5", 2, 5, 1]] },
   { name: "Violet Nomad #314", collection: "Kurio Nomads", creator: "kenji", category: "photography", chain: "polygon", likes: 288, featured: true, editions: [["Padrão", "8.34", 5, 10, 2]] },
   { name: "Ivory Baron #088", collection: "Kurio Barons", creator: "noa", category: "music", chain: "base", likes: 351, featured: true, editions: [["Padrão", "12.5", 1, 3, 1]] },
   { name: "Neon Vessel #552", collection: "Kurio Barons", creator: "iris", category: "3d-art", chain: "ethereum", likes: 97, editions: [["Padrão", "0.75", 12, 30, 5], ["Edição da artista", "1.2", 0, 5, 1]] },
@@ -124,8 +124,9 @@ function tokenIdFrom(name: string): string {
   return `#${number.padStart(4, "0")}`;
 }
 
-function ratingFor(row: NftRow, index: number): Nft["rating"] {
-  return row.rating ?? { average: 3.5 + ((index * 7) % 15) / 10, count: 5 + (row.likes % 40) };
+function ratingFor(nftId: string, likes: number, createdAt: string): Nft["rating"] {
+  const { average, count } = summarizeReviews(buildReviews(nftId, reviewCountFor(nftId, likes), createdAt));
+  return { average, count };
 }
 
 function buildNft(row: NftRow, index: number): Nft {
@@ -133,6 +134,7 @@ function buildNft(row: NftRow, index: number): Nft {
   const editions = row.editions.map((edition, editionIndex) =>
     buildEdition(number, editionIndex, edition),
   );
+  const createdAt = new Date(FIRST_CREATED_AT + index * DAY_MS).toISOString();
   const nft: Nft = {
     id: `nft_${number}`,
     name: row.name,
@@ -147,8 +149,8 @@ function buildNft(row: NftRow, index: number): Nft {
     priceFrom: editions[0].price,
     featured: row.featured ?? false,
     likes: row.likes,
-    rating: ratingFor(row, index),
-    createdAt: new Date(FIRST_CREATED_AT + index * DAY_MS).toISOString(),
+    rating: ratingFor(`nft_${number}`, row.likes, createdAt),
+    createdAt,
     version: 0,
   };
   refreshNft(nft);
