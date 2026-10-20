@@ -60,7 +60,7 @@ test("do carrinho ao recibo: campos do layout, revisão, pedido confirmado e rec
 
 test("Carla sem Nome ENS nem carteira fica bloqueada com o erro no campo", async ({ page }) => {
   await login(page, "carla@kurio.test", "/nft/nft_014");
-  await page.getByRole("button", { name: "Adicionar ao carrinho" }).click();
+  await page.getByRole("button", { name: "Comprar" }).click();
   await expect(page.getByText("Adicionado.")).toBeVisible();
 
   await page.goto("/checkout");

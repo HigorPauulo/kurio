@@ -22,7 +22,7 @@ async function addToCart(page: Page, nftId: string, quantity = 1): Promise<void>
   await page.goto(`/nft/${nftId}`);
   const increase = page.getByRole("button", { name: "Aumentar quantidade" });
   for (let step = 1; step < quantity; step += 1) await increase.click();
-  await page.getByRole("button", { name: "Adicionar ao carrinho" }).click();
+  await page.getByRole("button", { name: "Comprar" }).click();
   await expect(page.getByText("Adicionado.")).toBeVisible();
 }
 
@@ -36,7 +36,7 @@ test.beforeEach(async ({ page }) => {
 
 test("visitante respeita o limite da edição, altera, e o carrinho persiste no refresh", async ({ page }) => {
   await addToCart(page, "nft_001", 3);
-  await page.getByRole("button", { name: "Adicionar ao carrinho" }).click();
+  await page.getByRole("button", { name: "Comprar" }).click();
   await expect(page.getByRole("alert")).toHaveText("Esta edição permite até 3 unidades no carrinho.");
   await expect(page.getByRole("link", { name: "Carrinho, 3 itens" })).toBeVisible();
 

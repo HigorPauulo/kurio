@@ -391,7 +391,7 @@ mantido durante a implementação.
 | Início | Faixa de preço sem digitação; alças movem em passos de 0,001 ETH | O protótipo desenha um controle deslizante; a precisão de 18 casas segue no fio e no cálculo |
 | Detalhe | Aba "Avaliações de colecionadores", estrelas e "Mais desta coleção" ausentes | Avaliações não existem no contrato; `GET /nfts` não filtra por coleção |
 | Detalhe | Para o visitante, "Favoritar" leva ao login e volta ao NFT (o nome acessível avisa que exige entrar) | Favorito é dado de pessoa (`['u', owner]`) e exige sessão |
-| Detalhe | "Comprar" vira "Adicionar ao carrinho", com a quantidade escolhida | A compra passa pelo carrinho e pela cotação; não há compra direta no contrato |
+| Detalhe | "Comprar" adiciona ao carrinho a quantidade escolhida e mostra "Adicionado. Ver carrinho"; o nome acessível diz "(adiciona ao carrinho)" | A compra passa pelo carrinho e pela cotação; não há compra direta no contrato |
 | Carrinho | "ID do token" ausente nas linhas; a linha mostra a edição | O contrato não tem ID de token, e a compra é por edição |
 | Carrinho | "Colecionadores também viram" ausente | Exigiria assinar em tempo real mais NFTs na tela do carrinho, sem requisito que peça a seção |
 | Carrinho | "Resumo da carteira" vira "Resumo do pedido" | O bloco mostra a cotação do pedido, não a carteira |

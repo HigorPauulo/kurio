@@ -29,7 +29,8 @@ export function AddToCartButton({ nftId, editionId, quantity }: AddToCartButtonP
     <div className="flex flex-col items-start gap-2">
       <Button type="button" disabled={add.isPending} aria-busy={add.isPending} onClick={handleAdd} className="h-10 text-sm">
         <ShoppingCart aria-hidden="true" />
-        Adicionar ao carrinho
+        Comprar
+        <span className="sr-only"> (adiciona ao carrinho)</span>
       </Button>
       {add.isError && (
         <p role="alert" className="text-sm text-destructive">
