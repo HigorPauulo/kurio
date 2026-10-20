@@ -240,6 +240,15 @@ describe("persistência", () => {
     expect(Object.keys(createDb().read((tables) => tables.nfts))).toEqual(["nft_a", "nft_b"]);
   });
 
+  it("apaga no boot o snapshot de versões anteriores do schema", () => {
+    const oldKey = `kurio:mockdb:v${SCHEMA_VERSION - 1}`;
+    storage.setItem(oldKey, JSON.stringify({ schemaVersion: SCHEMA_VERSION - 1, tables: emptyTables() }));
+
+    createDb();
+
+    expect(storage.getItem(oldKey)).toBeNull();
+  });
+
   it("recusa o commit que estoura o orçamento e mantém o estado anterior", () => {
     const db = createDb(100);
 

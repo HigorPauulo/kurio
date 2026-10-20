@@ -137,7 +137,14 @@ export function createMockDb(options: MockDbOptions): MockDb {
   } = options;
   const listeners = new Set<(events: MockDbEvent[]) => void>();
 
+  function dropOldSnapshots(): void {
+    for (let version = 1; version < SCHEMA_VERSION; version += 1) {
+      storage?.removeItem(`kurio:mockdb:v${version}`);
+    }
+  }
+
   function load(): Tables | null {
+    dropOldSnapshots();
     const raw = storage?.getItem(STORAGE_KEY);
     if (!raw) return null;
     try {
