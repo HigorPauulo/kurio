@@ -80,7 +80,7 @@ function SearchBox({ value, onSearchChange }: { value: string | undefined; onSea
 
 function ViewTabs({ view }: { view: CatalogSearch["view"] }): JSX.Element {
   return (
-    <ul aria-label="Vistas do catálogo" className="flex gap-5 overflow-x-auto text-body leading-4 font-medium">
+    <ul aria-label="Vistas do catálogo" className="flex max-w-full min-w-0 gap-5 overflow-x-auto text-body leading-4 font-medium">
       {VIEW_TABS.map((tab) => (
         <li key={tab.label} className="shrink-0">
           <Link
@@ -332,7 +332,7 @@ export function CatalogPage({ search, onSearchChange }: CatalogPageProps): JSX.E
         </div>
         <div className="flex min-w-0 flex-col gap-8">
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+            <div className="flex max-w-full min-w-0 flex-wrap items-center gap-x-5 gap-y-3">
               <ViewTabs view={search.view} />
               {search.q && (
                 <button
