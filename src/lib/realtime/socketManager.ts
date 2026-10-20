@@ -10,6 +10,7 @@ export type SocketManagerOptions = {
   url: string;
   onEvent: (event: RealtimeEvent) => void;
   onConnect: (isReconnect: boolean) => void;
+  onStatusChange: (isConnected: boolean) => void;
   onSessionExpired: () => void;
 };
 
@@ -20,7 +21,13 @@ export type SocketManager = {
   request: (event: string, payload: unknown) => Promise<SubscriptionAck | null>;
 };
 
-export function createSocketManager({ url, onEvent, onConnect, onSessionExpired }: SocketManagerOptions): SocketManager {
+export function createSocketManager({
+  url,
+  onEvent,
+  onConnect,
+  onStatusChange,
+  onSessionExpired,
+}: SocketManagerOptions): SocketManager {
   let socket: Socket | null = null;
   let currentToken: string | null | undefined;
   let isRefused = false;
@@ -32,6 +39,7 @@ export function createSocketManager({ url, onEvent, onConnect, onSessionExpired 
     socket?.disconnect();
     socket = null;
     currentToken = undefined;
+    onStatusChange(false);
   }
 
   return {
@@ -49,9 +57,11 @@ export function createSocketManager({ url, onEvent, onConnect, onSessionExpired 
       });
       next.on("connect", () => {
         if (isRefused) return;
+        onStatusChange(true);
         onConnect(hasEverConnected);
         hasEverConnected = true;
       });
+      next.on("disconnect", () => onStatusChange(false));
       next.on("connect_error", (error: ConnectError) => {
         if (error.data?.code !== "SESSION_EXPIRED") return;
         isRefused = true;

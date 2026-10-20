@@ -30,3 +30,33 @@ export async function expectNoA11yViolations(page: Page): Promise<void> {
     .map((violation) => `${violation.id}: ${violation.nodes.map((node) => node.target.join(" ")).join(", ")}`);
   expect(blocking).toEqual([]);
 }
+
+type OrderSnapshot = { id: string; status: string };
+type CartSnapshot = { items: { editionId: string; quantity: number }[] } | null;
+
+type ControlWindow = {
+  __kurio: {
+    inspect: { orders: () => OrderSnapshot[]; cart: (owner: string) => CartSnapshot };
+    catalog: { setPrice: (nftId: string, editionId: string, price: string) => void };
+  };
+};
+
+export async function serverOrders(page: Page): Promise<OrderSnapshot[]> {
+  return page.evaluate(() => (window as unknown as ControlWindow).__kurio.inspect.orders());
+}
+
+export async function serverCart(page: Page, owner: string): Promise<CartSnapshot> {
+  return page.evaluate((key) => (window as unknown as ControlWindow).__kurio.inspect.cart(key), owner);
+}
+
+export async function goToReview(page: Page): Promise<void> {
+  await page.goto("/cart");
+  await page.getByRole("link", { name: "Conectar e finalizar" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Pagamento" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Revisar pedido" })).toBeVisible();
+  const connect = page.getByRole("button", { name: "Conectar MetaMask na Ethereum" });
+  if (await connect.isVisible()) await connect.click();
+  await expect(page.getByText("Conectada na Ethereum")).toBeVisible();
+  await page.getByRole("button", { name: "Revisar pedido" }).click();
+  await expect(page.getByRole("heading", { name: "Revise o pedido" })).toBeVisible();
+}

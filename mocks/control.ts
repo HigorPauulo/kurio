@@ -3,6 +3,7 @@ import { ethAmountSchema } from "@/contracts/common";
 import { orderSchema, type Order } from "@/contracts/order";
 import { refreshNft, nftUpdatedData } from "./db/nftUpdates";
 import type { MockDb } from "./db/mockDb";
+import { settleOrder, type SettleOutcome } from "./db/orders";
 import type { Tables } from "./db/tables";
 import type { LoggedRequest, NetworkConditions } from "./network/conditions";
 import type { RealtimeServer, RealtimeStats } from "./realtime/server";
@@ -17,6 +18,7 @@ export type KurioControl = {
     setAvailable: (nftId: string, editionId: string, available: number) => void;
   };
   sessions: { expire: (userId?: string) => void };
+  orders: { settle: (orderId: string, outcome: SettleOutcome) => boolean };
   realtime: {
     dropConnections: (options?: { reconnectAfterMs?: number }) => void;
     stats: () => RealtimeStats;
@@ -113,6 +115,10 @@ export function createControl({
           }
         });
       },
+    },
+
+    orders: {
+      settle: (orderId, outcome) => settleOrder(db, orderId, outcome),
     },
 
     realtime,

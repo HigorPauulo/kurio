@@ -12,6 +12,7 @@ import type { Nft, NftListResponse, NftSummary } from "@/contracts/nft";
 import { announce } from "@/lib/a11y/announcer";
 import { ApiError } from "@/lib/http/apiError";
 import { toggleItem } from "@/lib/list";
+import { ensureDespiteCancel } from "@/lib/query/ensure";
 import { keys } from "@/lib/query/keys";
 import { seedNftVersions } from "@/lib/query/versions";
 import { addFavorite, getFavorites, getFeaturedNfts, getNft, getNfts, removeFavorite } from "./api";
@@ -58,7 +59,7 @@ export function nftQuery(nftId: string): TaggedQueryOptions<Nft, ReturnType<type
 
 export async function ensureNft(queryClient: QueryClient, nftId: string): Promise<Nft | null> {
   try {
-    return await queryClient.ensureQueryData(nftQuery(nftId));
+    return await ensureDespiteCancel(() => queryClient.ensureQueryData(nftQuery(nftId)));
   } catch (error) {
     if (error instanceof ApiError && error.info.code === "NOT_FOUND") return null;
     throw error;

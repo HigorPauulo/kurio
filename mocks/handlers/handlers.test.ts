@@ -1,6 +1,7 @@
 import { setupServer } from "msw/node";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createMockDb } from "../db/mockDb";
+import { settleOrder } from "../db/orders";
 import { createSeed } from "../db/seed";
 import { createNetworkConditions } from "../network/conditions";
 import { buildScenario, type PresetName } from "../scenarios/presets";
@@ -8,6 +9,7 @@ import { authHandlers } from "./auth";
 import { cartHandlers } from "./cart";
 import { favoriteHandlers } from "./favorites";
 import { meHandlers } from "./me";
+import { orderHandlers } from "./orders";
 import { nftHandlers } from "./nfts";
 import type { HandlerDeps } from "./shared";
 import { walletHandlers } from "./wallets";
@@ -16,6 +18,7 @@ const START = Date.parse("2026-10-19T12:00:00.000Z");
 const PASSWORD = "Kurio@2026";
 
 let nowMs = START;
+const scheduled: string[] = [];
 let scenarioNames: PresetName[] = ["fast"];
 const db = createMockDb({ seed: createSeed, now: () => nowMs });
 
@@ -27,6 +30,8 @@ const deps: HandlerDeps = {
   }),
   getScenario: () => buildScenario(scenarioNames),
   now: () => nowMs,
+  wait: () => Promise.resolve(),
+  orders: { schedule: (orderId) => scheduled.push(orderId), resume: () => undefined },
 };
 
 const server = setupServer(
@@ -34,6 +39,7 @@ const server = setupServer(
   ...nftHandlers(deps),
   ...favoriteHandlers(deps),
   ...cartHandlers(deps),
+  ...orderHandlers(deps),
   ...meHandlers(deps),
   ...walletHandlers(deps),
 );
@@ -47,7 +53,7 @@ beforeEach(() => {
 });
 afterEach(() => server.resetHandlers());
 
-type CallOptions = { token?: string; guest?: string; body?: unknown; form?: FormData };
+type CallOptions = { token?: string; guest?: string; key?: string; body?: unknown; form?: FormData };
 
 type ResponseBody = {
   [key: string]: unknown;
@@ -59,8 +65,9 @@ type ResponseBody = {
   connection: unknown;
 };
 
-async function call(method: string, path: string, { token, guest, body, form }: CallOptions = {}) {
+async function call(method: string, path: string, { token, guest, key, body, form }: CallOptions = {}) {
   const headers: Record<string, string> = {};
+  if (key) headers["Idempotency-Key"] = key;
   if (token) headers.Authorization = `Bearer ${token}`;
   if (guest) headers["X-Guest-Cart-Id"] = guest;
   if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -495,5 +502,121 @@ describe("carrinho", () => {
       ["ed_004_1", 1, "sold_out", "0.75"],
       ["ed_012_1", 3, "ok", "0.07"],
     ]);
+  });
+});
+
+type OrderBody = {
+  id: string;
+  status: string;
+  receipt: { total: string; lines: { editionId: string; quantity: number }[]; buyer: { ensName: string; note: string | null } };
+  transaction: { hash: string; explorerUrl: string } | null;
+  refusal: { reason: string } | null;
+};
+
+async function prepareCheckout(email = "ana@kurio.test"): Promise<{ token: string; quoteId: string }> {
+  const token = await login(email);
+  await call("POST", "/me/wallets/wal_ana_1/connection", { token, body: { network: "ethereum" } });
+  const quote = await call("POST", "/quotes", { token, body: { network: "ethereum", purpose: "checkout" } });
+  return { token, quoteId: (quote.json as unknown as { id: string }).id };
+}
+
+function orderBody(quoteId: string, note: string | null = "Presente") {
+  return { quoteId, walletId: "wal_ana_1", network: "ethereum", note };
+}
+
+describe("pedidos", () => {
+  beforeEach(() => {
+    scheduled.length = 0;
+  });
+
+  it("exige a chave, cria pendente com reserva e agenda o desfecho", async () => {
+    const { token, quoteId } = await prepareCheckout();
+    expect((await call("POST", "/orders", { token, body: orderBody(quoteId) })).status).toBe(400);
+
+    const created = await call("POST", "/orders", { token, key: "k1", body: orderBody(quoteId) });
+    const order = created.json as unknown as OrderBody;
+    expect(created.status).toBe(201);
+    expect(order).toMatchObject({ status: "pending", receipt: { total: "0.8724", buyer: { ensName: "ana.eth", note: "Presente" } } });
+    expect(scheduled).toEqual([order.id]);
+    expect(db.read((tables) => tables.nfts.nft_012.editions[0].available)).toBe(28);
+  });
+
+  it("mesma chave devolve o mesmo pedido, mesmo com a cotação vencida; corpo diferente e cotação reusada são recusados", async () => {
+    const { token, quoteId } = await prepareCheckout();
+    const first = (await call("POST", "/orders", { token, key: "k1", body: orderBody(quoteId) })).json as unknown as OrderBody;
+    nowMs += 10 * 60_000;
+
+    const replay = await call("POST", "/orders", { token, key: "k1", body: orderBody(quoteId) });
+    expect(replay.status).toBe(200);
+    expect((replay.json as unknown as OrderBody).id).toBe(first.id);
+
+    const conflict = await call("POST", "/orders", { token, key: "k1", body: orderBody(quoteId, "outra") });
+    expect(conflict.json.error).toMatchObject({ code: "IDEMPOTENCY_CONFLICT", details: { orderId: first.id } });
+    const reused = await call("POST", "/orders", { token, key: "k2", body: orderBody(quoteId) });
+    expect(reused.json.error).toMatchObject({ code: "QUOTE_ALREADY_USED", details: { orderId: first.id } });
+
+    nowMs = START;
+    const fresh = (await call("POST", "/quotes", { token, body: { network: "ethereum", purpose: "checkout" } })).json as unknown as { id: string };
+    const second = await call("POST", "/orders", { token, key: "k3", body: orderBody(fresh.id) });
+    expect(second.json.error).toMatchObject({ code: "ORDER_PENDING", details: { orderId: first.id } });
+    expect(db.read((tables) => Object.keys(tables.orders))).toHaveLength(1);
+  });
+
+  it("valida perfil, carteira, rede e conexão", async () => {
+    const carla = await login("carla@kurio.test");
+    const carlaOrder = await call("POST", "/orders", { token: carla, key: "c1", body: orderBody("qte_x") });
+    expect(carlaOrder.json.error.fieldErrors).toHaveProperty("ensName");
+
+    const token = await login("ana@kurio.test");
+    const quote = (await call("POST", "/quotes", { token, body: { network: "ethereum" } })).json as unknown as { id: string };
+    expect((await call("POST", "/orders", { token, key: "a1", body: { ...orderBody(quote.id), network: "polygon" } })).json.error.fieldErrors).toHaveProperty("network");
+    expect((await call("POST", "/orders", { token, key: "a2", body: orderBody(quote.id) })).json.error.code).toBe("WALLET_NOT_CONNECTED");
+  });
+
+  it("recusa cotação velha com a nova nos detalhes, e cotação vencida", async () => {
+    const { token, quoteId } = await prepareCheckout();
+    db.commit((draft) => {
+      draft.nfts.nft_004.editions[0].price = "0.8" as never;
+    });
+    const stale = await call("POST", "/orders", { token, key: "s1", body: orderBody(quoteId) });
+    expect(stale.json.error.code).toBe("QUOTE_STALE");
+    const fresh = (stale.json.error as unknown as { details: { quote: { id: string; total: string } } }).details.quote;
+    expect(fresh.total).toBe("0.9224");
+
+    nowMs += 6 * 60_000;
+    expect((await call("POST", "/orders", { token, key: "s2", body: orderBody(fresh.id) })).json.error.code).toBe("QUOTE_EXPIRED");
+  });
+
+  it("confirmação baixa só o comprado do carrinho e grava a transação; recusa devolve o estoque", async () => {
+    const { token, quoteId } = await prepareCheckout();
+    const order = (await call("POST", "/orders", { token, key: "k1", body: orderBody(quoteId) })).json as unknown as OrderBody;
+    await call("POST", "/cart/items", { token, body: { nftId: "nft_014", editionId: "ed_014_1", quantity: 1 } });
+
+    expect(settleOrder(db, order.id, "confirmed")).toBe(true);
+    expect(settleOrder(db, order.id, "refused")).toBe(false);
+    const confirmed = (await call("GET", `/orders/${order.id}`, { token })).json as unknown as OrderBody;
+    expect(confirmed.transaction?.explorerUrl).toMatch(/^https:\/\/etherscan\.io\/tx\/0x[0-9a-f]{64}$/);
+    expect(db.read((tables) => tables.carts.usr_ana.items.map((item) => item.editionId))).toEqual(["ed_014_1"]);
+
+    db.reset();
+    const second = await prepareCheckout();
+    const refused = (await call("POST", "/orders", { token: second.token, key: "k2", body: orderBody(second.quoteId) })).json as unknown as OrderBody;
+    settleOrder(db, refused.id, "refused");
+    expect(db.read((tables) => tables.nfts.nft_012.editions[0].available)).toBe(30);
+    expect(db.read((tables) => tables.carts.usr_ana.items)).toHaveLength(2);
+    expect(((await call("GET", `/orders/${refused.id}`, { token: second.token })).json as unknown as OrderBody).refusal).not.toBeNull();
+  });
+
+  it("pedido de outro usuário responde 403 e inexistente 404, e o recibo não muda com o preço", async () => {
+    const { token, quoteId } = await prepareCheckout();
+    const order = (await call("POST", "/orders", { token, key: "k1", body: orderBody(quoteId) })).json as unknown as OrderBody;
+    db.commit((draft) => {
+      draft.nfts.nft_004.editions[0].price = "9" as never;
+    });
+    expect(((await call("GET", `/orders/${order.id}`, { token })).json as unknown as OrderBody).receipt.total).toBe("0.8724");
+
+    const bruno = await login("bruno@kurio.test");
+    expect((await call("GET", `/orders/${order.id}`, { token: bruno })).status).toBe(403);
+    expect((await call("GET", "/orders/ord_999", { token: bruno })).status).toBe(404);
   });
 });

@@ -40,7 +40,7 @@ carrinho, cotação usada, desfecho do pedido), em `mocks/db/tables.ts`.
 - Toda escrita em `nfts`, `carts` ou `orders` incrementa a `version` do registro, detectada pelo próprio
   commit (handler nunca mexe em `version`), e o evento leva essa versão. Evento e ID seguem
   `meta.sequence`, então a mesma sequência de commits gera os mesmos IDs.
-- Pedido segue a ordem de avaliação da [API](API.md#pedidos-privado): `idempotency` indexada por
+- Pedido (`mocks/handlers/orders.ts`, desfecho em `mocks/db/orders.ts`) segue a ordem de avaliação da [API](API.md#pedidos-privado): `idempotency` indexada por
   `userId:key`, cotação marcada com `usedByOrderId`, reserva na criação, devolução na recusa, baixa e
   remoção do carrinho só na confirmação. `buyer` é montado no commit e nunca recalculado.
 - Senha: PBKDF2-SHA256 com salt e 600 000 iterações via WebCrypto; as fixtures trazem o hash pronto.
@@ -101,7 +101,7 @@ restauram as fixtures antes. O app tira `scenario` e `reset` da URL depois de ap
 | `out-of-order` | `/nfts` com `base = 3000`, `step = 1000`, `k = 3` |
 | `empty-catalog` / `offline` | `/nfts` vazio / erro de rede |
 | `session-short` | token com 60 s |
-| `price-change-on-review` | 2 s após a primeira cotação do checkout, +15% no primeiro item (truncado em 6 casas), com `nft.updated` |
+| `price-change-on-review` | 2 s após a primeira cotação com `purpose: 'checkout'` desde o carregamento da página, +15% no primeiro item do carrinho (truncado em 6 casas), com `nft.updated` |
 | `order-timeout` | primeira `POST /orders` de cada chave cria o pedido e responde após 20 s |
 | `payment-refused` | desfecho `refused` |
 | `wallet-reject` | `WALLET_REJECTED` na conexão |
@@ -116,7 +116,7 @@ restauram as fixtures antes. O app tira `scenario` e `reset` da URL depois de ap
   usuário; os demais são recusados. Conexão recusada não recebe ack nem evento.
 - Subscriptions por conexão; `order.subscribe` valida o dono.
 - `nft.updated` vai a quem assinou o NFT; `order.updated`, ao dono que assinou o pedido.
-- Assinatura nova de um NFT reentrega a ela o último `nft.updated` daquele NFT, se houver. O evento
+- Assinatura nova de um NFT ou de um pedido reentrega a ela o último evento daquele recurso, se houver. O evento
   nasceu de um commit, então o invariante 2 vale; o cliente descarta pela versão se já tinha o dado.
 - `socket-duplicates` entrega cada evento duas vezes e reentrega o evento anterior do mesmo recurso 1 s
   depois. `dropConnections({ reconnectAfterMs })` fecha as conexões e, durante a janela, fecha cada nova
@@ -139,7 +139,7 @@ pacotes crus na conexão ([DECISIONS](DECISIONS.md)), todos cobertos pela spec E
 | `reset()` | restaura o seed |
 | `scenario.get()`, `scenario.set(presets)` | lê e troca o cenário |
 | `catalog.setPrice(nft, edição, preço)`, `catalog.setAvailable(nft, edição, n)` | muda o dado e emite `nft.updated` |
-| `orders.settle(id, 'confirmed' \| 'refused')` | resolve um pedido pendente (chega com os pedidos, fatia 7) |
+| `orders.settle(id, 'confirmed' \| 'refused')` | resolve um pedido pendente agora; devolve `false` se já terminal |
 | `realtime.dropConnections({ reconnectAfterMs })`, `realtime.stats()` | derruba sockets; conta sockets autorizados, subscriptions e eventos entregues (`delivered`) |
 | `sessions.expire(userId?)` | vence o token |
 | `inspect.orders()`, `inspect.cart(owner)`, `inspect.lastRequest(padrão)` | leitura do estado do servidor |

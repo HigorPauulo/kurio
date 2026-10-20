@@ -127,7 +127,7 @@ que URLs equivalentes compartilhem cache.
 | `catalog.featured`, `nft` | 60 s | 5 min | `nft` atualizado por evento |
 | `cart` | 0 | 1 min | sempre a resposta do servidor |
 | `quote` | até o `expiresAt` | 1 min | key por rede e `cartVersion`, então mutation de carrinho não precisa invalidar; sem refetch no foco (cada busca cria uma cotação); renova sozinha no vencimento |
-| `order` | 0 | 5 min | polling de 5 s só se `pending` e socket desconectado |
+| `order` | 0 | 5 min | polling de 5 s só se `pending` e socket desconectado, lido do estado observável da conexão (`useRealtimeConnected`) |
 | `favorites`, `me`, `wallets` | 5 min | 5 min | |
 
 Query repete só erro `retryable`, até 2 vezes, com backoff exponencial de 500 ms a 4 s e jitter.
@@ -165,7 +165,7 @@ refetch: mantém o conteúdo com indicador, nunca volta ao skeleton. Vazio é su
 | Rota | `beforeLoad` | `loader` |
 |---|---|---|
 | `/` | | prefetch de `featured` e da lista |
-| `/nft/$nftId` | | `ensureQueryData(nft)`; `NOT_FOUND` vira `notFound()` |
+| `/nft/$nftId` | | `ensureQueryData(nft)`, repetido uma vez se cancelado (`ensureDespiteCancel`); `NOT_FOUND` vira `notFound()` |
 | `/cart` | | prefetch de `cart` |
 | `/checkout`, `/orders/$orderId`, `/account/*` | `requireUserId`: sem sessão ativa, login com `redirect`; com sessão, `userId` no contexto | `ensureQueryData` da rota |
 | `/login`, `/register` | `redirectIfAuthenticated`: com sessão, vai a `safeRedirect(redirect)` | |
@@ -231,6 +231,15 @@ stateDiagram-v2
   Pending --> Refused: order.updated | GET
 ```
 
+Implementação em `features/checkout`: a revisão usa uma cotação própria (`checkoutQuote`, `purpose:
+'checkout'`), guarda a que o comprador aceitou e compara os valores (linhas, cupom, subtotal, desconto,
+taxa e total) com a atual; diferente, mostra o diff e bloqueia "Confirmar compra" até "Aceitar novos
+valores". O `basisHash` não serve para isso: ele muda com a versão do NFT, inclusive quando só o estoque
+mudou. Cotação nova com os mesmos valores é aceita sozinha. Desfechos do envio: `QUOTE_STALE` grava a
+cotação de `details.quote` e volta à revisão; `WALLET_NOT_CONNECTED` relê as carteiras e volta aos dados
+com o erro na conexão; `ORDER_PENDING` vai ao pedido pendente; erro sem campo conhecido aparece no topo do
+formulário. Em `Retry`, só "Tentar de novo" fica disponível.
+
 `Confirmed` e `Refused` são terminais: ignoram eventos e param o polling. O recibo renderiza
 **somente** com `status === 'confirmed'` lido do servidor. `Retry` não volta à edição: o pedido pode
 já existir. Em `Review`, um timer pelo `expiresAt` pede nova cotação antes de confirmar uma vencida.
@@ -242,7 +251,7 @@ corpo e o hash do corpo, e existe só enquanto não há desfecho.
 
 - **Uma tentativa sem desfecho nunca ganha chave nova.** Este é o invariante contra pedido duplicado.
 - Botão `disabled` e `aria-busy` durante o envio; segundo clique é no-op.
-- Timeout e rede reenviam o mesmo corpo com a mesma chave.
+- Timeout e rede reenviam o mesmo corpo com a mesma chave, depois de 1 s e de 2 s.
 - Ao abrir `/checkout` com tentativa, reenvia **antes de qualquer `POST /quotes`**: 200 ou 201 vai ao
   pedido; rede ou timeout mantém a tentativa; 409 de cotação, estoque ou carteira apaga a tentativa e
   volta à revisão com cotação nova.
@@ -363,6 +372,9 @@ mantido durante a implementação.
 | Tela | Desvio | Motivo |
 |---|---|---|
 | Pagamento (mobile) | Formulário do colecionador empilhado acima dos cards de carteira | O protótipo mobile não desenha o formulário, e os campos são exigidos |
+| Pagamento | Duas etapas na mesma rota (`step`): dados e revisão; subtotal, taxa e total ficam na revisão, cotados na rede escolhida | PAG-2 pede revisão antes do envio e novo aceite quando o valor muda; o protótipo mostra uma tela só |
+| Pagamento | "Carteira e rede" mostra os três provedores, só o da carteira escolhida com "Conectar"; os outros dizem qual é o escolhido | Conexão simulada por carteira cadastrada (API) |
+| Confirmação | Recibo é a página `/orders/$orderId`, não um modal; "Ver no Etherscan" vira "Ver no {explorador} (simulado)" | A URL do pedido sobrevive a refresh e reconexão (PED-1); o hash é simulado |
 | Início | Contagem por categoria e por rede na coluna de filtros ausente | `GET /nfts` não devolve facetas; contar no cliente exigiria baixar o catálogo inteiro |
 | Início | Abas "Todos os NFTs", "Novos lançamentos" e "Em alta" viram o "Ordenar por" (Mais recentes, Mais curtidos) | As abas e a ordenação do protótipo disputam o mesmo parâmetro `sort` |
 | Início | Faixa de preço por dois campos (mínimo e máximo) em vez de slider | Slider não digita valor exato em ETH; os campos aceitam vírgula e 18 casas |

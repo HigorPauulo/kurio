@@ -4,21 +4,20 @@ import {
   applyCouponBodySchema,
   createQuoteBodySchema,
   mergeCartBodySchema,
-  quoteSchema,
   updateCartItemBodySchema,
 } from "@/contracts/cart";
-import { compareEth, formatEth } from "@/lib/eth";
+import { compareEth, formatEth, fromWei, toWei } from "@/lib/eth";
+import { nftUpdatedData, refreshNft } from "../db/nftUpdates";
 import {
-  buildQuote,
   currentSubtotal,
   editionLimit,
   findCoupon,
   findEdition,
   isCouponExpired,
-  QUOTE_TTL_MS,
+  createQuote,
   toCartView,
 } from "../db/commerce";
-import type { CartRecord, Tables } from "../db/tables";
+import type { CartRecord } from "../db/tables";
 import {
   API,
   apiError,
@@ -31,6 +30,9 @@ import {
 } from "./shared";
 
 const GUEST_HEADER = "X-Guest-Cart-Id";
+const PRICE_CHANGE_DELAY_MS = 2_000;
+const PRICE_CHANGE_PERCENT = 115n;
+const SIX_DECIMALS_WEI = 10n ** 12n;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 type Owner = { owner: string; response?: undefined } | { response: Response };
@@ -71,6 +73,24 @@ export function cartHandlers(deps: HandlerDeps): HttpHandler[] {
 
   function cartResponse(owner: string): Response {
     return HttpResponse.json(db.read((tables) => toCartView(tables, tables.carts[owner])));
+  }
+
+  let isPriceChangeScheduled = false;
+
+  function schedulePriceChange(record: CartRecord): void {
+    const first = record.items[0];
+    if (!deps.getScenario().flags.priceChangeOnReview || isPriceChangeScheduled || !first) return;
+    isPriceChangeScheduled = true;
+    setTimeout(() => {
+      db.commit((draft, { emit }) => {
+        const found = findEdition(draft, first.nftId, first.editionId);
+        if (!found) return;
+        const raised = (toWei(found.edition.price) * PRICE_CHANGE_PERCENT) / 100n;
+        found.edition.price = fromWei(raised - (raised % SIX_DECIMALS_WEI));
+        refreshNft(found.nft);
+        emit({ type: "nft.updated", resourceId: found.nft.id, audience: null, data: nftUpdatedData(found.nft) });
+      });
+    }, PRICE_CHANGE_DELAY_MS);
   }
 
   function touch(cart: CartRecord, timestamp: Date): void {
@@ -298,20 +318,8 @@ export function cartHandlers(deps: HandlerDeps): HttpHandler[] {
           return apiError(request, 422, "VALIDATION_FAILED", "O carrinho está vazio.");
         }
 
-        let quoteId = "";
-        db.commit((draft: Tables, { nextId, now: commitNow }) => {
-          const timestamp = commitNow();
-          quoteId = nextId("qte");
-          draft.quotes[quoteId] = {
-            ...buildQuote(draft, draft.carts[resolved.owner], body.data.network, timestamp.getTime()),
-            id: quoteId,
-            createdAt: timestamp.toISOString(),
-            expiresAt: new Date(timestamp.getTime() + QUOTE_TTL_MS).toISOString(),
-            owner: resolved.owner,
-            usedByOrderId: null,
-          };
-        });
-        return HttpResponse.json(db.read((tables) => quoteSchema.parse(tables.quotes[quoteId])), { status: 201 });
+        if (body.data.purpose === "checkout") schedulePriceChange(record);
+        return HttpResponse.json(createQuote(db, resolved.owner, body.data.network), { status: 201 });
       }),
     ),
   ];

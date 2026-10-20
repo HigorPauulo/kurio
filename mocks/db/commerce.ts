@@ -1,8 +1,9 @@
-import type { CartItem, Cart, Quote, QuoteIssue } from "@/contracts/cart";
+import { quoteSchema, type CartItem, type Cart, type Quote, type QuoteIssue } from "@/contracts/cart";
 import type { Chain, EthAmount } from "@/contracts/common";
 import { purchaseLimit, type Edition, type Nft } from "@/contracts/nft";
 import { addEth, compareEth, minEth, multiplyEth, percentOfEth, subtractEth } from "@/lib/eth";
 import { COUPON_FIXTURES, NETWORK_FEE_FIXTURES, type CouponFixture } from "../fixtures/commerce";
+import type { MockDb } from "./mockDb";
 import type { CartRecord, Tables } from "./tables";
 
 export const QUOTE_TTL_MS = 5 * 60_000;
@@ -63,7 +64,7 @@ export function currentSubtotal(tables: Readonly<Tables>, record: CartRecord): E
   }, ZERO);
 }
 
-function hashText(text: string): string {
+export function hashText(text: string): string {
   let hash = 0x811c9dc5;
   for (let index = 0; index < text.length; index += 1) {
     hash = Math.imul(hash ^ text.charCodeAt(index), 0x01000193) >>> 0;
@@ -132,4 +133,21 @@ export function buildQuote(tables: Readonly<Tables>, record: CartRecord, network
     purchasable: lines.length > 0 && !isBlocked,
     basisHash: hashText([...versions, record.coupon?.code ?? "", network].join("|")),
   };
+}
+
+export function createQuote(db: MockDb, owner: string, network: Chain): Quote {
+  let quoteId = "";
+  db.commit((draft, { nextId, now }) => {
+    const timestamp = now();
+    quoteId = nextId("qte");
+    draft.quotes[quoteId] = {
+      ...buildQuote(draft, draft.carts[owner], network, timestamp.getTime()),
+      id: quoteId,
+      createdAt: timestamp.toISOString(),
+      expiresAt: new Date(timestamp.getTime() + QUOTE_TTL_MS).toISOString(),
+      owner,
+      usedByOrderId: null,
+    };
+  });
+  return db.read((tables) => quoteSchema.parse(tables.quotes[quoteId]));
 }
