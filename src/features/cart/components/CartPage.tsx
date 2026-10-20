@@ -67,7 +67,7 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
             variant="outline"
             size="sm"
             className="self-start"
-            onClick={() => update.mutate({ itemId: item.id, quantity: limit })}
+            onClick={() => update.mutate({ itemId: item.id, quantity: limit, nftName: item.nftName })}
           >
             Ajustar para {limit}
           </Button>
@@ -80,7 +80,7 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
           size="icon"
           aria-label={`Diminuir quantidade de ${item.nftName}`}
           disabled={isBlocked || item.quantity <= 1}
-          onClick={() => update.mutate({ itemId: item.id, quantity: item.quantity - 1 })}
+          onClick={() => update.mutate({ itemId: item.id, quantity: item.quantity - 1, nftName: item.nftName })}
         >
           <Minus aria-hidden="true" />
         </Button>
@@ -91,7 +91,7 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
           size="icon"
           aria-label={`Aumentar quantidade de ${item.nftName}`}
           disabled={isBlocked || item.quantity >= limit}
-          onClick={() => update.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
+          onClick={() => update.mutate({ itemId: item.id, quantity: item.quantity + 1, nftName: item.nftName })}
         >
           <Plus aria-hidden="true" />
         </Button>
