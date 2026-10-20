@@ -1,4 +1,4 @@
-import { SlidersHorizontal } from "lucide-react";
+import { Check, SlidersHorizontal } from "lucide-react";
 import { useState, type FormEvent, type JSX } from "react";
 import { TextField } from "@/components/form/TextField";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,12 @@ type FilterFormProps = {
   filters: CatalogFilters;
   onApply: (filters: CatalogFilters) => void;
 };
+
+const LEGEND = "mb-3 text-lg leading-4 font-bold";
+const OPTION =
+  "group/option relative flex cursor-pointer items-center justify-between text-body leading-10 text-text-secondary hover:text-text-accent has-checked:text-text-accent has-focus-visible:rounded-sm has-focus-visible:ring-2 has-focus-visible:ring-ring";
+const HIT_AREA = "absolute inset-0 size-full cursor-pointer appearance-none opacity-0";
+const CHECK = "invisible size-4 group-has-checked/option:visible";
 
 const STATUS_OPTIONS: { value: CatalogStatus | ""; label: string }[] = [
   { value: "", label: "Todos" },
@@ -54,73 +60,91 @@ function FilterForm({ filters, onApply }: FilterFormProps): JSX.Element {
   }
 
   return (
-    <form noValidate aria-label="Filtros" className="flex flex-col gap-6" onSubmit={handleSubmit}>
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 font-medium">Categorias</legend>
-        {categorySchema.options.map((category) => (
-          <label key={category} className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={categories.includes(category)}
-              onChange={(event) => setCategories(toggleItem(categories, category, event.target.checked))}
-            />
-            {CATEGORY_LABELS[category]}
-          </label>
-        ))}
+    <form noValidate aria-label="Filtros" className="flex flex-col gap-10" onSubmit={handleSubmit}>
+      <fieldset className="flex flex-col gap-3">
+        <legend className={LEGEND}>Coleções</legend>
+        <div className="flex flex-col px-3">
+          {categorySchema.options.map((category) => (
+            <label key={category} className={OPTION}>
+              <input
+                type="checkbox"
+                className={HIT_AREA}
+                checked={categories.includes(category)}
+                onChange={(event) => setCategories(toggleItem(categories, category, event.target.checked))}
+              />
+              {CATEGORY_LABELS[category]}
+              <Check aria-hidden="true" className={CHECK} />
+            </label>
+          ))}
+        </div>
       </fieldset>
 
       <fieldset className="flex flex-col gap-3">
-        <legend className="mb-2 font-medium">Faixa de preço (ETH)</legend>
-        <TextField
-          label="Preço mínimo"
-          inputMode="decimal"
-          autoComplete="off"
-          value={priceMin}
-          error={errors.priceMin}
-          onChange={(event) => setPriceMin(event.target.value)}
-        />
-        <TextField
-          label="Preço máximo"
-          inputMode="decimal"
-          autoComplete="off"
-          value={priceMax}
-          error={errors.priceMax}
-          onChange={(event) => setPriceMax(event.target.value)}
-        />
+        <legend className={LEGEND}>Faixa de preço (ETH)</legend>
+        <div className="flex flex-col gap-3 pl-3">
+          <TextField
+            label="Preço mínimo"
+            inputMode="decimal"
+            autoComplete="off"
+            placeholder="0,02"
+            value={priceMin}
+            error={errors.priceMin}
+            onChange={(event) => setPriceMin(event.target.value)}
+          />
+          <TextField
+            label="Preço máximo"
+            inputMode="decimal"
+            autoComplete="off"
+            placeholder="12,3"
+            value={priceMax}
+            error={errors.priceMax}
+            onChange={(event) => setPriceMax(event.target.value)}
+          />
+        </div>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 font-medium">Rede</legend>
-        {chainSchema.options.map((chain) => (
-          <label key={chain} className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={chains.includes(chain)}
-              onChange={(event) => setChains(toggleItem(chains, chain, event.target.checked))}
-            />
-            {CHAIN_LABELS[chain]}
-          </label>
-        ))}
+      <fieldset className="flex flex-col gap-3">
+        <legend className={LEGEND}>Rede</legend>
+        <div className="flex flex-col pl-3">
+          {chainSchema.options.map((chain) => (
+            <label key={chain} className={OPTION}>
+              <input
+                type="checkbox"
+                className={HIT_AREA}
+                checked={chains.includes(chain)}
+                onChange={(event) => setChains(toggleItem(chains, chain, event.target.checked))}
+              />
+              {CHAIN_LABELS[chain]}
+              <Check aria-hidden="true" className={CHECK} />
+            </label>
+          ))}
+        </div>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-2 font-medium">Disponibilidade</legend>
-        {STATUS_OPTIONS.map((option) => (
-          <label key={option.value} className="flex items-center gap-2 text-sm">
-            <input
-              type="radio"
-              name="status"
-              checked={status === option.value}
-              onChange={() => setStatus(option.value)}
-            />
-            {option.label}
-          </label>
-        ))}
+      <fieldset className="flex flex-col gap-3">
+        <legend className={LEGEND}>Disponibilidade</legend>
+        <div className="flex flex-col pl-3">
+          {STATUS_OPTIONS.map((option) => (
+            <label key={option.value} className={OPTION}>
+              <input
+                type="radio"
+                name="status"
+                className={HIT_AREA}
+                checked={status === option.value}
+                onChange={() => setStatus(option.value)}
+              />
+              {option.label}
+              <Check aria-hidden="true" className={CHECK} />
+            </label>
+          ))}
+        </div>
       </fieldset>
 
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit">Aplicar filtros</Button>
-        <Button type="button" variant="outline" onClick={() => onApply(CLEARED_FILTERS)}>
+      <div className="flex flex-wrap items-center gap-4 pl-3">
+        <Button type="submit" size="sm">
+          Aplicar filtros
+        </Button>
+        <Button type="button" variant="link" size="sm" className="px-0" onClick={() => onApply(CLEARED_FILTERS)}>
           Limpar filtros
         </Button>
       </div>
@@ -136,9 +160,9 @@ export function CatalogFiltersPanel({ filters, onApply, isCompact }: CatalogFilt
 
   if (!isCompact) {
     return (
-      <aside aria-label="Filtros do catálogo" className="w-56 shrink-0">
+      <div className="bg-surface-card p-5">
         <FilterForm key={formKey} filters={filters} onApply={onApply} />
-      </aside>
+      </div>
     );
   }
 
@@ -149,9 +173,8 @@ export function CatalogFiltersPanel({ filters, onApply, isCompact }: CatalogFilt
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger render={<Button variant="outline" />}>
-        <SlidersHorizontal aria-hidden="true" />
-        Filtros
+      <DialogTrigger render={<Button size="icon" aria-label="Filtros" className="size-11 shrink-0" />}>
+        <SlidersHorizontal aria-hidden="true" className="size-5" />
       </DialogTrigger>
       <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>
