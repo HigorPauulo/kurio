@@ -1,167 +1,245 @@
 import { Check, SlidersHorizontal } from "lucide-react";
 import { useState, type FormEvent, type JSX } from "react";
-import { TextField } from "@/components/form/TextField";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { categorySchema, chainSchema, type Category, type Chain } from "@/contracts/common";
-import { compareEth, formatEthInput, parseEthInput } from "@/lib/eth";
+import { categorySchema, chainSchema, type Category, type Chain, type EthAmount } from "@/contracts/common";
+import type { CatalogFacets } from "@/contracts/nft";
+import { compareEth, formatEth, fromEthSteps, toEthSteps } from "@/lib/eth";
 import { toggleItem } from "@/lib/list";
 import { CATEGORY_LABELS, CHAIN_LABELS } from "../labels";
-import { CLEARED_FILTERS, joinParam, splitParam, type CatalogFilters, type CatalogStatus } from "../search";
+import { joinParam, splitParam, type CatalogFilters } from "../search";
+
+type ApplyMode = "instant" | "deferred";
 
 type FilterFormProps = {
   filters: CatalogFilters;
+  facets: CatalogFacets | undefined;
+  mode: ApplyMode;
   onApply: (filters: CatalogFilters) => void;
 };
 
+type PriceBounds = { lower: number; upper: number };
+
+const PRICE_STEP = "0.001" as EthAmount;
+
 const LEGEND = "mb-3 text-lg leading-4 font-bold";
 const OPTION =
-  "group/option relative flex cursor-pointer items-center justify-between text-body leading-10 text-text-secondary hover:text-text-accent has-checked:text-text-accent has-focus-visible:rounded-sm has-focus-visible:ring-2 has-focus-visible:ring-ring";
+  "group/option relative flex cursor-pointer items-center justify-between gap-2 text-body leading-10 text-text-secondary hover:text-text-accent has-checked:text-text-accent has-focus-visible:rounded-sm has-focus-visible:ring-2 has-focus-visible:ring-ring";
 const HIT_AREA = "absolute inset-0 size-full cursor-pointer appearance-none opacity-0";
-const CHECK = "invisible size-4 group-has-checked/option:visible";
+const CHECK = "hidden size-3.5 group-has-checked/option:block";
+const THUMB =
+  "pointer-events-none absolute inset-x-0 top-1/2 h-6 w-full -translate-y-1/2 appearance-none bg-transparent focus-visible:outline-none [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:size-4 [&::-moz-range-thumb]:cursor-grab [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-primary [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:size-4 [&::-webkit-slider-thumb]:cursor-grab [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary focus-visible:[&::-webkit-slider-thumb]:ring-3 focus-visible:[&::-webkit-slider-thumb]:ring-ring/60 focus-visible:[&::-moz-range-thumb]:ring-3 focus-visible:[&::-moz-range-thumb]:ring-ring/60";
 
-const STATUS_OPTIONS: { value: CatalogStatus | ""; label: string }[] = [
-  { value: "", label: "Todos" },
-  { value: "available", label: "Disponíveis" },
-  { value: "sold_out", label: "Esgotados" },
-];
+function getBounds(facets: CatalogFacets | undefined): PriceBounds | null {
+  if (!facets?.price) return null;
+  return {
+    lower: toEthSteps(facets.price.min, PRICE_STEP, "floor"),
+    upper: toEthSteps(facets.price.max, PRICE_STEP, "ceil"),
+  };
+}
 
-function FilterForm({ filters, onApply }: FilterFormProps): JSX.Element {
+function clampSteps(value: number, bounds: PriceBounds): number {
+  return Math.min(Math.max(value, bounds.lower), bounds.upper);
+}
+
+function initialSteps(amount: EthAmount | undefined, fallback: number, bounds: PriceBounds | null, rounding: "floor" | "ceil"): number {
+  if (!amount || !bounds) return fallback;
+  return clampSteps(toEthSteps(amount, PRICE_STEP, rounding), bounds);
+}
+
+type FacetListProps<Value extends string> = {
+  legend: string;
+  options: readonly Value[];
+  labels: Record<Value, string>;
+  counts: Record<Value, number> | undefined;
+  selected: Value[];
+  onToggle: (value: Value, isChecked: boolean) => void;
+};
+
+const COLLATOR = new Intl.Collator("pt-BR", { sensitivity: "base", numeric: true });
+
+function FacetList<Value extends string>({ legend, options, labels, counts, selected, onToggle }: FacetListProps<Value>): JSX.Element {
+  const sorted = [...options].sort((left, right) => COLLATOR.compare(labels[left], labels[right]));
+
+  return (
+    <fieldset className="flex flex-col gap-3">
+      <legend className={LEGEND}>{legend}</legend>
+      <div className="flex flex-col px-3">
+        {sorted.map((option) => (
+          <label key={option} className={OPTION}>
+            <input
+              type="checkbox"
+              className={HIT_AREA}
+              aria-label={counts ? `${labels[option]}, ${counts[option]} ${counts[option] === 1 ? "NFT" : "NFTs"}` : undefined}
+              checked={selected.includes(option)}
+              onChange={(event) => onToggle(option, event.target.checked)}
+            />
+            <span className="flex items-center gap-1.5">
+              <Check aria-hidden="true" className={CHECK} />
+              {labels[option]}
+            </span>
+            {counts && (
+              <span aria-hidden="true" className="font-bold">
+                ({counts[option]})
+              </span>
+            )}
+          </label>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
+type PriceRangeProps = {
+  bounds: PriceBounds | null;
+  steps: [number, number];
+  onChange: (steps: [number, number]) => void;
+};
+
+function PriceRange({ bounds, steps, onChange }: PriceRangeProps): JSX.Element {
+  const [minSteps, maxSteps] = steps;
+
+  if (!bounds) {
+    return <p className="text-body text-text-secondary">Sem preços para filtrar.</p>;
+  }
+
+  const span = Math.max(bounds.upper - bounds.lower, 1);
+  const left = ((minSteps - bounds.lower) / span) * 100;
+  const right = ((bounds.upper - maxSteps) / span) * 100;
+  const minLabel = `${formatEth(fromEthSteps(minSteps, PRICE_STEP))} ETH`;
+  const maxLabel = `${formatEth(fromEthSteps(maxSteps, PRICE_STEP))} ETH`;
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="relative h-6">
+        <span aria-hidden="true" className="absolute inset-x-0 top-1/2 h-1 -translate-y-1/2 rounded-full bg-border-soft" />
+        <span
+          aria-hidden="true"
+          className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-primary"
+          style={{ left: `${left}%`, right: `${right}%` }}
+        />
+        <label className="sr-only" htmlFor="price-min">
+          Preço mínimo
+        </label>
+        <input
+          id="price-min"
+          type="range"
+          min={bounds.lower}
+          max={bounds.upper}
+          value={minSteps}
+          aria-valuetext={minLabel}
+          onChange={(event) => onChange([Math.min(Number.parseInt(event.target.value, 10), maxSteps), maxSteps])}
+          className={THUMB}
+        />
+        <label className="sr-only" htmlFor="price-max">
+          Preço máximo
+        </label>
+        <input
+          id="price-max"
+          type="range"
+          min={bounds.lower}
+          max={bounds.upper}
+          value={maxSteps}
+          aria-valuetext={maxLabel}
+          onChange={(event) => onChange([minSteps, Math.max(Number.parseInt(event.target.value, 10), minSteps)])}
+          className={THUMB}
+        />
+      </div>
+      <p className="text-body">
+        Preço: {formatEth(fromEthSteps(minSteps, PRICE_STEP))} - {maxLabel}
+      </p>
+    </div>
+  );
+}
+
+function FilterForm({ filters, facets, mode, onApply }: FilterFormProps): JSX.Element {
+  const bounds = getBounds(facets);
   const [categories, setCategories] = useState(splitParam<Category>(filters.category));
   const [chains, setChains] = useState(splitParam<Chain>(filters.chain));
-  const [status, setStatus] = useState<CatalogStatus | "">(filters.status ?? "");
-  const [priceMin, setPriceMin] = useState(filters.priceMin ? formatEthInput(filters.priceMin) : "");
-  const [priceMax, setPriceMax] = useState(filters.priceMax ? formatEthInput(filters.priceMax) : "");
-  const [errors, setErrors] = useState<{ priceMin?: string; priceMax?: string }>({});
+  const [priceSteps, setPriceSteps] = useState<[number, number]>(() => [
+    initialSteps(filters.priceMin, bounds?.lower ?? 0, bounds, "floor"),
+    initialSteps(filters.priceMax, bounds?.upper ?? 0, bounds, "ceil"),
+  ]);
+
+  function priceFilters(): Pick<CatalogFilters, "priceMin" | "priceMax"> {
+    if (!bounds) return { priceMin: filters.priceMin, priceMax: filters.priceMax };
+    const [minSteps, maxSteps] = priceSteps;
+    const priceMin = minSteps > bounds.lower ? fromEthSteps(minSteps, PRICE_STEP) : undefined;
+    const priceMax = maxSteps < bounds.upper ? fromEthSteps(maxSteps, PRICE_STEP) : undefined;
+    return { priceMin, priceMax: priceMin && priceMax && compareEth(priceMin, priceMax) > 0 ? priceMin : priceMax };
+  }
+
+  function apply(next: { categories: Category[]; chains: Chain[] }, price: Pick<CatalogFilters, "priceMin" | "priceMax">): void {
+    onApply({ ...filters, ...price, category: joinParam(next.categories), chain: joinParam(next.chains) });
+  }
+
+  function handleCategory(category: Category, isChecked: boolean): void {
+    const next = toggleItem(categories, category, isChecked);
+    setCategories(next);
+    if (mode === "instant") apply({ categories: next, chains }, filters);
+  }
+
+  function handleChain(chain: Chain, isChecked: boolean): void {
+    const next = toggleItem(chains, chain, isChecked);
+    setChains(next);
+    if (mode === "instant") apply({ categories, chains: next }, filters);
+  }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
-    const min = priceMin.trim() ? parseEthInput(priceMin) : undefined;
-    const max = priceMax.trim() ? parseEthInput(priceMax) : undefined;
-    const nextErrors = {
-      priceMin: min === null ? "Informe um valor em ETH, como 0,5." : undefined,
-      priceMax:
-        max === null
-          ? "Informe um valor em ETH, como 2,5."
-          : min && max && compareEth(min, max) > 0
-            ? "O preço máximo deve ser maior ou igual ao mínimo."
-            : undefined,
-    };
-    setErrors(nextErrors);
-    if (nextErrors.priceMin || nextErrors.priceMax) return;
-
-    onApply({
-      category: joinParam(categories),
-      chain: joinParam(chains),
-      status: status || undefined,
-      priceMin: min ?? undefined,
-      priceMax: max ?? undefined,
-    });
+    apply({ categories, chains }, priceFilters());
   }
 
   return (
     <form noValidate aria-label="Filtros" className="flex flex-col gap-10" onSubmit={handleSubmit}>
+      <FacetList
+        legend="Coleções"
+        options={categorySchema.options}
+        labels={CATEGORY_LABELS}
+        counts={facets?.category}
+        selected={categories}
+        onToggle={handleCategory}
+      />
+
       <fieldset className="flex flex-col gap-3">
-        <legend className={LEGEND}>Coleções</legend>
-        <div className="flex flex-col px-3">
-          {categorySchema.options.map((category) => (
-            <label key={category} className={OPTION}>
-              <input
-                type="checkbox"
-                className={HIT_AREA}
-                checked={categories.includes(category)}
-                onChange={(event) => setCategories(toggleItem(categories, category, event.target.checked))}
-              />
-              {CATEGORY_LABELS[category]}
-              <Check aria-hidden="true" className={CHECK} />
-            </label>
-          ))}
+        <legend className={LEGEND}>Faixa de preço</legend>
+        <div className="flex flex-col items-start gap-3 pl-3">
+          <div className="w-full">
+            <PriceRange bounds={bounds} steps={priceSteps} onChange={setPriceSteps} />
+          </div>
+          <Button type="submit" size="sm" className="px-3">
+            Aplicar
+          </Button>
         </div>
       </fieldset>
 
-      <fieldset className="flex flex-col gap-3">
-        <legend className={LEGEND}>Faixa de preço (ETH)</legend>
-        <div className="flex flex-col gap-3 pl-3">
-          <TextField
-            label="Preço mínimo"
-            inputMode="decimal"
-            autoComplete="off"
-            placeholder="ex.: 0,02"
-            value={priceMin}
-            error={errors.priceMin}
-            onChange={(event) => setPriceMin(event.target.value)}
-          />
-          <TextField
-            label="Preço máximo"
-            inputMode="decimal"
-            autoComplete="off"
-            placeholder="ex.: 12,3"
-            value={priceMax}
-            error={errors.priceMax}
-            onChange={(event) => setPriceMax(event.target.value)}
-          />
-        </div>
-      </fieldset>
-
-      <fieldset className="flex flex-col gap-3">
-        <legend className={LEGEND}>Rede</legend>
-        <div className="flex flex-col pl-3">
-          {chainSchema.options.map((chain) => (
-            <label key={chain} className={OPTION}>
-              <input
-                type="checkbox"
-                className={HIT_AREA}
-                checked={chains.includes(chain)}
-                onChange={(event) => setChains(toggleItem(chains, chain, event.target.checked))}
-              />
-              {CHAIN_LABELS[chain]}
-              <Check aria-hidden="true" className={CHECK} />
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
-      <fieldset className="flex flex-col gap-3">
-        <legend className={LEGEND}>Disponibilidade</legend>
-        <div className="flex flex-col pl-3">
-          {STATUS_OPTIONS.map((option) => (
-            <label key={option.value} className={OPTION}>
-              <input
-                type="radio"
-                name="status"
-                className={HIT_AREA}
-                checked={status === option.value}
-                onChange={() => setStatus(option.value)}
-              />
-              {option.label}
-              <Check aria-hidden="true" className={CHECK} />
-            </label>
-          ))}
-        </div>
-      </fieldset>
-
-      <div className="flex flex-wrap items-center gap-4 pl-3">
-        <Button type="submit" size="sm">
-          Aplicar filtros
-        </Button>
-        <Button type="button" variant="link" size="sm" className="px-0" onClick={() => onApply(CLEARED_FILTERS)}>
-          Limpar filtros
-        </Button>
-      </div>
+      <FacetList
+        legend="Rede"
+        options={chainSchema.options}
+        labels={CHAIN_LABELS}
+        counts={facets?.chain}
+        selected={chains}
+        onToggle={handleChain}
+      />
     </form>
   );
 }
 
-type CatalogFiltersPanelProps = FilterFormProps & { isCompact: boolean };
+type CatalogFiltersPanelProps = {
+  filters: CatalogFilters;
+  facets: CatalogFacets | undefined;
+  onApply: (filters: CatalogFilters) => void;
+  isCompact: boolean;
+};
 
-export function CatalogFiltersPanel({ filters, onApply, isCompact }: CatalogFiltersPanelProps): JSX.Element {
+export function CatalogFiltersPanel({ filters, facets, onApply, isCompact }: CatalogFiltersPanelProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
-  const formKey = JSON.stringify(filters);
+  const formKey = `${JSON.stringify(filters)}|${facets?.price?.min ?? ""}|${facets?.price?.max ?? ""}`;
 
   if (!isCompact) {
     return (
       <div className="bg-surface-card p-5">
-        <FilterForm key={formKey} filters={filters} onApply={onApply} />
+        <FilterForm key={formKey} filters={filters} facets={facets} mode="instant" onApply={onApply} />
       </div>
     );
   }
@@ -180,7 +258,7 @@ export function CatalogFiltersPanel({ filters, onApply, isCompact }: CatalogFilt
         <DialogHeader>
           <DialogTitle>Filtros</DialogTitle>
         </DialogHeader>
-        <FilterForm key={formKey} filters={filters} onApply={handleApply} />
+        <FilterForm key={formKey} filters={filters} facets={facets} mode="deferred" onApply={handleApply} />
       </DialogContent>
     </Dialog>
   );

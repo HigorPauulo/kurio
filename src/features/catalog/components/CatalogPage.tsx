@@ -162,7 +162,7 @@ function FeaturedNft(): JSX.Element | null {
   return (
     <section aria-labelledby="featured-title" className="relative flex flex-col gap-4 bg-linear-to-b from-primary/10 to-primary/3 pt-6 pb-1">
       <div className="flex flex-col gap-4 px-5">
-        <h2 id="featured-title" className="text-2xl leading-8 font-bold text-text-accent uppercase">
+        <h2 id="featured-title" className="text-center text-2xl leading-8 font-bold text-text-accent uppercase">
           NFT em destaque
         </h2>
         <p className="text-center text-title leading-4 font-bold uppercase">Oferta limitada</p>
@@ -285,6 +285,7 @@ export function CatalogPage({ search, onSearchChange }: CatalogPageProps): JSX.E
     priceMin: search.priceMin,
     priceMax: search.priceMax,
   };
+  const facets = useQuery(catalogListQuery(search)).data?.facets;
   const searchBox = <SearchBox value={search.q} onSearchChange={onSearchChange} />;
 
   return (
@@ -292,7 +293,7 @@ export function CatalogPage({ search, onSearchChange }: CatalogPageProps): JSX.E
       {isCompact && (
         <div className="flex items-center gap-3">
           {searchBox}
-          <CatalogFiltersPanel isCompact filters={filters} onApply={onSearchChange} />
+          <CatalogFiltersPanel isCompact filters={filters} facets={facets} onApply={onSearchChange} />
         </div>
       )}
       <HeroCarousel />
@@ -301,7 +302,7 @@ export function CatalogPage({ search, onSearchChange }: CatalogPageProps): JSX.E
           Mercado
         </h2>
         <div className="order-last flex flex-col gap-6 md:order-none">
-          {!isCompact && <CatalogFiltersPanel isCompact={false} filters={filters} onApply={onSearchChange} />}
+          {!isCompact && <CatalogFiltersPanel isCompact={false} filters={filters} facets={facets} onApply={onSearchChange} />}
           <FeaturedNft />
         </div>
         <div className="flex min-w-0 flex-col gap-8">
