@@ -16,7 +16,8 @@ import { SORT_LABELS } from "../labels";
 import { catalogListQuery, featuredNftsQuery } from "../queries";
 import { CATALOG_PAGE_SIZE, CLEARED_FILTERS, hasActiveFilters, type CatalogFilters, type CatalogSearch, type CatalogSort } from "../search";
 import { CatalogFiltersPanel } from "./CatalogFilters";
-import { HomeEditorial, HomeHero } from "./HomeSections";
+import { HeroCarousel } from "./HeroCarousel";
+import { HomeEditorial } from "./HomeSections";
 import { NftCard, NftCardSkeleton } from "./NftCard";
 
 export type SearchChange = (patch: Partial<CatalogSearch>, options?: { replace?: boolean }) => void;
@@ -294,7 +295,7 @@ export function CatalogPage({ search, onSearchChange }: CatalogPageProps): JSX.E
           <CatalogFiltersPanel isCompact filters={filters} onApply={onSearchChange} />
         </div>
       )}
-      <HomeHero />
+      <HeroCarousel />
       <section id="mercado" aria-labelledby="market-title" className="flex scroll-mt-6 flex-col gap-8 md:grid md:grid-cols-[15rem_1fr] md:items-start md:gap-8 lg:grid-cols-[19.375rem_1fr] lg:gap-12">
         <h2 id="market-title" className="sr-only">
           Mercado

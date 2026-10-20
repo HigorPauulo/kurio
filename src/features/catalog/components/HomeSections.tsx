@@ -4,8 +4,6 @@ import type { JSX } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const HERO_IMAGE = "/images/nfts/emerald-ape.webp";
-
 const PROMOS = [
   {
     title: "Lançamentos gênesis de edição limitada",
@@ -55,51 +53,6 @@ const POSTS = [
     from: "diario-carteira",
   },
 ];
-
-export function HomeHero(): JSX.Element {
-  return (
-    <section
-      aria-labelledby="hero-title"
-      className="relative flex items-center gap-4 overflow-hidden rounded-3xl bg-linear-to-br from-surface-dark to-surface-raised p-4 md:rounded-none md:bg-none md:p-0 md:pl-10 lg:h-112.5"
-    >
-      <div className="flex min-w-0 flex-1 flex-col items-start gap-3 md:gap-8">
-        <div className="flex flex-col gap-1 md:gap-2">
-          <p className="text-2xs leading-4 font-medium md:text-sm md:tracking-brand">Bem-vindo à Kurio</p>
-          <h1
-            id="hero-title"
-            className="text-base leading-7 font-bold uppercase md:text-3xl md:leading-12 lg:max-w-150 lg:text-display lg:leading-17.5"
-          >
-            Seja dono do futuro <br className="hidden lg:block" />
-            da arte digital
-          </h1>
-          <p className="line-clamp-3 max-w-139 text-2xs leading-4 text-text-secondary md:line-clamp-none md:text-sm md:leading-6">
-            Descubra NFTs selecionados de criadores emergentes e consagrados. Colecione arte digital rara, apoie artistas e
-            tenha uma parte da cultura da internet.
-          </p>
-        </div>
-        <Link
-          to="/"
-          hash="mercado"
-          className={cn(
-            buttonVariants({ variant: "link" }),
-            "h-auto gap-1 px-0 text-2xs font-bold text-text-accent uppercase md:h-10 md:w-35 md:rounded-md md:bg-primary md:text-base md:text-primary-foreground md:no-underline md:hover:bg-text-accent",
-          )}
-        >
-          Explorar
-          <ArrowRight aria-hidden="true" className="md:hidden" />
-        </Link>
-      </div>
-      <img
-        src={HERO_IMAGE}
-        alt="Arte em destaque: macaco de óculos e jaqueta verde"
-        width={640}
-        height={640}
-        fetchPriority="high"
-        className="aspect-square w-32 shrink-0 rounded-2xl object-cover md:w-72 md:rounded-3xl lg:w-112.5"
-      />
-    </section>
-  );
-}
 
 function Promos(): JSX.Element {
   return (
