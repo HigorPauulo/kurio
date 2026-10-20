@@ -48,14 +48,14 @@ type Session = { token: string; expiresAt: string; user: User }
 type Edition = { id; label; price: EthAmount; available: number; supply: number; maxPerOrder: number
                  status: 'available' | 'sold_out' | 'unavailable' }
 type Image = { url; alt; width: number; height: number }
-type Nft = { id; name; description; collection: { id; name }; creator: { id; name; avatarUrl }
+type Nft = { id; name; tokenId; rating: { average; count }; description; collection: { id; name }; creator: { id; name; avatarUrl }
              category: Category; chain: Chain; images: Image[]; editions: Edition[]
              priceFrom: EthAmount; featured: boolean; likes: number; createdAt; version: number }
 type NftSummary = Pick<Nft, 'id' | 'name' | 'collection' | 'creator' | 'category' | 'chain'
                   | 'priceFrom' | 'likes' | 'version'> & { cover: Image; status: 'available' | 'sold_out' }
 type Page<T> = { items: T[]; page: number; pageSize: number; total: number; totalPages: number }
 
-type CartItem = { id; nftId; editionId; quantity: number; nftName; editionLabel; cover: Image
+type CartItem = { id; nftId; editionId; quantity: number; nftName; tokenId; editionLabel; cover: Image
                   unitPrice: EthAmount; available: number; maxPerOrder: number
                   status: 'ok' | 'price_changed' | 'insufficient' | 'sold_out' }
 type Cart = { id; items: CartItem[]; coupon: { code } | null; version: number; updatedAt }
@@ -73,7 +73,7 @@ type QuoteIssue = { kind: 'PRICE_CHANGED'; itemId; from: EthAmount; to: EthAmoun
 // Snapshot montado pelo servidor a partir do User e da Wallet no momento do pedido
 type Buyer = { name; username; email; ensName; profileName; referralCode; note: string | null }
 type Order = { id; status: 'pending' | 'confirmed' | 'refused'; version: number; quoteId
-               receipt: { lines: (Quote['lines'][number] & { nftName; editionLabel; cover: Image })[]
+               receipt: { lines: (Quote['lines'][number] & { nftName; tokenId; editionLabel; cover: Image })[]
                           subtotal; discount; networkFee; total; coupon: { code } | null; network: Chain
                           wallet: { id; label; address; provider: WalletProvider }; buyer: Buyer }
                transaction: { hash; explorerUrl } | null      // só em confirmed

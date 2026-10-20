@@ -1,7 +1,7 @@
 import type { UserId } from "@/contracts/common";
 import { emptyTables, type Tables } from "./tables";
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 6;
 export const STORAGE_KEY = `kurio:mockdb:v${SCHEMA_VERSION}`;
 
 const DEFAULT_SNAPSHOT_BUDGET = 1_000_000;

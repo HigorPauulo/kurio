@@ -45,7 +45,9 @@ function makeNft(id: string): Nft {
     ],
     priceFrom: eth("0.5"),
     featured: false,
+    tokenId: "#0001",
     likes: 0,
+    rating: { average: 4, count: 1 },
     createdAt: "2026-10-01T00:00:00.000Z",
     version: 0,
   };

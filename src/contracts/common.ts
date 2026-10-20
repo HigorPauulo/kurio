@@ -39,6 +39,8 @@ export const categorySchema = z.enum([
   "utility",
 ]);
 
+export const tokenIdSchema = z.string().regex(/^#\d{4,}$/);
+
 export const imageSchema = z.object({
   url: z.string(),
   alt: z.string(),

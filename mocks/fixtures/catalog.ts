@@ -55,11 +55,12 @@ type NftRow = {
   likes: number;
   featured?: true;
   images?: number;
+  rating?: { average: number; count: number };
   editions: EditionRow[];
 };
 
 const ROWS: NftRow[] = [
-  { name: "Emerald Ape #042", collection: "Apes Esmeralda", creator: "lia", category: "digital-art", chain: "ethereum", likes: 412, featured: true, images: 2, editions: [["Padrão", "2.38", 8, 20, 3], ["Ouro", "4.5", 2, 5, 1]] },
+  { name: "Emerald Ape #042", collection: "Apes Esmeralda", creator: "lia", category: "digital-art", chain: "ethereum", likes: 412, featured: true, images: 2, rating: { average: 4.5, count: 19 }, editions: [["Padrão", "2.38", 8, 20, 3], ["Ouro", "4.5", 2, 5, 1]] },
   { name: "Violet Nomad #314", collection: "Nômades", creator: "kenji", category: "photography", chain: "polygon", likes: 288, featured: true, editions: [["Padrão", "8.34", 5, 10, 2]] },
   { name: "Ivory Baron #088", collection: "Barões", creator: "noa", category: "music", chain: "base", likes: 351, featured: true, editions: [["Padrão", "12.5", 1, 3, 1]] },
   { name: "Neon Vessel #552", collection: "Sinais", creator: "iris", category: "3d-art", chain: "ethereum", likes: 97, editions: [["Padrão", "0.75", 12, 30, 5], ["Edição da artista", "1.2", 0, 5, 1]] },
@@ -117,6 +118,16 @@ function artwork(name: string, imageIndex: number): Image {
   };
 }
 
+function tokenIdFrom(name: string): string {
+  const number = /#(\d+)$/.exec(name)?.[1];
+  if (!number) throw new Error(`NFT de fixture sem número no nome: ${name}`);
+  return `#${number.padStart(4, "0")}`;
+}
+
+function ratingFor(row: NftRow, index: number): Nft["rating"] {
+  return row.rating ?? { average: 3.5 + ((index * 7) % 15) / 10, count: 5 + (row.likes % 40) };
+}
+
 function buildNft(row: NftRow, index: number): Nft {
   const number = String(index + 1).padStart(3, "0");
   const editions = row.editions.map((edition, editionIndex) =>
@@ -125,6 +136,7 @@ function buildNft(row: NftRow, index: number): Nft {
   const nft: Nft = {
     id: `nft_${number}`,
     name: row.name,
+    tokenId: tokenIdFrom(row.name),
     description: `${row.name}, da coleção ${row.collection}.`,
     collection: { id: collectionId(row.collection), name: row.collection },
     creator: CREATORS[row.creator],
@@ -135,6 +147,7 @@ function buildNft(row: NftRow, index: number): Nft {
     priceFrom: editions[0].price,
     featured: row.featured ?? false,
     likes: row.likes,
+    rating: ratingFor(row, index),
     createdAt: new Date(FIRST_CREATED_AT + index * DAY_MS).toISOString(),
     version: 0,
   };

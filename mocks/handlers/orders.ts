@@ -128,6 +128,7 @@ export function orderHandlers(deps: HandlerDeps): HttpHandler[] {
                 return {
                   ...line,
                   nftName: item?.nftName ?? found?.nft.name ?? line.nftId,
+                  tokenId: item?.tokenId ?? found?.nft.tokenId ?? "#0000",
                   editionLabel: item?.editionLabel ?? found?.edition.label ?? line.editionId,
                   cover: item?.cover ?? found?.nft.images[0] ?? { url: "", alt: "", width: 1, height: 1 },
                 };

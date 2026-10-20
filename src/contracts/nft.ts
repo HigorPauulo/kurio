@@ -8,6 +8,7 @@ import {
   imageSchema,
   nftIdSchema,
   pageSchema,
+  tokenIdSchema,
 } from "./common";
 import { compareEth } from "@/lib/eth";
 
@@ -29,6 +30,7 @@ export const editionSchema = z.object({
 export const nftSchema = z.object({
   id: nftIdSchema,
   name: z.string(),
+  tokenId: tokenIdSchema,
   description: z.string(),
   collection: z.object({ id: z.string(), name: z.string() }),
   creator: z.object({ id: z.string(), name: z.string(), avatarUrl: z.string() }),
@@ -39,6 +41,7 @@ export const nftSchema = z.object({
   priceFrom: ethAmountSchema,
   featured: z.boolean(),
   likes: z.number().int().min(0),
+  rating: z.object({ average: z.number().min(0).max(5), count: z.number().int().min(0) }),
   createdAt: dateTimeSchema,
   version: z.number().int().min(0),
 });

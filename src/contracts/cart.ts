@@ -9,6 +9,7 @@ import {
   imageSchema,
   nftIdSchema,
   quoteIdSchema,
+  tokenIdSchema,
 } from "./common";
 
 const positiveQuantitySchema = z.number().int().min(1, "A quantidade mínima é 1.");
@@ -21,6 +22,7 @@ export const cartItemSchema = z.object({
   editionId: editionIdSchema,
   quantity: positiveQuantitySchema,
   nftName: z.string(),
+  tokenId: tokenIdSchema,
   editionLabel: z.string(),
   cover: imageSchema,
   unitPrice: ethAmountSchema,
