@@ -49,3 +49,15 @@ export function ChevronDownIcon(props: IconProps): JSX.Element {
     </svg>
   );
 }
+
+export function DeleteIcon(props: IconProps): JSX.Element {
+  return (
+    <svg width="24" height="24" viewBox="-3.17 -1.9 24 24" fill="none" aria-hidden="true" {...props}>
+      <g stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M15.4245 7.59C15.4245 15.609 16.5788 19.2338 8.81495 19.2338C1.05019 19.2338 2.22829 15.609 2.22829 7.59" />
+        <path d="M16.9005 4.51571H0.75" />
+        <path d="M12.2502 4.51571C12.2502 4.51571 12.7788 0.75 8.82448 0.75C4.87114 0.75 5.39971 4.51571 5.39971 4.51571" />
+      </g>
+    </svg>
+  );
+}

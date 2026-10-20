@@ -1,18 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Minus, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Minus, Plus } from "lucide-react";
 import { useState, type FormEvent, type JSX } from "react";
 import { TextField } from "@/components/form/TextField";
+import { DeleteIcon } from "@/components/icons/KurioIcons";
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { Cart, CartItem, Quote } from "@/contracts/cart";
 import { purchaseLimit } from "@/contracts/nft";
 import { formatEth } from "@/lib/eth";
 import { getApiFieldError } from "@/lib/forms";
+import { NftRail } from "../../catalog/components/NftRail";
+import { catalogListQuery } from "../../catalog/queries";
 import { cn } from "@/lib/utils";
 import { useNftSubscription } from "@/lib/realtime/instance";
-import { CHAIN_LABELS } from "../../catalog/labels";
 import {
-  CART_NETWORK,
   cartQuery,
   quoteQuery,
   useApplyCouponMutation,
@@ -21,6 +22,7 @@ import {
   useUpdateQuantityMutation,
 } from "../queries";
 
+const QUANTITY_BUTTON = "h-7.5 w-5 rounded-full border border-ink p-0 shadow-md [&_svg:not([class*='size-'])]:size-3.5";
 const ROW = "grid grid-cols-[auto_1fr] md:grid-cols-[minmax(0,1fr)_7.5rem_8rem_7.5rem_2.5rem]";
 
 function itemLimit(item: CartItem): number {
@@ -70,7 +72,6 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
             {item.nftName}
           </Link>
           <span className="text-sm text-secondary-base">ID do token: {item.tokenId}</span>
-          <span className="text-xs text-secondary-base">Edição: {item.editionLabel}</span>
           <span className="text-lg font-bold text-text-accent md:hidden">
             {formatEth(line?.unitPrice ?? item.unitPrice)} ETH
           </span>
@@ -88,24 +89,24 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
           )}
         </div>
       </div>
-      <p className="hidden text-base font-bold text-text-accent md:block">
+      <p className="hidden text-base font-bold text-text-secondary md:block">
         <span className="sr-only">Preço unitário: </span>
         {formatEth(line?.unitPrice ?? item.unitPrice)} ETH
       </p>
       <div className="flex items-center gap-2 pb-3 pl-3 md:p-0" role="group" aria-label={`Quantidade de ${item.nftName}`}>
         <Button
           type="button"
-          size="icon-xs"
+          className={QUANTITY_BUTTON}
           aria-label={`Diminuir quantidade de ${item.nftName}`}
           disabled={isBlocked || item.quantity <= 1}
           onClick={() => update.mutate({ itemId: item.id, quantity: item.quantity - 1, nftName: item.nftName })}
         >
           <Minus aria-hidden="true" />
         </Button>
-        <span className="w-6 text-center text-lg">{item.quantity}</span>
+        <span className="w-5 text-center text-md">{item.quantity}</span>
         <Button
           type="button"
-          size="icon-xs"
+          className={QUANTITY_BUTTON}
           aria-label={`Aumentar quantidade de ${item.nftName}`}
           disabled={isBlocked || item.quantity >= limit}
           onClick={() => update.mutate({ itemId: item.id, quantity: item.quantity + 1, nftName: item.nftName })}
@@ -124,9 +125,9 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
         aria-label={`Remover ${item.nftName}`}
         disabled={remove.isPending}
         onClick={() => remove.mutate(item.id)}
-        className="absolute top-2 right-2 text-text-secondary md:static"
+        className="absolute top-2 right-2 text-secondary-base hover:text-text-accent md:static"
       >
-        <Trash2 aria-hidden="true" className="size-5" />
+        <DeleteIcon className="size-6" />
       </Button>
     </li>
   );
@@ -219,18 +220,19 @@ function Summary({ owner, cart }: { owner: string; cart: Cart }): JSX.Element {
           <dd className="text-right text-lg">{quote.data ? `${formatEth(quote.data.subtotal)} ETH` : "..."}</dd>
           <dt>Desconto</dt>
           <dd className="text-right">{quote.data ? `- ${formatEth(quote.data.discount)} ETH` : "..."}</dd>
-          <dt>
-            Taxa de rede <span className="block text-xs text-text-accent">{CHAIN_LABELS[CART_NETWORK]}, estimada</span>
-          </dt>
-          <dd className="text-right text-lg">{quote.data ? `${formatEth(quote.data.networkFee)} ETH` : "..."}</dd>
+          <dt>Taxa de rede</dt>
+          <dd className="text-right text-lg">
+            {quote.data ? `${formatEth(quote.data.networkFee)} ETH` : "..."}
+            <span className="block text-xs text-text-accent">Taxa estimada</span>
+          </dd>
           <dt className="mt-3 font-bold">Total</dt>
           <dd className="mt-3 text-right text-lg font-bold text-text-accent">
             {quote.data ? `${formatEth(quote.data.total)} ETH` : "..."}
           </dd>
         </dl>
       )}
-      <p role="status" className="text-xs text-secondary-base">
-        {isRefreshing ? "Atualizando o resumo..." : "Valores calculados pelo servidor."}
+      <p role="status" className="sr-only">
+        {isRefreshing ? "Atualizando o resumo..." : ""}
       </p>
       <Link to="/checkout" className={cn(buttonVariants({ size: "lg" }), "w-full rounded-full md:h-10 md:rounded-md")}>
         Conectar e finalizar
@@ -293,6 +295,22 @@ function CartContent({ owner }: { owner: string }): JSX.Element {
   );
 }
 
+function AlsoViewedRail({ owner }: { owner: string | null }): JSX.Element | null {
+  const popular = useQuery(catalogListQuery({ sort: "popular" }));
+  const cart = useQuery({ ...cartQuery(owner ?? ""), enabled: owner !== null });
+  const inCart = new Set(cart.data?.items.map((item) => item.nftId));
+  if (popular.isError) return null;
+
+  return (
+    <NftRail
+      title="Colecionadores também viram"
+      listLabel="NFTs que colecionadores também viram"
+      items={popular.data?.items.filter((nft) => !inCart.has(nft.id)) ?? []}
+      isPending={popular.isPending}
+    />
+  );
+}
+
 function CartSkeleton(): JSX.Element {
   return (
     <div aria-busy="true" className="flex flex-col gap-3">
@@ -328,6 +346,9 @@ export function CartPage({ owner }: { owner: string | null }): JSX.Element {
       </nav>
       <h1 className="text-2xl font-bold md:sr-only">Carrinho de NFTs</h1>
       {owner ? <CartContent owner={owner} /> : <EmptyCart />}
+      <div className="mt-16 lg:mt-24">
+        <AlsoViewedRail owner={owner} />
+      </div>
     </main>
   );
 }
