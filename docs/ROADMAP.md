@@ -19,7 +19,7 @@ real funcionando no ambiente publicado. Critérios em [Entrega](#entrega).
 | 1 | ✅ **Fundação e spike** | Vite, TS strict, lint, Tailwind, shadcn, Router, Query, Axios, Vitest, Playwright, CI. Spike: `socket.io-client` no MSW com ack, evento, queda e reconexão | NF-6 | | 2 |
 | 2 | ✅ **Contratos e mocks** | Schemas Zod, `MockDb`, fixtures, cenários, `window.__kurio` | MOC, AUT-4 | 1 | 3 |
 | 3 | ✅ **Sessão e conta** | `configureHttp`, login, cadastro, expiração, `switchIdentity`, perfil e carteiras com os campos do layout | AUT-1..4, PER, WAL, NAV-2 | 2 | 2,5 |
-| 4 | ⬜ **Catálogo e detalhe** | Filtros, ordenação e página na URL; detalhe; favoritos otimistas | CAT, DET, NAV-1, NAV-3 | 2 | 2 |
+| 4 | ✅ **Catálogo e detalhe** | Filtros, ordenação e página na URL; detalhe; favoritos otimistas | CAT, DET, NAV-1, NAV-3 | 2 | 2 |
 | 5 | ⬜ **Carrinho e cotação** | Visitante e usuário, merge, cupom, resumo pela cotação | CRT-1..4, NF-5 | 2 | 1,5 |
 | 6 | ⬜ **Tempo real** | Socket por sessão, `eventStore`, subscriptions, reconciliação | RT, CRT-5 | 4, 5 | 1,5 |
 | 7 | ⬜ **Checkout e pedido** | Campos do layout, revisão, idempotência, recibo, pedido alheio | PAG, PED, AUT-5 | 3, 6 | 2,5 |
@@ -86,3 +86,4 @@ detalhe aberto; `__kurio.build` igual ao SHA da `main`.
 | 2026-10-19 | `5fd30c2` | ok: rotas, refresh em rota profunda, socket simulado, ack, cabeçalhos de segurança, console sem erro |
 | 2026-10-19 | `2cb7467` | ok: correções da revisão; `/assets/` inexistente responde 404 em texto; rotas, socket, ack e console sem erro |
 | 2026-10-19 | `7237d0c` | ok: fatia 2 e correções da revisão; `__kurio.build` igual ao SHA; cenário da URL, persistência e reset; rotas, socket e ack; console sem erro |
+| 2026-10-19 | `6b10280` | ok: fatia 3 e correções da revisão, em 1440 e 390; `__kurio.build` igual ao SHA; rota privada leva ao login e Esc volta ao início; perfil persiste após refresh na rota profunda; carteiras sem overflow; expiração mostra o aviso; console só com os 401 provocados |

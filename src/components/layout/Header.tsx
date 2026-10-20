@@ -22,6 +22,12 @@ export function Header(): JSX.Element {
           KURIO
         </Link>
         <Link to="/">Início</Link>
+        <Link to="/unavailable" search={{ from: "criadores" }}>
+          Criadores
+        </Link>
+        <Link to="/unavailable" search={{ from: "aprenda" }}>
+          Aprenda
+        </Link>
         {session.status === "authenticated" ? (
           <>
             <Link to="/account/profile">Perfil</Link>

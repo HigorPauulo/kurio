@@ -16,6 +16,7 @@ import { Route as UnavailableRouteImport } from './routes/unavailable'
 import { Route as AccountProfileRouteImport } from './routes/account/profile'
 import { Route as AccountWalletsRouteImport } from './routes/account/wallets'
 import { Route as DevRealtimeRouteImport } from './routes/dev/realtime'
+import { Route as NftNftIdRouteImport } from './routes/nft/$nftId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +53,11 @@ const DevRealtimeRoute = DevRealtimeRouteImport.update({
   path: '/dev/realtime',
   getParentRoute: () => rootRouteImport,
 } as any)
+const NftNftIdRoute = NftNftIdRouteImport.update({
+  id: '/nft/$nftId',
+  path: '/nft/$nftId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/account/profile': typeof AccountProfileRoute
   '/account/wallets': typeof AccountWalletsRoute
   '/dev/realtime': typeof DevRealtimeRoute
+  '/nft/$nftId': typeof NftNftIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -70,6 +77,7 @@ export interface FileRoutesByTo {
   '/account/profile': typeof AccountProfileRoute
   '/account/wallets': typeof AccountWalletsRoute
   '/dev/realtime': typeof DevRealtimeRoute
+  '/nft/$nftId': typeof NftNftIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -80,6 +88,7 @@ export interface FileRoutesById {
   '/account/profile': typeof AccountProfileRoute
   '/account/wallets': typeof AccountWalletsRoute
   '/dev/realtime': typeof DevRealtimeRoute
+  '/nft/$nftId': typeof NftNftIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -91,6 +100,7 @@ export interface FileRouteTypes {
     | '/account/profile'
     | '/account/wallets'
     | '/dev/realtime'
+    | '/nft/$nftId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -100,6 +110,7 @@ export interface FileRouteTypes {
     | '/account/profile'
     | '/account/wallets'
     | '/dev/realtime'
+    | '/nft/$nftId'
   id:
     | '__root__'
     | '/'
@@ -109,6 +120,7 @@ export interface FileRouteTypes {
     | '/account/profile'
     | '/account/wallets'
     | '/dev/realtime'
+    | '/nft/$nftId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -119,6 +131,7 @@ export interface RootRouteChildren {
   AccountProfileRoute: typeof AccountProfileRoute
   AccountWalletsRoute: typeof AccountWalletsRoute
   DevRealtimeRoute: typeof DevRealtimeRoute
+  NftNftIdRoute: typeof NftNftIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -172,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevRealtimeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/nft/$nftId': {
+      id: '/nft/$nftId'
+      path: '/nft/$nftId'
+      fullPath: '/nft/$nftId'
+      preLoaderRoute: typeof NftNftIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -183,6 +203,7 @@ const rootRouteChildren: RootRouteChildren = {
   AccountProfileRoute: AccountProfileRoute,
   AccountWalletsRoute: AccountWalletsRoute,
   DevRealtimeRoute: DevRealtimeRoute,
+  NftNftIdRoute: NftNftIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
