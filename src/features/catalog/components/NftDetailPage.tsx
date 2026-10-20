@@ -22,8 +22,8 @@ import { isVerticalScroller, useDragScroll } from "@/lib/useDragScroll";
 import { useSwipe } from "@/lib/useSwipe";
 import { cn } from "@/lib/utils";
 import { CATEGORY_LABELS, CHAIN_LABELS, formatRating } from "../labels";
-import { favoritesQuery, nftQuery, useToggleFavoriteMutation } from "../queries";
-import { CollectionRail } from "./CollectionRail";
+import { collectionNftsQuery, favoritesQuery, nftQuery, useToggleFavoriteMutation } from "../queries";
+import { NftRail } from "./NftRail";
 import { NftReviews } from "./NftReviews";
 import { Stars } from "./Stars";
 
@@ -483,6 +483,19 @@ function ShareLinks({ name }: { name: string }): JSX.Element {
         ))}
       </ul>
     </div>
+  );
+}
+
+function CollectionRail({ nftId, collectionId }: { nftId: string; collectionId: string }): JSX.Element | null {
+  const collection = useQuery(collectionNftsQuery(collectionId));
+  if (collection.isError) return null;
+  return (
+    <NftRail
+      title="Mais desta coleção"
+      listLabel="NFTs da mesma coleção"
+      items={collection.data?.items.filter((item) => item.id !== nftId) ?? []}
+      isPending={collection.isPending}
+    />
   );
 }
 

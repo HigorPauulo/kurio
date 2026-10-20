@@ -1,11 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState, type JSX } from "react";
+import { useEffect, useId, useRef, useState, type JSX } from "react";
+import type { NftSummary } from "@/contracts/nft";
 import { useDragScroll } from "@/lib/useDragScroll";
 import { cn } from "@/lib/utils";
-import { collectionNftsQuery } from "../queries";
 import { NftCard, NftCardSkeleton } from "./NftCard";
 
-type CollectionRailProps = { nftId: string; collectionId: string };
+type NftRailProps = { title: string; listLabel: string; items: NftSummary[]; isPending: boolean };
 
 type Pages = { count: number; current: number };
 
@@ -18,9 +17,8 @@ function measurePages(list: HTMLElement): Pages {
 
 const ITEM = "w-[calc((100%-1rem)/2.2)] shrink-0 snap-start md:w-[calc((100%-3rem)/3)] lg:w-[calc((100%-6rem)/5)]";
 
-export function CollectionRail({ nftId, collectionId }: CollectionRailProps): JSX.Element | null {
-  const collection = useQuery(collectionNftsQuery(collectionId));
-  const items = collection.data?.items.filter((nft) => nft.id !== nftId) ?? [];
+export function NftRail({ title, listLabel, items, isPending }: NftRailProps): JSX.Element | null {
+  const titleId = useId();
   const listRef = useRef<HTMLUListElement>(null);
   const dragScroll = useDragScroll<HTMLUListElement>();
   const [pages, setPages] = useState<Pages>({ count: 1, current: 0 });
@@ -40,16 +38,16 @@ export function CollectionRail({ nftId, collectionId }: CollectionRailProps): JS
     list.scrollTo({ left: pages.count > 1 ? (maxScroll * page) / (pages.count - 1) : 0, behavior: "smooth" });
   }
 
-  if (collection.isError || (collection.data && items.length === 0)) return null;
+  if (!isPending && items.length === 0) return null;
 
   return (
-    <section aria-labelledby="collection-title" className="flex flex-col gap-7">
-      <h2 id="collection-title" className="border-b border-border-strong pb-3 text-lg font-bold text-text-accent">
-        Mais desta coleção
+    <section aria-labelledby={titleId} className="flex flex-col gap-7">
+      <h2 id={titleId} className="border-b border-border-strong pb-3 text-lg font-bold text-text-accent">
+        {title}
       </h2>
-      {collection.isPending ? (
+      {isPending ? (
         <div aria-busy="true" className="flex gap-4 overflow-hidden lg:gap-6">
-          <p className="sr-only">Carregando a coleção...</p>
+          <p className="sr-only">Carregando {title.toLowerCase()}...</p>
           {Array.from({ length: 5 }, (_, index) => (
             <div key={index} className={ITEM}>
               <NftCardSkeleton />
@@ -60,7 +58,7 @@ export function CollectionRail({ nftId, collectionId }: CollectionRailProps): JS
         <>
           <ul
             ref={listRef}
-            aria-label="NFTs da mesma coleção"
+            aria-label={listLabel}
             onScroll={(event) => setPages(measurePages(event.currentTarget))}
             {...dragScroll}
             className="flex cursor-grab snap-x snap-proximity gap-4 overflow-x-auto pb-2 select-none [scrollbar-width:none] lg:gap-6 [&::-webkit-scrollbar]:hidden"
@@ -77,7 +75,7 @@ export function CollectionRail({ nftId, collectionId }: CollectionRailProps): JS
                 <button
                   key={page}
                   type="button"
-                  aria-label={`Mostrar a página ${page + 1} de ${pages.count} da coleção`}
+                  aria-label={`Mostrar a página ${page + 1} de ${pages.count} de ${title.toLowerCase()}`}
                   aria-current={page === pages.current ? "true" : undefined}
                   onClick={() => goToPage(page)}
                   className="flex size-6 items-center justify-center rounded-full"

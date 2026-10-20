@@ -393,8 +393,8 @@ mantido durante a implementação.
 | Detalhe | "Mais desta coleção" sem assinatura de tempo real; o preço dos cards segue o `staleTime` da lista (60 s) | Assinar até 15 NFTs a mais por tela para cards secundários não paga o custo; o detalhe aberto segue ao vivo |
 | Detalhe | Para o visitante, "Favoritar" leva ao login e volta ao NFT (o nome acessível avisa que exige entrar) | Favorito é dado de pessoa (`['u', owner]`) e exige sessão |
 | Detalhe | "Comprar" adiciona ao carrinho a quantidade escolhida e mostra "Adicionado. Ver carrinho"; o nome acessível diz "(adiciona ao carrinho)" | A compra passa pelo carrinho e pela cotação; não há compra direta no contrato |
-| Carrinho, pagamento e recibo | Linhas mostram a edição abaixo do ID do token | A compra é por edição |
-| Carrinho | "Colecionadores também viram" ausente | Exigiria assinar em tempo real mais NFTs na tela do carrinho, sem requisito que peça a seção |
+| Pagamento e recibo | Linhas mostram a edição abaixo do ID do token; no carrinho, só o ID, como no protótipo | A compra é por edição, e a revisão é onde a edição precisa estar à vista |
+| Carrinho | "Colecionadores também viram" mostra os NFTs mais curtidos (`sort=popular`) que não estão no carrinho, sem assinatura de tempo real | O protótipo não define a origem da lista; "mais curtidos" é o dado de interesse que a API tem |
 | Carrinho | "Resumo da carteira" vira "Resumo do pedido" | O bloco mostra a cotação do pedido, não a carteira |
 | Todas | Tema escuro único, sem alternância claro e escuro | O protótipo só desenha o tema escuro |
 | Todas | Borda dos campos em `secondary-base` (#B39463) em vez de `border-soft` (#55321F); busca e newsletter ganham borda; foco com contorno sólido de 2 px | #55321F dá 1,7:1 com o fundo; limite de campo e foco pedem 3:1 (WCAG 1.4.11) |
