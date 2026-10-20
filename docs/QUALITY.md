@@ -20,7 +20,7 @@ erro não aparece na tela, e o resto é roteiro manual executado antes da entreg
 | Arquivo | Casos |
 |---|---|
 | `eth.test.ts` | 18 casas; `0.1 + 0.2`; acima de `2^53` wei; `floor` do desconto; formato inválido; `formatEth` exato com vírgula; `parseEthInput` com vírgula e ponto; `formatEthInput` volta igual pelo `parseEthInput`, inclusive acima de 1000 |
-| `eventStore.test.ts` | duplicata por `id`; versão menor e igual; audiência de outro usuário; pedido terminal; semeadura por REST |
+| `eventStore.test.ts` | duplicata por `id`; versão menor e igual; audiência de outro usuário; pedido terminal por evento e por REST; semeadura por REST; LRU de ids; reset na troca de identidade mantém as versões públicas e esquece os pedidos |
 | `apiError.test.ts` | timeout e falha de rede recuperáveis; corpo de erro da API com mensagem, `details` e `fieldErrors`; fora do formato, código derivado do status (400, 401, 404, 500, 503) e 408, 429 e 5xx recuperáveis; código desconhecido preserva mensagem e `requestId` |
 | `client.test.ts` | `UNAUTHENTICATED` com token enviado também expira; expiração dispara uma vez por token enviado, inclusive com requisições simultâneas e novo login antes da resposta antiga; requisição sem token não dispara; erro fora do Axios chega intacto |
 | `handshake.test.ts` | token do CONNECT com e sem namespace; auth ausente ou vazia é visitante; JSON ilegível, auth que não é objeto e token que não é texto são inválidos; evento com e sem id de ack; pacote ilegível ignorado |
@@ -55,7 +55,7 @@ declara o cenário. Regras:
 | `cart` | `fast` | limites no detalhe e no carrinho; cupons inválido, expirado e abaixo do mínimo com mensagens distintas; resumo da cotação com precisão decimal; refresh; merge no login com ajuste anunciado e visitante apagado no servidor; item acima do estoque avisa e se ajusta ao limite | CRT-1..4, NF-5 |
 | `checkout` | `fast` | catálogo até o recibo; Carla bloqueada sem Nome ENS; `setPrice` depois não altera o recibo; carrinho perde só o comprado; Bruno na URL de um pedido da Ana vê "não encontrado" | PAG-4, PED-2..4, MOC-2, AUT-5 |
 | `checkout-failures` | `payment-refused`, `order-timeout`, `wallet-reject` | duplo clique e retry geram um pedido só; reload no timeout recupera o mesmo pedido; recusa preserva o carrinho | PAG-1, PAG-3, PED-3 |
-| `realtime` | `fast`, `socket-duplicates`; na fatia 7, `price-change-on-review` e `socket-drop` | evento atualiza detalhe e catálogo; anúncio e resumo novo no carrinho; valor não regride e anúncio único; queda reconecta, reassina e reconcilia; token recusado expira sem reconectar; `stats()` zera ao sair; heartbeat em 2 min de relógio. Na fatia 7: "Confirmar" bloqueado até aceite e reload no pendente mantém o pedido | CRT-5, PAG-2, PED-1, RT, MOC-7 |
+| `realtime` | `fast`, `socket-duplicates`; na fatia 7, `price-change-on-review` e `socket-drop` | evento atualiza detalhe e catálogo; anúncio e resumo novo no carrinho; valor não regride e anúncio único; queda reconecta, reassina e reconcilia; token recusado expira, não reconecta com ele e segue como visitante; `stats()` zera ao sair; heartbeat em 2 min de relógio. Na fatia 7: "Confirmar" bloqueado até aceite e reload no pendente mantém o pedido | CRT-5, PAG-2, PED-1, RT, MOC-7 |
 | `bootstrap` | Service Worker ou `localStorage` bloqueado | aviso no lugar da tela em branco, sem loop de recarga | NF-6 |
 | `mocks` | `fast` | cenário da URL aplicado e URL limpa; SHA do build exposto; cenário e banco persistem no reload; `reset()` apaga o snapshot e volta ao cenário padrão | MOC-3, MOC-8 |
 
