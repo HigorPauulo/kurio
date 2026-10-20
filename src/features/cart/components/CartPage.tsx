@@ -10,7 +10,9 @@ import { formatEth } from "@/lib/eth";
 import { getApiFieldError } from "@/lib/forms";
 import { cn } from "@/lib/utils";
 import { useNftSubscription } from "@/lib/realtime/instance";
+import { CHAIN_LABELS } from "../../catalog/labels";
 import {
+  CART_NETWORK,
   cartQuery,
   quoteQuery,
   useApplyCouponMutation,
@@ -63,7 +65,7 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
           height={96}
           className="aspect-square w-24 shrink-0 object-cover md:w-17.5"
         />
-        <div className="flex min-w-0 flex-1 flex-col gap-1 py-2">
+        <div className="flex min-w-0 flex-1 flex-col gap-1 py-2 pr-10 md:pr-0">
           <Link to="/nft/$nftId" params={{ nftId: item.nftId }} className="font-bold hover:text-text-accent">
             {item.nftName}
           </Link>
@@ -217,7 +219,7 @@ function Summary({ owner, cart }: { owner: string; cart: Cart }): JSX.Element {
           <dt>Desconto</dt>
           <dd className="text-right">{quote.data ? `- ${formatEth(quote.data.discount)} ETH` : "..."}</dd>
           <dt>
-            Taxa de rede <span className="block text-xs text-text-accent">Ethereum, estimada</span>
+            Taxa de rede <span className="block text-xs text-text-accent">{CHAIN_LABELS[CART_NETWORK]}, estimada</span>
           </dt>
           <dd className="text-right text-lg">{quote.data ? `${formatEth(quote.data.networkFee)} ETH` : "..."}</dd>
           <dt className="mt-3 font-bold">Total</dt>
@@ -269,7 +271,7 @@ function CartContent({ owner }: { owner: string }): JSX.Element {
   if (cart.data.items.length === 0) return <EmptyCart />;
 
   return (
-    <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-21">
+    <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:gap-21">
       <div className="flex min-w-0 flex-1 flex-col gap-3">
         <div aria-hidden="true" className={cn(ROW, "hidden border-b border-border-strong pb-3 font-bold md:grid")}>
           <span>NFTs</span>
@@ -283,7 +285,7 @@ function CartContent({ owner }: { owner: string }): JSX.Element {
           ))}
         </ul>
       </div>
-      <div className="lg:w-83">
+      <div className="xl:w-83">
         <Summary owner={owner} cart={cart.data} />
       </div>
     </div>
