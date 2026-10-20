@@ -87,3 +87,4 @@ detalhe aberto; `__kurio.build` igual ao SHA da `main`.
 | 2026-10-19 | `2cb7467` | ok: correções da revisão; `/assets/` inexistente responde 404 em texto; rotas, socket, ack e console sem erro |
 | 2026-10-19 | `7237d0c` | ok: fatia 2 e correções da revisão; `__kurio.build` igual ao SHA; cenário da URL, persistência e reset; rotas, socket e ack; console sem erro |
 | 2026-10-19 | `6b10280` | ok: fatia 3 e correções da revisão, em 1440 e 390; `__kurio.build` igual ao SHA; rota privada leva ao login e Esc volta ao início; perfil persiste após refresh na rota profunda; carteiras sem overflow; expiração mostra o aviso; console só com os 401 provocados |
+| 2026-10-19 | `b1219e3` | ok: fatia 4 e correções da revisão, em 1440 e 390; `__kurio.build` igual ao SHA; filtros, ordenação e preço na URL sobrevivem ao refresh; edição da URL no detalhe; NFT e rota inexistentes com não encontrado; sem overflow; console só com o 404 provocado do `nft_999` |
