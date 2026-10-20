@@ -14,5 +14,7 @@ export const keys = {
     cart: ["u", owner, "cart"] as const,
     quotes: ["u", owner, "quote"] as const,
     quote: (network: string, cartVersion: number) => ["u", owner, "quote", network, cartVersion] as const,
+    checkoutQuote: (network: string, cartVersion: number) => ["u", owner, "quote", "checkout", network, cartVersion] as const,
+    order: (orderId: string) => ["u", owner, "order", orderId] as const,
   }),
 };

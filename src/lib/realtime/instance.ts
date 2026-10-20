@@ -12,6 +12,7 @@ type RealtimeConfig = { onSessionExpired: () => void };
 
 let config: RealtimeConfig = { onSessionExpired: () => undefined };
 const nftCounts = new Map<string, number>();
+const orderCounts = new Map<string, number>();
 
 export function configureRealtime(next: RealtimeConfig): void {
   config = next;
@@ -38,6 +39,7 @@ const manager = createSocketManager({
   onConnect: (isReconnect) => {
     const nftIds = [...nftCounts.keys()];
     if (nftIds.length > 0) void subscribeNfts(nftIds);
+    for (const orderId of orderCounts.keys()) void manager.request("order.subscribe", { orderId });
     if (isReconnect) reconcileAfterReconnect(queryClient);
   },
   onSessionExpired: () => config.onSessionExpired(),
@@ -73,4 +75,28 @@ function retainNfts(nftIds: readonly string[]): () => void {
 export function useNftSubscription(nftIds: readonly string[]): void {
   const signature = [...new Set(nftIds)].sort().join(",");
   useEffect(() => (signature ? retainNfts(signature.split(",")) : undefined), [signature]);
+}
+
+export function isRealtimeConnected(): boolean {
+  return manager.isConnected();
+}
+
+function retainOrder(orderId: string): () => void {
+  const count = orderCounts.get(orderId) ?? 0;
+  orderCounts.set(orderId, count + 1);
+  if (count === 0 && manager.isConnected()) void manager.request("order.subscribe", { orderId });
+
+  return () => {
+    const remaining = (orderCounts.get(orderId) ?? 1) - 1;
+    if (remaining > 0) {
+      orderCounts.set(orderId, remaining);
+      return;
+    }
+    orderCounts.delete(orderId);
+    if (manager.isConnected()) void manager.request("order.unsubscribe", { orderId });
+  };
+}
+
+export function useOrderSubscription(orderId: string | null): void {
+  useEffect(() => (orderId ? retainOrder(orderId) : undefined), [orderId]);
 }
