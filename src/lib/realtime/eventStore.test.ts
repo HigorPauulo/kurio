@@ -76,10 +76,16 @@ describe("eventStore", () => {
     expect(store.accept(nftEvent("evt_1", 1))).toBe(false);
   });
 
-  it("reset apaga versões e ids aplicados", () => {
+  it("reset na troca de identidade mantém o que é público e esquece só os pedidos", () => {
     const store = createEventStore();
-    store.accept(nftEvent("evt_1", 4));
-    store.reset(null);
-    expect(store.accept(nftEvent("evt_1", 4))).toBe(true);
+    store.reset("usr_ana");
+    store.accept(nftEvent("evt_1", 6));
+    store.accept(orderEvent("evt_2", 1, "confirmed"));
+
+    store.reset("usr_bruno");
+
+    expect(store.accept(nftEvent("evt_3", 5))).toBe(false);
+    expect(store.knownVersion("nft", "nft_001")).toBe(6);
+    expect(store.knownVersion("order", "ord_1")).toBe(-1);
   });
 });

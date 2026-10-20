@@ -1,20 +1,21 @@
 import type { RealtimeEvent } from "@/contracts/events";
+import { isTerminalOrderStatus } from "@/contracts/order";
 
 const DEFAULT_CAPACITY = 500;
-const TERMINAL_STATUSES = new Set(["confirmed", "refused"]);
 
 export type ResourceKind = RealtimeEvent["resource"]["kind"];
 
 export type EventStore = {
   reset: (userId: string | null) => void;
   seed: (kind: ResourceKind, id: string, version: number, status?: string) => void;
+  knownVersion: (kind: ResourceKind, id: string) => number;
   accept: (event: RealtimeEvent) => boolean;
 };
 
 export function createEventStore(capacity = DEFAULT_CAPACITY): EventStore {
   let userId: string | null = null;
-  let appliedIds = new Set<string>();
-  let versions = new Map<string, number>();
+  const appliedIds = new Set<string>();
+  const versions = new Map<string, number>();
   let terminalOrders = new Set<string>();
 
   function resourceKey(kind: ResourceKind, id: string): string {
@@ -35,15 +36,18 @@ export function createEventStore(capacity = DEFAULT_CAPACITY): EventStore {
   return {
     reset(nextUserId) {
       userId = nextUserId;
-      appliedIds = new Set();
-      versions = new Map();
+      for (const key of [...versions.keys()]) {
+        if (key.startsWith("order:")) versions.delete(key);
+      }
       terminalOrders = new Set();
     },
 
     seed(kind, id, version, status) {
       raiseVersion(resourceKey(kind, id), version);
-      if (kind === "order" && status && TERMINAL_STATUSES.has(status)) terminalOrders.add(id);
+      if (kind === "order" && status && isTerminalOrderStatus(status)) terminalOrders.add(id);
     },
+
+    knownVersion: (kind, id) => versions.get(resourceKey(kind, id)) ?? -1,
 
     accept(event) {
       const key = resourceKey(event.resource.kind, event.resource.id);
@@ -54,7 +58,7 @@ export function createEventStore(capacity = DEFAULT_CAPACITY): EventStore {
 
       remember(event.id);
       raiseVersion(key, event.version);
-      if (event.type === "order.updated" && TERMINAL_STATUSES.has(event.data.status)) {
+      if (event.type === "order.updated" && isTerminalOrderStatus(event.data.status)) {
         terminalOrders.add(event.resource.id);
       }
       return true;

@@ -31,7 +31,7 @@ type FavoritesKey = ReturnType<typeof keys.priv>["favorites"];
 export function catalogListQuery(search: CatalogSearch): TaggedQueryOptions<NftListResponse, ListKey> {
   return queryOptions({
     queryKey: keys.catalog.list(search),
-    queryFn: ({ signal }) => seedNftVersions(getNfts(search, signal), (list) => list.items),
+    queryFn: ({ signal }) => seedNftVersions(() => getNfts(search, signal), (list) => list.items),
     staleTime: THIRTY_SECONDS,
     gcTime: FIVE_MINUTES,
     placeholderData: keepPreviousData,
@@ -41,7 +41,7 @@ export function catalogListQuery(search: CatalogSearch): TaggedQueryOptions<NftL
 export function featuredNftsQuery(): TaggedQueryOptions<NftSummary[], typeof keys.catalog.featured> {
   return queryOptions({
     queryKey: keys.catalog.featured,
-    queryFn: ({ signal }) => seedNftVersions(getFeaturedNfts(signal), (list) => list),
+    queryFn: ({ signal }) => seedNftVersions(() => getFeaturedNfts(signal), (list) => list),
     staleTime: ONE_MINUTE,
     gcTime: FIVE_MINUTES,
   });
@@ -50,7 +50,7 @@ export function featuredNftsQuery(): TaggedQueryOptions<NftSummary[], typeof key
 export function nftQuery(nftId: string): TaggedQueryOptions<Nft, ReturnType<typeof keys.nft>> {
   return queryOptions({
     queryKey: keys.nft(nftId),
-    queryFn: ({ signal }) => seedNftVersions(getNft(nftId, signal), (nft) => [nft]),
+    queryFn: ({ signal }) => seedNftVersions(() => getNft(nftId, signal), (nft) => [nft]),
     staleTime: ONE_MINUTE,
     gcTime: FIVE_MINUTES,
   });
