@@ -116,7 +116,7 @@ restauram as fixtures antes. O app tira `scenario` e `reset` da URL depois de ap
   usuário; os demais são recusados. Conexão recusada não recebe ack nem evento.
 - Subscriptions por conexão; `order.subscribe` valida o dono.
 - `nft.updated` vai a quem assinou o NFT; `order.updated`, ao dono que assinou o pedido.
-- Assinatura nova de um NFT reentrega a ela o último `nft.updated` daquele NFT, se houver. O evento
+- Assinatura nova de um NFT ou de um pedido reentrega a ela o último evento daquele recurso, se houver. O evento
   nasceu de um commit, então o invariante 2 vale; o cliente descarta pela versão se já tinha o dado.
 - `socket-duplicates` entrega cada evento duas vezes e reentrega o evento anterior do mesmo recurso 1 s
   depois. `dropConnections({ reconnectAfterMs })` fecha as conexões e, durante a janela, fecha cada nova

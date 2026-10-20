@@ -30,13 +30,13 @@ type ApiError = { error: { code: ErrorCode; message: string; retryable: boolean;
 | 401 | `UNAUTHENTICATED`, `SESSION_EXPIRED`, `INVALID_CREDENTIALS` | não |
 | 403 | `FORBIDDEN` | não |
 | 404 | `NOT_FOUND` | não |
-| 409 | `EMAIL_TAKEN`, `USERNAME_TAKEN`, `WALLET_ADDRESS_TAKEN`, `AVAILABILITY_CONFLICT`, `QUOTE_STALE`, `QUOTE_EXPIRED`, `QUOTE_ALREADY_USED`, `IDEMPOTENCY_CONFLICT`, `WALLET_NOT_CONNECTED` | não |
+| 409 | `EMAIL_TAKEN`, `USERNAME_TAKEN`, `WALLET_ADDRESS_TAKEN`, `AVAILABILITY_CONFLICT`, `QUOTE_STALE`, `QUOTE_EXPIRED`, `QUOTE_ALREADY_USED`, `IDEMPOTENCY_CONFLICT`, `ORDER_PENDING`, `WALLET_NOT_CONNECTED` | não |
 | 422 | `VALIDATION_FAILED` (com `fieldErrors`), `COUPON_INVALID`, `COUPON_EXPIRED`, `COUPON_MINIMUM_NOT_MET`, `WRONG_PASSWORD`, `WALLET_REJECTED` | não |
 | 500, 503 | `INTERNAL`, `UNAVAILABLE` | sim |
 
 Sem resposta (rede ou timeout de 10 s), o cliente normaliza como `NETWORK_ERROR` ou `TIMEOUT`, ambos
 retryable. `details` por código: `AVAILABILITY_CONFLICT` → `{ editionId, available, maxPerOrder }`;
-`QUOTE_STALE` → `{ quote: Quote }` (a nova); `IDEMPOTENCY_CONFLICT` e `QUOTE_ALREADY_USED` →
+`QUOTE_STALE` → `{ quote: Quote }` (a nova); `IDEMPOTENCY_CONFLICT`, `QUOTE_ALREADY_USED` e `ORDER_PENDING` →
 `{ orderId }`; `COUPON_MINIMUM_NOT_MET` → `{ minimum: EthAmount, subtotal: EthAmount }`.
 
 ## Modelos
@@ -220,7 +220,7 @@ linha por item, inclusive esgotado ou acima do limite; `SOLD_OUT` e `INSUFFICIEN
 
 | Endpoint | Corpo | Sucesso | Erros |
 |---|---|---|---|
-| `POST /orders` + `Idempotency-Key: <uuid>` | `{ quoteId, walletId, network, note }` | 201 `Order` pendente; 200 com o mesmo pedido se mesma chave e mesmo corpo | 400 sem chave; 409 `IDEMPOTENCY_CONFLICT`, `QUOTE_ALREADY_USED`, `QUOTE_STALE`, `QUOTE_EXPIRED`, `AVAILABILITY_CONFLICT`, `WALLET_NOT_CONNECTED`; 422 |
+| `POST /orders` + `Idempotency-Key: <uuid>` | `{ quoteId, walletId, network, note }` | 201 `Order` pendente; 200 com o mesmo pedido se mesma chave e mesmo corpo | 400 sem chave; 409 `IDEMPOTENCY_CONFLICT`, `QUOTE_ALREADY_USED`, `ORDER_PENDING`, `QUOTE_STALE`, `QUOTE_EXPIRED`, `AVAILABILITY_CONFLICT`, `WALLET_NOT_CONNECTED`; 422 |
 | `GET /orders/:id` | | 200 `Order` | 403 de outro usuário; 404 |
 
 Ordem de avaliação de `POST /orders`, obrigatória para o handler:
@@ -229,7 +229,9 @@ Ordem de avaliação de `POST /orders`, obrigatória para o handler:
 2. Chave já registrada para o usuário → mesmo `bodyHash` devolve 200 com o pedido no estado atual;
    hash diferente → 409 `IDEMPOTENCY_CONFLICT`. **Nenhuma outra validação roda antes deste passo**:
    cotação expirada, estoque ou carteira não impedem recuperar um pedido já criado.
-3. Cotação já usada por outra chave → 409 `QUOTE_ALREADY_USED` com o `orderId` existente.
+3. Cotação já usada por outra chave → 409 `QUOTE_ALREADY_USED` com o `orderId` existente. Usuário com
+   pedido `pending` → 409 `ORDER_PENDING` com o `orderId` dele: um pedido em processamento por vez, para
+   o mesmo carrinho não reservar nem cobrar duas vezes.
 4. Só então: corpo e perfil (422, com `fieldErrors` para `ensName` nulo, `walletId` que não é do usuário
    ou `network` fora de `wallet.networks`), cotação (`QUOTE_EXPIRED`, também para cotação inexistente
    ou de outro dono; `QUOTE_STALE` com a cotação nova em `details.quote`), conexão da carteira na rede
