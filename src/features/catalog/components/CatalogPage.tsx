@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useEffect, useState, type JSX } from "react";
-import { SearchIcon } from "@/components/icons/KurioIcons";
+import { ChevronDownIcon, SearchIcon } from "@/components/icons/KurioIcons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import { formatEth } from "@/lib/eth";
 import { useDelayedFlag } from "@/lib/useDelayedFlag";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { cn } from "@/lib/utils";
-import { SORT_LABELS } from "../labels";
+import { SORT_LABELS, VIEW_TABS } from "../labels";
 import { catalogListQuery, featuredNftsQuery } from "../queries";
 import { CATALOG_PAGE_SIZE, CLEARED_FILTERS, hasActiveFilters, type CatalogFilters, type CatalogSearch, type CatalogSort } from "../search";
 import { CatalogFiltersPanel } from "./CatalogFilters";
@@ -78,13 +78,35 @@ function SearchBox({ value, onSearchChange }: { value: string | undefined; onSea
   );
 }
 
+function ViewTabs({ view }: { view: CatalogSearch["view"] }): JSX.Element {
+  return (
+    <ul aria-label="Vistas do catálogo" className="flex gap-5 overflow-x-auto text-body leading-4 font-medium">
+      {VIEW_TABS.map((tab) => (
+        <li key={tab.label} className="shrink-0">
+          <Link
+            to="/"
+            search={(previous) => ({ ...previous, view: tab.view, page: undefined })}
+            resetScroll={false}
+            aria-current={tab.view === view ? "true" : undefined}
+            data-active={tab.view === view}
+            activeOptions={{ exact: true, includeSearch: true, includeHash: true }}
+            className="relative block pb-2 whitespace-nowrap hover:text-text-accent data-[active=true]:text-text-accent data-[active=true]:after:absolute data-[active=true]:after:inset-x-0 data-[active=true]:after:bottom-0 data-[active=true]:after:h-0.5 data-[active=true]:after:bg-primary"
+          >
+            {tab.label}
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function SortSelect({ value, onSearchChange }: { value: CatalogSort; onSearchChange: SearchChange }): JSX.Element {
   return (
-    <div className="flex items-center gap-2 text-body">
+    <div className="relative flex items-center gap-2 text-body">
       <label htmlFor="catalog-sort">Ordenar por:</label>
       <select
         id="catalog-sort"
-        className="h-9 cursor-pointer rounded-md bg-background pr-1 text-body text-foreground hover:text-text-accent focus-visible:outline-2 focus-visible:outline-ring"
+        className="h-9 cursor-pointer appearance-none rounded-md bg-background pr-6 text-body text-foreground hover:text-text-accent"
         value={value}
         onChange={(event) => {
           const sort = catalogSortSchema.parse(event.target.value);
@@ -97,6 +119,7 @@ function SortSelect({ value, onSearchChange }: { value: CatalogSort; onSearchCha
           </option>
         ))}
       </select>
+      <ChevronDownIcon className="pointer-events-none absolute right-0 size-4" />
     </div>
   );
 }
@@ -112,7 +135,7 @@ function Pagination({ page, totalPages }: { page: number; totalPages: number }):
   return (
     <nav aria-label="Paginação" className="flex flex-wrap items-center justify-end gap-2">
       {page > 1 && (
-        <Link to="/" search={pageHref(page - 1)} aria-label="Página anterior" className={PAGE_ITEM}>
+        <Link to="/" hash="mercado" search={pageHref(page - 1)} aria-label="Página anterior" className={PAGE_ITEM}>
           <ChevronLeft aria-hidden="true" className="size-4.5" />
         </Link>
       )}
@@ -120,6 +143,7 @@ function Pagination({ page, totalPages }: { page: number; totalPages: number }):
         <Link
           key={number}
           to="/"
+          hash="mercado"
           search={pageHref(number)}
           aria-label={`Página ${number}`}
           aria-current={number === page ? "page" : undefined}
@@ -129,7 +153,7 @@ function Pagination({ page, totalPages }: { page: number; totalPages: number }):
         </Link>
       ))}
       {page < totalPages && (
-        <Link to="/" search={pageHref(page + 1)} aria-label="Próxima página" className={PAGE_ITEM}>
+        <Link to="/" hash="mercado" search={pageHref(page + 1)} aria-label="Próxima página" className={PAGE_ITEM}>
           <ChevronRight aria-hidden="true" className="size-4.5" />
         </Link>
       )}
@@ -200,7 +224,7 @@ function ResultCount({ search }: { search: CatalogSearch }): JSX.Element {
   else if (total !== undefined) message = `${total} ${total === 1 ? "NFT encontrado" : "NFTs encontrados"}`;
 
   return (
-    <p role="status" className="text-body font-medium text-text-accent">
+    <p role="status" className="sr-only">
       {message}
     </p>
   );
@@ -242,7 +266,7 @@ function CatalogResults({ search, onSearchChange }: CatalogPageProps): JSX.Eleme
         {hasActiveFilters(search) ? (
           <Button
             variant="outline"
-            onClick={() => onSearchChange({ ...CLEARED_FILTERS, q: undefined })}
+            onClick={() => onSearchChange({ ...CLEARED_FILTERS, q: undefined, view: undefined })}
           >
             Limpar filtros
           </Button>
@@ -258,7 +282,7 @@ function CatalogResults({ search, onSearchChange }: CatalogPageProps): JSX.Eleme
       {items.length === 0 ? (
         <div className="flex flex-col items-start gap-2">
           <p>Esta página não existe mais.</p>
-          <Link to="/" search={pageHref(1)} className="underline underline-offset-4">
+          <Link to="/" hash="mercado" search={pageHref(1)} className="underline underline-offset-4">
             Ir para a primeira página
           </Link>
         </div>
@@ -306,10 +330,23 @@ export function CatalogPage({ search, onSearchChange }: CatalogPageProps): JSX.E
           <FeaturedNft />
         </div>
         <div className="flex min-w-0 flex-col gap-8">
-          {!isCompact && searchBox}
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-            <ResultCount search={search} />
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+              <ViewTabs view={search.view} />
+              {search.q && (
+                <button
+                  type="button"
+                  aria-label={`Limpar a busca por ${search.q}`}
+                  onClick={() => onSearchChange({ q: undefined })}
+                  className="flex h-7 items-center gap-1.5 rounded-full border border-input px-3 text-caption text-text-secondary hover:border-primary hover:text-text-accent"
+                >
+                  Busca: <strong className="font-bold text-foreground">{search.q}</strong>
+                  <X aria-hidden="true" className="size-3.5" />
+                </button>
+              )}
+            </div>
             <SortSelect value={search.sort ?? "recent"} onSearchChange={onSearchChange} />
+            <ResultCount search={search} />
           </div>
           <CatalogResults search={search} onSearchChange={onSearchChange} />
         </div>

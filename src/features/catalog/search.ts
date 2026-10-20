@@ -73,5 +73,5 @@ export function joinParam(values: readonly string[]): string | undefined {
 }
 
 export function hasActiveFilters(search: CatalogSearch): boolean {
-  return Boolean(search.q ?? search.category ?? search.chain ?? search.status ?? search.priceMin ?? search.priceMax);
+  return Boolean(search.q ?? search.view ?? search.category ?? search.chain ?? search.status ?? search.priceMin ?? search.priceMax);
 }

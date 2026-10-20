@@ -20,7 +20,11 @@ function HomeRoute() {
 
   const handleSearchChange = useCallback<SearchChange>(
     (patch, options) => {
-      void navigate({ search: (previous) => ({ ...previous, page: undefined, ...patch }), replace: options?.replace });
+      void navigate({
+        search: (previous) => ({ ...previous, page: undefined, ...patch }),
+        replace: options?.replace,
+        resetScroll: false,
+      });
     },
     [navigate],
   );

@@ -161,7 +161,7 @@ export function Footer(): JSX.Element {
           <ul>
             {COLLECTION_LINKS.map((link) => (
               <li key={link.category}>
-                <Link to="/" search={{ category: link.category }} className={LINK}>
+                <Link to="/" hash="mercado" search={{ category: link.category }} className={LINK}>
                   {link.label}
                 </Link>
               </li>
