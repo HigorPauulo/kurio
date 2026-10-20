@@ -9,7 +9,7 @@ type KurioWindow = {
   };
 };
 
-const DB_KEY = "kurio:mockdb:v8";
+const DB_KEY = "kurio:mockdb";
 
 async function waitForMocks(page: Page): Promise<void> {
   await page.waitForFunction(() => "__kurio" in window);

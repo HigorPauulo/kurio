@@ -322,7 +322,7 @@ Falha de mutation é anunciada em live region `assertive`; sucesso em `polite`.
 | `kurio:checkout:attempt:<userId>` | local | tentativa de pedido |
 | `kurio:checkout:draft:<userId>` | session | rascunho do formulário |
 | `kurio:scenario` | local | cenário do mock |
-| `kurio:mockdb:v<schema>` | local | snapshot do `MockDb` (só os mocks leem) |
+| `kurio:mockdb` | local | snapshot do `MockDb` com `schemaVersion` dentro (só os mocks leem) |
 
 Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lança.
 

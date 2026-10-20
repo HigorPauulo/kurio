@@ -49,7 +49,7 @@ carrinho, cotação usada, desfecho do pedido), em `mocks/db/tables.ts`.
   de `UNAUTHENTICATED` (token desconhecido).
   `idempotency` e `orders` ficam, porque são o que recupera um pedido.
 
-**Persistência:** snapshot em `localStorage` (`kurio:mockdb:v<schemaVersion>`) após cada commit;
+**Persistência:** snapshot em `localStorage` (`kurio:mockdb`, com `schemaVersion` dentro do snapshot) após cada commit;
 `schemaVersion` diferente, JSON ilegível ou falta de alguma tabela descarta o snapshot e reaplica o
 seed. Armazenamento bloqueado ou cheio deixa o banco só em memória. A falha de um inscrito no
 `subscribe` não desfaz o commit nem impede os outros inscritos. Pedido `pending` guarda `settleAt`
