@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Pause, Play } from "lucide-react";
-import { useEffect, useRef, useState, type JSX, type MouseEvent, type PointerEvent } from "react";
+import { useEffect, useState, type JSX } from "react";
 import { buttonVariants } from "@/components/ui/button";
 import { useMediaQuery } from "@/lib/useMediaQuery";
+import { useSwipe } from "@/lib/useSwipe";
 import { cn } from "@/lib/utils";
 
 const ROTATION_MS = 6000;
-const SWIPE_THRESHOLD_PX = 50;
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
 const SLIDES = [
@@ -39,44 +39,12 @@ export function HeroCarousel(): JSX.Element {
   const [isPausedByUser, setIsPausedByUser] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [dragOffset, setDragOffset] = useState<number | null>(null);
-  const dragStartRef = useRef<number | null>(null);
-  const hasDraggedRef = useRef(false);
+  const swipe = useSwipe((direction) => goTo(direction));
+  const dragOffset = swipe.offset;
   const isRotating = !isPausedByUser && !isHovered && !isFocused && !isReducedMotion && dragOffset === null;
 
   function goTo(step: number): void {
     setActive((current) => (current + step + SLIDES.length) % SLIDES.length);
-  }
-
-  function handlePointerDown(event: PointerEvent<HTMLDivElement>): void {
-    if (event.button !== 0) return;
-    dragStartRef.current = event.clientX;
-    hasDraggedRef.current = false;
-    setDragOffset(0);
-  }
-
-  function handlePointerMove(event: PointerEvent<HTMLDivElement>): void {
-    if (dragStartRef.current === null) return;
-    const offset = event.clientX - dragStartRef.current;
-    if (Math.abs(offset) > 5 && !hasDraggedRef.current) {
-      hasDraggedRef.current = true;
-      event.currentTarget.setPointerCapture(event.pointerId);
-    }
-    setDragOffset(offset);
-  }
-
-  function handlePointerEnd(): void {
-    if (dragStartRef.current === null) return;
-    if (dragOffset !== null && Math.abs(dragOffset) >= SWIPE_THRESHOLD_PX) goTo(dragOffset < 0 ? 1 : -1);
-    dragStartRef.current = null;
-    setDragOffset(null);
-  }
-
-  function handleClickCapture(event: MouseEvent<HTMLDivElement>): void {
-    if (!hasDraggedRef.current) return;
-    event.preventDefault();
-    event.stopPropagation();
-    hasDraggedRef.current = false;
   }
 
   useEffect(() => {
@@ -103,12 +71,7 @@ export function HeroCarousel(): JSX.Element {
       <div
         aria-live={isRotating ? "off" : "polite"}
         className={cn("grid touch-pan-y select-none", dragOffset !== null && "cursor-grabbing")}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerEnd}
-        onPointerCancel={handlePointerEnd}
-        onClickCapture={handleClickCapture}
-        onDragStart={(event) => event.preventDefault()}
+        {...swipe.handlers}
       >
         {SLIDES.map((slide, index) => {
           const isActive = index === active;
