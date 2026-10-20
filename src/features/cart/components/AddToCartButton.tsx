@@ -3,20 +3,19 @@ import { ShoppingCart } from "lucide-react";
 import { useState, type JSX } from "react";
 import { Button } from "@/components/ui/button";
 import { announce } from "@/lib/a11y/announcer";
-import { useCartOwner } from "@/lib/session/instance";
+import { ensureCartOwner } from "@/lib/session/instance";
 import { useAddCartItemMutation } from "../queries";
 
 type AddToCartButtonProps = { nftId: string; editionId: string; quantity: number };
 
 export function AddToCartButton({ nftId, editionId, quantity }: AddToCartButtonProps): JSX.Element {
-  const owner = useCartOwner();
-  const add = useAddCartItemMutation(owner);
+  const add = useAddCartItemMutation();
   const [isAdded, setIsAdded] = useState(false);
 
   function handleAdd(): void {
     setIsAdded(false);
     add.mutate(
-      { nftId, editionId, quantity },
+      { owner: ensureCartOwner(), nftId, editionId, quantity },
       {
         onSuccess: () => {
           setIsAdded(true);

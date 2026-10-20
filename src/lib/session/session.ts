@@ -17,6 +17,7 @@ async function mergeGuestCart(
   try {
     const { cart, adjustments } = await guestCart.merge(guestCartId);
     guestCart.clear();
+    await queryClient.cancelQueries({ queryKey: keys.priv(userId).cart });
     queryClient.setQueryData(keys.priv(userId).cart, cart);
     return adjustments;
   } catch {

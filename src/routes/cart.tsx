@@ -5,12 +5,13 @@ import { getCartOwner, useCartOwner } from "@/lib/session/instance";
 
 export const Route = createFileRoute("/cart")({
   loader: ({ context }) => {
-    void context.queryClient.prefetchQuery(cartQuery(getCartOwner()));
+    const owner = getCartOwner();
+    if (owner) void context.queryClient.prefetchQuery(cartQuery(owner));
   },
   component: CartRoute,
 });
 
 function CartRoute() {
   const owner = useCartOwner();
-  return <CartPage key={owner} owner={owner} />;
+  return <CartPage key={owner ?? "empty"} owner={owner} />;
 }

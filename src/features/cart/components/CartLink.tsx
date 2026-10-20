@@ -7,7 +7,7 @@ import { cartQuery } from "../queries";
 
 export function CartLink(): JSX.Element {
   const owner = useCartOwner();
-  const cart = useQuery(cartQuery(owner));
+  const cart = useQuery({ ...cartQuery(owner ?? ""), enabled: owner !== null });
   const count = cart.data?.items.reduce((total, item) => total + item.quantity, 0) ?? 0;
   const label = count === 0 ? "Carrinho vazio" : `Carrinho, ${count} ${count === 1 ? "item" : "itens"}`;
 
