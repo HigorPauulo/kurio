@@ -17,7 +17,7 @@ Para onde o projeto vai. Onde ele está é o [STATUS](STATUS.md); o porquê das 
 | 4 | ✅ **Catálogo e detalhe** | Filtros, ordenação e página na URL; detalhe; favoritos otimistas | CAT, DET, NAV-1, NAV-3 | 2 | 2 |
 | 5 | ✅ **Carrinho e cotação** | Visitante e usuário, merge, cupom, resumo pela cotação | CRT-1..4, NF-5 | 2 | 1,5 |
 | 6 | ✅ **Tempo real** | Socket por sessão, `eventStore`, subscriptions, reconciliação | RT, CRT-5 | 4, 5 | 1,5 |
-| 7 | ⬜ **Checkout e pedido** | Campos do layout, revisão, idempotência, recibo, pedido alheio | PAG, PED, AUT-5 | 3, 6 | 2,5 |
+| 7 | ✅ **Checkout e pedido** | Campos do layout, revisão, idempotência, recibo, pedido alheio | PAG, PED, AUT-5 | 3, 6 | 2,5 |
 | 8 | ⬜ **Visual e responsivo** | Tokens do Figma, composição em 390 e 1440, 768 sem quebra, estados de carregamento | VIS, NF-1, NF-2, NF-3 | 7 | 2 |
 | 9 | ⬜ **Publicação** | Vercel, smoke, Lighthouse, roteiro manual, documentação conferida com o código | NF-4, NF-6, NF-7, MOC-8, VIS-4 | 8 | 1 |
 | | **Linha de chegada** | | | | **18** |
@@ -84,3 +84,4 @@ detalhe aberto; `__kurio.build` igual ao SHA da `main`.
 | 2026-10-19 | `6b10280` | ok: fatia 3 e correções da revisão, em 1440 e 390; `__kurio.build` igual ao SHA; rota privada leva ao login e Esc volta ao início; perfil persiste após refresh na rota profunda; carteiras sem overflow; expiração mostra o aviso; console só com os 401 provocados |
 | 2026-10-19 | `b1219e3` | ok: fatia 4 e correções da revisão, em 1440 e 390; `__kurio.build` igual ao SHA; filtros, ordenação e preço na URL sobrevivem ao refresh; edição da URL no detalhe; NFT e rota inexistentes com não encontrado; sem overflow; console só com o 404 provocado do `nft_999` |
 | 2026-10-19 | `547965c` | ok: fatia 5 e correções da revisão, em 1440 e 390; `__kurio.build` igual ao SHA; visitante sem carrinho até adicionar; carrinho do visitante persiste no refresh com total `0,1221 ETH`; login da Ana une os carrinhos (5 itens, `0,993 ETH`) e apaga o visitante; sem overflow; nenhuma resposta de erro e console sem exceção |
+| 2026-10-19 | `b41063a` | ok: fatia 6 e correções da revisão, em 1440 e 390; `__kurio.build` igual ao SHA; `setPrice` chega ao detalhe aberto; carrinho da Ana recalcula para `0,9224 ETH` e anuncia; socket autenticado com 2 subscriptions; `/dev/realtime` mostra não encontrado; sem overflow; nenhuma resposta de erro e console sem exceção |

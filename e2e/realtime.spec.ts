@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectNoA11yViolations, login, startFresh } from "./support/kurio.js";
+import { expectNoA11yViolations, goToReview, login, startFresh } from "./support/kurio.js";
 
 type Stats = { sockets: number; authenticated: number; subscriptions: number; delivered: number };
 
@@ -133,4 +133,48 @@ test("a conexão sobrevive a 2 minutos com o heartbeat simulado", async ({ page 
   expect((await stats(page)).sockets).toBe(1);
   await setPrice(page, "nft_001", "ed_001_1", "2.7");
   await expect(page.getByLabel(/^Padrão · 2,7 ETH/)).toBeVisible();
+});
+
+test("preço muda na revisão: diff, confirmar bloqueado até aceitar, e o pedido sai com o valor novo", async ({ page }) => {
+  await startFresh(page, "fast+price-change-on-review");
+  await login(page, "ana@kurio.test");
+  await goToReview(page);
+
+  await expect(page.getByText("Os valores mudaram desde a sua revisão.")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("Pulso Neon: de 0,75 para 0,8625 ETH")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Confirmar compra" })).toBeDisabled();
+
+  await page.getByRole("button", { name: "Aceitar novos valores" }).click();
+  await page.getByRole("button", { name: "Confirmar compra" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Seus NFTs agora estão na sua carteira" })).toBeVisible();
+  await expect(page.getByText("0,9849 ETH").first()).toBeVisible();
+});
+
+test("queda do socket com pedido pendente: reload mantém o pedido e a reconexão traz o desfecho", async ({ page }) => {
+  await startFresh(page, "socket-drop");
+  await login(page, "ana@kurio.test");
+  await goToReview(page);
+  await page.getByRole("button", { name: "Confirmar compra" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Pedido em processamento" })).toBeVisible();
+  const orderUrl = page.url();
+
+  await page.reload();
+  expect(page.url()).toBe(orderUrl);
+  await expect(page.getByRole("heading", { level: 1, name: /Pedido em processamento|Seus NFTs agora/ })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Seus NFTs agora estão na sua carteira" })).toBeVisible({ timeout: 15_000 });
+  await expect.poll(async () => (await stats(page)).subscriptions).toBe(0);
+});
+
+test("estoque que muda na revisão sem mudar valores não pede novo aceite", async ({ page }) => {
+  await startFresh(page);
+  await login(page, "ana@kurio.test");
+  await goToReview(page);
+  await waitForSubscriptions(page, 2);
+  await page.evaluate(() =>
+    (window as unknown as { __kurio: { catalog: { setAvailable: (n: string, e: string, a: number) => void } } }).__kurio.catalog.setAvailable("nft_004", "ed_004_1", 10),
+  );
+
+  await expect.poll(async () => (await stats(page)).delivered).toBeGreaterThan(0);
+  await expect(page.getByRole("button", { name: "Confirmar compra" })).toBeEnabled();
+  await expect(page.getByText("Os valores mudaram desde a sua revisão.")).toHaveCount(0);
 });

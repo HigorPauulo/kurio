@@ -3,6 +3,7 @@ import type { z } from "zod";
 import type { ErrorCode } from "@/contracts/error";
 import { userSchema, type Session, type User } from "@/contracts/user";
 import type { MockDb } from "../db/mockDb";
+import type { OrderScheduler } from "../db/orders";
 import type { Tables, UserRecord } from "../db/tables";
 import type { NetworkConditions } from "../network/conditions";
 import type { Scenario } from "../scenarios/presets";
@@ -14,6 +15,8 @@ export type HandlerDeps = {
   conditions: NetworkConditions;
   getScenario: () => Scenario;
   now: () => number;
+  wait: (ms: number) => Promise<void>;
+  orders: OrderScheduler;
 };
 
 type ErrorExtras = { fieldErrors?: Record<string, string[]>; details?: unknown };

@@ -115,8 +115,11 @@ export const quoteSchema = z.object({
   expiresAt: dateTimeSchema,
 });
 
+export const quotePurposeSchema = z.enum(["cart", "checkout"]);
+
 export const createQuoteBodySchema = z.object({
   network: chainSchema,
+  purpose: quotePurposeSchema.default("cart"),
 });
 
 export type CartItem = z.infer<typeof cartItemSchema>;
@@ -125,3 +128,4 @@ export type MergeCartResponse = z.infer<typeof mergeCartResponseSchema>;
 export type QuoteLine = z.infer<typeof quoteLineSchema>;
 export type QuoteIssue = z.infer<typeof quoteIssueSchema>;
 export type Quote = z.infer<typeof quoteSchema>;
+export type QuotePurpose = z.infer<typeof quotePurposeSchema>;

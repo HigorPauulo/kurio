@@ -5,9 +5,11 @@ import { cartHandlers } from "./handlers/cart";
 import { favoriteHandlers } from "./handlers/favorites";
 import { meHandlers } from "./handlers/me";
 import { nftHandlers } from "./handlers/nfts";
+import { orderHandlers } from "./handlers/orders";
 import type { HandlerDeps } from "./handlers/shared";
 import { walletHandlers } from "./handlers/wallets";
 import { createMockDb } from "./db/mockDb";
+import { createOrderScheduler } from "./db/orders";
 import { createSeed } from "./db/seed";
 import { openStorage } from "./db/storage";
 import { createNetworkConditions } from "./network/conditions";
@@ -50,6 +52,8 @@ function setUpBackend(): Backend {
   const conditions = createNetworkConditions({ getScenario });
   const now = () => Date.now();
   const realtime = createRealtimeServer({ db, getScenario, now });
+  const orders = createOrderScheduler({ db, now, getOutcome: () => getScenario().settleOutcome });
+  orders.resume();
 
   window.__kurio = createControl({
     db,
@@ -61,7 +65,8 @@ function setUpBackend(): Backend {
     build: import.meta.env.VITE_BUILD_SHA,
   });
 
-  return { deps: { db, conditions, getScenario, now }, realtime };
+  const wait = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+  return { deps: { db, conditions, getScenario, now, wait, orders }, realtime };
 }
 
 export function start(): Promise<unknown> {
@@ -71,6 +76,7 @@ export function start(): Promise<unknown> {
     ...nftHandlers(deps),
     ...favoriteHandlers(deps),
     ...cartHandlers(deps),
+    ...orderHandlers(deps),
     ...meHandlers(deps),
     ...walletHandlers(deps),
     realtime.handler,
