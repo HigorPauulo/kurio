@@ -2,6 +2,10 @@ import { redirect } from "@tanstack/react-router";
 import { safeRedirect } from "@/lib/url/safeRedirect";
 import { sessionStore } from "./instance";
 
+export type AuthMode = "login" | "register";
+
+const PRIVATE_PREFIXES = ["/account", "/checkout", "/orders"];
+
 export function requireUserId(location: { href: string }): string {
   const state = sessionStore.getState();
   if (state.status !== "authenticated") {
@@ -16,11 +20,18 @@ export function redirectIfAuthenticated(target: string | undefined): void {
   }
 }
 
-const PRIVATE_PREFIXES = ["/account", "/checkout", "/orders"];
+export function isPrivatePath(target: string): boolean {
+  const pathname = target.split(/[?#]/, 1)[0];
+  return PRIVATE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
 
-export function getDismissTarget(target: string | undefined): string {
+export function openAuthDialog(mode: AuthMode, target: string | undefined): never {
+  redirectIfAuthenticated(target);
   const destination = safeRedirect(target);
-  const pathname = destination.split(/[?#]/, 1)[0];
-  const isPrivate = PRIVATE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
-  return isPrivate ? "/" : destination;
+  if (isPrivatePath(destination)) {
+    throw redirect({ to: "/", search: { auth: mode, redirect: destination } });
+  }
+  const url = new URL(destination, window.location.origin);
+  url.searchParams.set("auth", mode);
+  throw redirect({ href: `${url.pathname}${url.search}${url.hash}` });
 }

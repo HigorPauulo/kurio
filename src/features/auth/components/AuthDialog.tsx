@@ -1,11 +1,11 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import type { JSX, ReactNode } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
-import { getDismissTarget } from "@/lib/session/guards";
 
 type AuthDialogProps = {
   mode: "login" | "register";
-  redirect: string | undefined;
+  open: boolean;
+  onClose: () => void;
   description: string;
   children: ReactNode;
 };
@@ -14,12 +14,11 @@ const TAB = "text-xl leading-6";
 const SOCIAL =
   "flex h-10 items-center justify-center gap-3 rounded-md border border-border-strong text-caption font-medium text-text-secondary hover:border-primary";
 
-export function AuthDialog({ mode, redirect, description, children }: AuthDialogProps): JSX.Element {
-  const navigate = useNavigate();
+export function AuthDialog({ mode, open, onClose, description, children }: AuthDialogProps): JSX.Element {
   const isLogin = mode === "login";
 
   return (
-    <Dialog open onOpenChange={(open) => !open && void navigate({ href: getDismissTarget(redirect) })}>
+    <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <DialogContent className="gap-6 px-6 pt-10 pb-12 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:border-b-0 max-sm:bg-background sm:max-w-125 sm:px-20">
         <p aria-hidden="true" className="pt-10 pb-6 text-center text-3xl font-bold tracking-brand sm:hidden">
           KURIO
@@ -29,13 +28,25 @@ export function AuthDialog({ mode, redirect, description, children }: AuthDialog
             <>
               <DialogTitle className={`${TAB} font-medium text-text-accent`}>Entrar</DialogTitle>
               <span aria-hidden="true" className="h-6 w-px bg-primary" />
-              <Link to="/register" search={{ redirect }} className={`${TAB} hover:text-text-accent`}>
+              <Link
+                to="."
+                search={(previous) => ({ ...previous, auth: "register" })}
+                replace
+                resetScroll={false}
+                className={`${TAB} hover:text-text-accent`}
+              >
                 Criar conta
               </Link>
             </>
           ) : (
             <>
-              <Link to="/login" search={{ redirect }} className={`${TAB} hover:text-text-accent`}>
+              <Link
+                to="."
+                search={(previous) => ({ ...previous, auth: "login" })}
+                replace
+                resetScroll={false}
+                className={`${TAB} hover:text-text-accent`}
+              >
                 Entrar
               </Link>
               <span aria-hidden="true" className="h-6 w-px bg-primary" />

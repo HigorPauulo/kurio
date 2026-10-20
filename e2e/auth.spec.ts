@@ -42,7 +42,7 @@ test("login com senha errada avisa sem entrar", async ({ page }) => {
 
 test("rota privada sem sessão leva ao login e volta ao destino", async ({ page }) => {
   await page.goto("/account/profile");
-  await expect(page).toHaveURL(/\/login\?redirect=%2Faccount%2Fprofile/);
+  await expect(page).toHaveURL(/\/\?auth=login&redirect=%2Faccount%2Fprofile/);
 
   const dialog = page.getByRole("dialog", { name: "Entrar" });
   await dialog.getByLabel("E-mail").fill("ana@kurio.test");
@@ -51,6 +51,27 @@ test("rota privada sem sessão leva ao login e volta ao destino", async ({ page 
 
   await expect(page).toHaveURL(/\/account\/profile$/);
   await expect(page.getByRole("heading", { name: "Perfil do colecionador" })).toBeVisible();
+});
+
+test("entrar por uma página pública mantém a página por trás e fechar volta para ela", async ({ page }) => {
+  await page.goto("/nft/nft_001");
+  await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Entrar" }).click();
+
+  const dialog = page.getByRole("dialog", { name: "Entrar" });
+  await expect(dialog).toBeVisible();
+  await expect(page).toHaveURL(/\/nft\/nft_001\?auth=login$/);
+  await expect(page.locator("main h1")).toHaveText("Emerald Ape #042");
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toHaveCount(0);
+  await expect(page).toHaveURL(/\/nft\/nft_001$/);
+
+  await page.getByRole("link", { name: /Favoritar/ }).click();
+  await dialog.getByLabel("E-mail").fill("ana@kurio.test");
+  await dialog.getByLabel("Senha").fill(PASSWORD);
+  await dialog.getByRole("button", { name: "Entrar" }).click();
+  await expect(page).toHaveURL(/\/nft\/nft_001$/);
+  await expect(page.getByRole("button", { name: "Favoritar" })).toBeVisible();
 });
 
 test("fechar o login aberto por rota privada não prende o usuário no diálogo", async ({ page }) => {

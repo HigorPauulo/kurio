@@ -422,15 +422,15 @@ function FavoriteButton({ nftId, userId }: { nftId: string; userId: string }): J
 
 function FavoriteAction({ nftId }: { nftId: string }): JSX.Element {
   const session = useSession();
-  const location = useLocation();
 
   if (session.status === "authenticated") {
     return <FavoriteButton nftId={nftId} userId={session.session.user.id} />;
   }
   return (
     <Link
-      to="/login"
-      search={{ redirect: location.href }}
+      to="."
+      search={(previous) => ({ ...previous, auth: "login" })}
+      resetScroll={false}
       className={cn(buttonVariants({ variant: "outline" }), "h-10 min-w-32.5 text-sm font-medium")}
     >
       <Heart aria-hidden="true" />

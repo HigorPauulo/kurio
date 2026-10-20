@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useNavigate } from "@tanstack/react-router";
 import type { JSX } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -7,7 +6,6 @@ import { FormError, TextField } from "@/components/form/TextField";
 import { Button } from "@/components/ui/button";
 import { registerBodySchema } from "@/contracts/user";
 import { applyApiError } from "@/lib/forms";
-import { safeRedirect } from "@/lib/url/safeRedirect";
 import { useRegisterMutation } from "../queries";
 import { AuthDialog } from "./AuthDialog";
 
@@ -21,27 +19,27 @@ const registerFormSchema = registerBodySchema
 type RegisterFormInput = z.input<typeof registerFormSchema>;
 type RegisterFormOutput = z.output<typeof registerFormSchema>;
 
-export function RegisterDialog({ redirect }: { redirect?: string }): JSX.Element {
-  const navigate = useNavigate();
+type RegisterDialogProps = { open: boolean; onClose: () => void; onDone: () => Promise<void> };
+
+export function RegisterDialog({ open, onClose, onDone }: RegisterDialogProps): JSX.Element {
   const register = useRegisterMutation();
   const form = useForm<RegisterFormInput, unknown, RegisterFormOutput>({
     resolver: zodResolver(registerFormSchema),
     defaultValues: { username: "", email: "", password: "", confirmPassword: "" },
   });
   const { errors, isSubmitting } = form.formState;
-  const destination = safeRedirect(redirect);
 
   async function handleSubmit({ username, email, password }: RegisterFormOutput): Promise<void> {
     try {
       await register.mutateAsync({ username, email, password });
-      await navigate({ href: destination });
+      await onDone();
     } catch (error) {
       applyApiError(error, form.setError, ["username", "email", "password"]);
     }
   }
 
   return (
-    <AuthDialog mode="register" redirect={redirect} description="Crie seu perfil de colecionador e conecte uma carteira quando quiser.">
+    <AuthDialog mode="register" open={open} onClose={onClose} description="Crie seu perfil de colecionador e conecte uma carteira quando quiser.">
       <form noValidate className="flex flex-col gap-4" onSubmit={(event) => void form.handleSubmit(handleSubmit)(event)}>
         <TextField
           label="Nome de usuário"

@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate, useSearch } from "@tanstack/react-router";
 import type { JSX } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,15 +12,14 @@ import {
 import { useSession } from "@/lib/session/instance";
 import { useLogoutMutation } from "../queries";
 
-const AUTH_PATHS = new Set(["/login", "/register"]);
-
 export function ExpiredSessionDialog(): JSX.Element | null {
   const session = useSession();
   const location = useLocation();
   const navigate = useNavigate();
   const logout = useLogoutMutation();
+  const { auth } = useSearch({ from: "__root__" });
 
-  if (session.status !== "expired" || AUTH_PATHS.has(location.pathname)) return null;
+  if (session.status !== "expired" || auth) return null;
 
   async function handleLeave(): Promise<void> {
     await logout.mutateAsync();

@@ -1,36 +1,35 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import type { JSX } from "react";
 import { useForm } from "react-hook-form";
 import { FormError, TextField } from "@/components/form/TextField";
 import { Button } from "@/components/ui/button";
 import { loginBodySchema, type LoginBody } from "@/contracts/user";
 import { applyApiError } from "@/lib/forms";
-import { safeRedirect } from "@/lib/url/safeRedirect";
 import { useLoginMutation } from "../queries";
 import { AuthDialog } from "./AuthDialog";
 
-export function LoginDialog({ redirect }: { redirect?: string }): JSX.Element {
-  const navigate = useNavigate();
+type LoginDialogProps = { open: boolean; onClose: () => void; onDone: () => Promise<void> };
+
+export function LoginDialog({ open, onClose, onDone }: LoginDialogProps): JSX.Element {
   const login = useLoginMutation();
   const form = useForm<LoginBody>({
     resolver: zodResolver(loginBodySchema),
     defaultValues: { email: "", password: "" },
   });
   const { errors, isSubmitting } = form.formState;
-  const destination = safeRedirect(redirect);
 
   async function handleSubmit(values: LoginBody): Promise<void> {
     try {
       await login.mutateAsync(values);
-      await navigate({ href: destination });
+      await onDone();
     } catch (error) {
       applyApiError(error, form.setError, ["email", "password"]);
     }
   }
 
   return (
-    <AuthDialog mode="login" redirect={redirect} description="Entre para gerenciar sua carteira, coleção e perfil de criador.">
+    <AuthDialog mode="login" open={open} onClose={onClose} description="Entre para gerenciar sua carteira, coleção e perfil de criador.">
       <form noValidate className="flex flex-col gap-4" onSubmit={(event) => void form.handleSubmit(handleSubmit)(event)}>
         <TextField
           label="E-mail"

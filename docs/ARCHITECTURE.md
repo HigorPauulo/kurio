@@ -171,7 +171,7 @@ refetch: mantém o conteúdo com indicador, nunca volta ao skeleton. Vazio é su
 | `/nft/$nftId` | | `ensureQueryData(nft)`, repetido uma vez se cancelado (`ensureDespiteCancel`); `NOT_FOUND` vira `notFound()` |
 | `/cart` | | prefetch de `cart` |
 | `/checkout`, `/orders/$orderId`, `/account/*` | `requireUserId`: sem sessão ativa, login com `redirect`; com sessão, `userId` no contexto | `ensureQueryData` da rota |
-| `/login`, `/register` | `redirectIfAuthenticated`: com sessão, vai a `safeRedirect(redirect)` | |
+| `/login`, `/register` | `openAuthDialog`: com sessão, vai a `safeRedirect(redirect)`; sem sessão, redireciona ao destino com `?auth=` (ou a `/` com `redirect`, se o destino for privado) | |
 
 A busca da URL é texto puro, sem JSON (`?priceMin=0.10`, não `?priceMin=%220.10%22`): o parser padrão do
 router converte `0.10` em número e perde casas do `EthAmount`. Search params validados por Zod com `.catch` (inválido degrada ao default, nunca lança) e defaults
@@ -360,9 +360,12 @@ Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lan�
   "Ordenar por" muda só a ordem. Busca pela lupa do cabeçalho no desktop e pelo campo do topo no
   mobile; busca ativa aparece numa etiqueta que a limpa.
 - `prefers-reduced-motion` remove shimmer e transições.
-- Login e cadastro são rotas próprias renderizadas como diálogo sobre o layout. Entrar vai ao `redirect`;
-  fechar sem entrar volta a ele só se for público, senão vai a `/` (`getDismissTarget`), para o guard não
-  reabrir o diálogo.
+- Login e cadastro são uma sobreposição sobre a página aberta, controlada pela busca da raiz
+  (`?auth=login|register`, com `redirect` opcional); "Entrar", "Favoritar" do visitante e a troca de aba
+  só acrescentam o parâmetro, sem voltar ao topo. Fechar remove o parâmetro e mantém a página; entrar vai
+  ao `redirect` se houver, senão fica na página. `/login` e `/register` seguem para link direto e guard:
+  abrem a sobreposição sobre o destino, ou sobre `/` com `redirect` se o destino for privado
+  (`openAuthDialog`), para o guard não reabrir o diálogo.
 - Mudança de cotação mostra o diff por linha e exige aceite.
 - Ação fora do escopo vai a `/unavailable` ou fica desabilitada com o motivo.
 - ETH na tela: valor exato, sem arredondar nem zeros à direita, vírgula decimal e ponto de milhar

@@ -5,6 +5,8 @@ import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { LiveRegion } from "@/components/layout/LiveRegion";
 import { MobileTabBar } from "@/components/layout/MobileTabBar";
+import { z } from "zod";
+import { AuthOverlay } from "@/features/auth/components/AuthOverlay";
 import { ExpiredSessionDialog } from "@/features/auth/components/ExpiredSessionDialog";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +15,10 @@ export type RouterContext = {
 };
 
 export const Route = createRootRouteWithContext<RouterContext>()({
+  validateSearch: z.object({
+    auth: z.enum(["login", "register"]).optional().catch(undefined),
+    redirect: z.string().optional().catch(undefined),
+  }),
   component: RootLayout,
   notFoundComponent: NotFound,
 });
@@ -29,6 +35,7 @@ function RootLayout() {
       </div>
       {!isFullScreen && <Footer />}
       {!isFullScreen && <MobileTabBar />}
+      <AuthOverlay />
       <ExpiredSessionDialog />
       <LiveRegion />
     </div>

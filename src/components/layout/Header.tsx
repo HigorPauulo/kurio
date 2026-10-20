@@ -14,7 +14,7 @@ const MARKET_PREFIXES = ["/nft/", "/cart", "/checkout", "/orders/"];
 
 function getSection(pathname: string, hash: string): Section {
   if (pathname === "/" && hash.replace("#", "") === "mercado") return "market";
-  if (pathname === "/" || pathname === "/login" || pathname === "/register") return "home";
+  if (pathname === "/") return "home";
   if (MARKET_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return "market";
   if (pathname.startsWith("/account/")) return "account";
   return "other";
@@ -95,8 +95,9 @@ export function Header(): JSX.Element {
             </Button>
           ) : (
             <Link
-              to="/login"
-              search={{ redirect: location.href }}
+              to="."
+              search={(previous) => ({ ...previous, auth: "login" })}
+              resetScroll={false}
               className={cn(buttonVariants({ size: "sm" }), "h-9 px-3 text-base font-medium")}
             >
               <LoginIcon className="size-5" />
