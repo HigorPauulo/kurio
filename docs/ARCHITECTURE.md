@@ -83,7 +83,9 @@ não existe mais depois de um deploy (aba aberta antes da publicação) dispara 
 página recarrega com a versão nova, no máximo uma vez a cada 10 s, para uma falha repetida não virar
 loop de recarga. `index.html` traz, dentro de `#root`, o casco estático do cabeçalho com as mesmas
 classes e a mesma altura do cabeçalho real (105 px abaixo de 1024, 73 px acima), e faz preload da arte
-do hero, para que CLS e LCP não dependam do bootstrap.
+do hero, para que CLS e LCP não dependam do bootstrap. Um `<style>` inline mínimo pinta o fundo e
+esconde o casco (`visibility`, que mantém a altura) até o `index.css` carregar e revelá-lo; sem isso, no
+dev, onde o CSS chega por JavaScript, o casco aparecia sem estilo por um instante.
 
 ## 5. Transporte HTTP
 
@@ -390,7 +392,8 @@ mantido durante a implementação.
 | Carrinho | Resumo abaixo dos itens até 1280 px, lado a lado a partir dele | Entre 1024 e 1280 as colunas fixas da tabela espremeriam o nome do NFT |
 | Todas (mobile) | Cabeçalho compacto mantido acima da busca, com a navegação principal em linha rolável; a barra de abas leva a início, lista de interesse (fora de escopo), carrinho e conta, sem o botão central | Criadores, Aprenda, Perfil, Carteiras e Sair precisam existir em 390; o botão central do protótipo não tem função no escopo |
 | Todas | Rodapé com links para `/unavailable`, coleções levando ao filtro da categoria e "Enviar" da newsletter levando a `/unavailable` | Páginas editoriais e newsletter estão fora de escopo; nada aparenta sucesso funcional |
-| Início | Seções "Lançamentos" e "Diário da Cunhagem" com links para `/unavailable`; indicador de carrossel do hero ausente | Conteúdo editorial fora de escopo; o hero não é um carrossel |
+| Início | Seções "Lançamentos" e "Diário da Cunhagem" com links para `/unavailable` | Conteúdo editorial fora de escopo |
+| Início | Hero é um carrossel de 3 slides que gira a cada 6 s e troca ao arrastar (mouse ou toque, 50 px), com botão de pausar ao lado dos pontos centralizados; para ao passar o mouse, ao focar e com movimento reduzido; o título visível de cada slide é `h2`, e o `h1` da rota fica só para leitor de tela | WCAG 2.2.2 exige pausar movimento automático acima de 5 s; um `h1` estável por rota (QUALITY §5) |
 | Início | "NFT em destaque" mostra o primeiro destaque da API com nome e preço sobre a arte | O destaque é dado do servidor; nome e preço tornam o bloco um link útil |
 | Início | Busca no topo da coluna de resultados no desktop (o protótipo só tem o ícone no cabeçalho, que leva a ela) | CAT-1 exige busca por texto |
 | Início | Contagem de resultados no lugar das abas | As abas viraram o "Ordenar por" (linha acima) |
