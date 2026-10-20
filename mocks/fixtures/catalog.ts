@@ -1,6 +1,7 @@
 import type { Category, Chain, EthAmount } from "@/contracts/common";
 import type { Edition, Nft } from "@/contracts/nft";
 import { refreshNft } from "../db/nftUpdates";
+import { stripAccents } from "../text";
 
 const PLACEHOLDER_IMAGE = "/images/nfts/placeholder.svg";
 const FIRST_CREATED_AT = Date.parse("2026-09-01T12:00:00.000Z");
@@ -64,9 +65,7 @@ const ROWS: NftRow[] = [
 ];
 
 function collectionId(name: string): string {
-  const slug = name
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
+  const slug = stripAccents(name)
     .replace(/[^a-zA-Z0-9]+/g, "-")
     .toLowerCase();
   return `col_${slug}`;

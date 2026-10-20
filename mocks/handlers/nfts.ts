@@ -8,12 +8,13 @@ import {
   type NftSummary,
 } from "@/contracts/nft";
 import { compareEth } from "@/lib/eth";
+import { stripAccents } from "../text";
 import { API, apiError, withConditions, type HandlerDeps } from "./shared";
 
 const FEATURED_LIMIT = 6;
 
 export function normalizeSearchText(value: string): string {
-  return value.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  return stripAccents(value).toLowerCase();
 }
 
 export function toNftSummary(nft: Nft): NftSummary {
@@ -100,7 +101,7 @@ export function nftHandlers(deps: HandlerDeps): HttpHandler[] {
     http.get(
       `${API}/nfts/:nftId`,
       withConditions(deps, ({ request, params }) => {
-        const nft = db.read((tables) => tables.nfts[String(params.nftId)]);
+        const nft = allNfts().find((candidate) => candidate.id === String(params.nftId));
         if (!nft) return apiError(request, 404, "NOT_FOUND", "NFT não encontrado.");
         return HttpResponse.json(nftSchema.parse(nft));
       }),
