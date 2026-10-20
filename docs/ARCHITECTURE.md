@@ -42,8 +42,8 @@ flowchart LR
 | `src/lib/eth` | Aritmética de wei, padrão do `EthAmount`, `formatEth`, `formatEthInput`, `parseEthInput` | só tipos de `contracts` |
 | `src/lib/url` | `safeRedirect`; busca da URL em texto puro (`parsePlainSearch`, `stringifyPlainSearch`) | nada |
 | `src/lib/a11y` | `announce()` e a live region única | nada |
-| `src/lib/query` | `queryClient`, `keys.ts`, política de retry, wrapper de `queryFn` que semeia versões | `contracts`, `lib/realtime/eventStore` (módulo puro: não há ciclo) |
-| `src/lib/realtime` | `socketManager`, `eventStore`, `useNftSubscription`, ponte com o cache | `contracts`, `lib/query` |
+| `src/lib/query` | `queryClient`, `keys.ts`, política de retry, wrapper de `queryFn` que semeia versões (`versions.ts`) | `contracts`, `lib/realtime/eventStore` (módulo puro: não há ciclo) |
+| `src/lib/realtime` | `socketManager`, `eventStore`, `useNftSubscription`, ponte com o cache (`bridge.ts`) | `contracts`, `lib/query`, `lib/a11y` |
 | `src/lib/session` | `sessionStore`, `switchIdentity`, `completeLogin`, carrinho de visitante (`guestCart`, `getCartOwner`, `useCartOwner`), guards de rota (`requireUserId`, `redirectIfAuthenticated`) | `http`, `realtime`, `query`, `url`, `contracts` |
 | `src/lib/forms` | `applyApiError`: `fieldErrors` da API no campo, o resto na mensagem do formulário | `http` |
 | `src/features/<domínio>/api.ts` | Uma função por endpoint: Axios + `schema.parse` | `lib/http`, `contracts` |
@@ -256,12 +256,15 @@ preserva `redirect=/checkout?step=...`; o rascunho só volta para o mesmo `userI
 
 ## 10. Tempo real
 
-- Um socket por sessão, criado no `switchIdentity`, só transporte WebSocket, `autoConnect: false`,
-  token em `auth`. `connect_error` com `SESSION_EXPIRED` expira a sessão e não reconecta.
+- Um socket por sessão, só transporte WebSocket, `autoConnect: false`, `forceNew`, token em `auth`
+  (visitante com `auth` vazia). O `switchIdentity` derruba o socket e chama `eventStore.reset` no passo
+  2; o bootstrap (`App.tsx`) escuta o `sessionStore` e cria o socket do estado novo: autenticado com o
+  token, visitante sem token, expirado sem socket. `connect_error` com `SESSION_EXPIRED` expira a sessão
+  e não reconecta.
 - `connect_error` é terminal: depois dele o app não consulta `socket.connected`, que fica `true`
   porque o cliente se destrói antes de atualizar a flag. Com token inválido, `connect` dispara antes
-  do `connect_error` (o binding aceita antes de ler o token), então o app só assina NFTs com sessão
-  válida, nunca no `connect` puro.
+  do `connect_error` (o binding aceita antes de ler o token); o app reassina no `connect`, e o servidor
+  ignora pedido de conexão recusada, sem ack nem evento.
 - `useNftSubscription(ids)` conta referências por id: assina na transição 0 → 1, cancela na 1 → 0, e o
   cleanup remove os listeners que registrou.
 - `eventStore.accept(evento)` descarta, nesta ordem: `id` já aplicado (LRU de 500), versão menor ou
