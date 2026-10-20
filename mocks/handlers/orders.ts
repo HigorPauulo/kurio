@@ -52,6 +52,15 @@ export function orderHandlers(deps: HandlerDeps): HttpHandler[] {
           });
         }
 
+        const pending = db.read((tables) =>
+          Object.values(tables.orders).find((order) => order.userId === auth.userId && order.status === "pending"),
+        );
+        if (pending) {
+          return apiError(request, 409, "ORDER_PENDING", "Você já tem um pedido em processamento.", {
+            details: { orderId: pending.id },
+          });
+        }
+
         const parsed = createOrderBodySchema.safeParse(rawBody);
         if (!parsed.success) {
           const fieldErrors: Record<string, string[]> = {};

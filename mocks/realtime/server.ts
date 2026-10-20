@@ -124,7 +124,14 @@ export function createRealtimeServer({ db, getScenario, now }: RealtimeServerDep
     const order = db.read((tables) => tables.orders[orderId]);
     if (!order) return { ok: false, code: "NOT_FOUND" };
     if (order.userId !== client.userId) return { ok: false, code: "FORBIDDEN" };
-    client.orderIds.add(orderId);
+    if (!client.orderIds.has(orderId)) {
+      client.orderIds.add(orderId);
+      const last = lastEventByResource.get(`order:${orderId}`);
+      if (last) {
+        sendEvent(client.link, last);
+        delivered += 1;
+      }
+    }
     return { ok: true };
   }
 

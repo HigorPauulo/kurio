@@ -554,6 +554,11 @@ describe("pedidos", () => {
     expect(conflict.json.error).toMatchObject({ code: "IDEMPOTENCY_CONFLICT", details: { orderId: first.id } });
     const reused = await call("POST", "/orders", { token, key: "k2", body: orderBody(quoteId) });
     expect(reused.json.error).toMatchObject({ code: "QUOTE_ALREADY_USED", details: { orderId: first.id } });
+
+    nowMs = START;
+    const fresh = (await call("POST", "/quotes", { token, body: { network: "ethereum", purpose: "checkout" } })).json as unknown as { id: string };
+    const second = await call("POST", "/orders", { token, key: "k3", body: orderBody(fresh.id) });
+    expect(second.json.error).toMatchObject({ code: "ORDER_PENDING", details: { orderId: first.id } });
     expect(db.read((tables) => Object.keys(tables.orders))).toHaveLength(1);
   });
 
