@@ -3,11 +3,6 @@
 Para onde o projeto vai. Onde ele está é o [STATUS](STATUS.md); o porquê das escolhas, o
 [DECISIONS](DECISIONS.md).
 
-## A linha de chegada
-
-**Entrega em até 24 h:** o avaliador recebe o link do repositório e a URL pública, com mocks e tempo
-real funcionando no ambiente publicado. Critérios em [Entrega](#entrega).
-
 ## A fila
 
 **Esta tabela é a única fonte de ordem.** Lê-se de cima para baixo.
