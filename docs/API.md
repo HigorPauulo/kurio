@@ -173,14 +173,16 @@ de tempo real: muda sem `nft.updated` e chega ao catálogo pelo `staleTime`.
 |---|---|---|---|
 | `GET /cart` | | 200 `Cart` (criado vazio se não existir) | 400 sem `Authorization` nem `X-Guest-Cart-Id` (UUID) |
 | `POST /cart/items` | `{ nftId, editionId, quantity }` | 200 `Cart`; soma se a edição já estiver | 404; 409 `AVAILABILITY_CONFLICT` |
-| `PATCH /cart/items/:id` | `{ quantity }` (≥ 1) | 200 `Cart` | 404; 409 `AVAILABILITY_CONFLICT` |
+| `PATCH /cart/items/:id` | `{ quantity }` (≥ 1) | 200 `Cart`; diminuir é sempre aceito, mesmo acima do limite | 404; 409 `AVAILABILITY_CONFLICT` ao aumentar além do limite |
 | `DELETE /cart/items/:id` | | 200 `Cart`, idempotente | |
 | `PUT /cart/coupon` | `{ code }` | 200 `Cart` | 422 `COUPON_INVALID`, `COUPON_EXPIRED`, `COUPON_MINIMUM_NOT_MET` |
 | `DELETE /cart/coupon` | | 200 `Cart` | |
 | `POST /cart/merge` (privado) | `{ guestCartId }` | 200 `{ cart, adjustments: { editionId, requested, kept }[] }` | |
 
 Merge: por edição, soma e limita a `min(available, maxPerOrder)`; cada corte vira um `adjustment`. O
-cupom do visitante só entra se o usuário não tiver um. O carrinho do visitante é apagado.
+cupom do visitante só entra se o usuário não tiver um. Edição esgotada não entra, e o item que o usuário
+já tinha dela fica como está (`sold_out`). Item somado ou copiado grava o preço atual. O carrinho do
+visitante é apagado.
 
 Item do carrinho: `unitPrice` é o preço que o comprador viu ao adicionar ou alterar o item; `available`,
 `maxPerOrder` e `status` são recalculados a cada resposta. `status` é `sold_out` se a edição não está à

@@ -125,7 +125,8 @@ que URLs equivalentes compartilhem cache.
 |---|---|---|---|
 | `catalog.list` | 30 s | 5 min | `keepPreviousData` |
 | `catalog.featured`, `nft` | 60 s | 5 min | `nft` atualizado por evento |
-| `cart`, `quote` | 0 | 1 min | sempre a resposta do servidor |
+| `cart` | 0 | 1 min | sempre a resposta do servidor |
+| `quote` | até o `expiresAt` | 1 min | key por rede e `cartVersion`, então mutation de carrinho não precisa invalidar; sem refetch no foco (cada busca cria uma cotação); renova sozinha no vencimento |
 | `order` | 0 | 5 min | polling de 5 s só se `pending` e socket desconectado |
 | `favorites`, `me`, `wallets` | 5 min | 5 min | |
 
@@ -136,7 +137,7 @@ Mutation não repete, exceto `createOrder` (§9.2).
 
 | Gatilho | Operação no cache |
 |---|---|
-| Mutation de carrinho | grava `cart` com a resposta; invalida `quote` do dono |
+| Mutation de carrinho | grava `cart` com a resposta; a `cartVersion` nova muda a key da `quote` |
 | `POST /cart/merge` | grava `cart` do usuário; remove o escopo `guest:<id>` |
 | Favorito | otimista (§6.4) |
 | Perfil, avatar | grava `me` com a resposta |
@@ -186,9 +187,11 @@ stateDiagram-v2
   Authenticated --> Anonymous: logout
 ```
 
-O visitante ganha um UUID em `kurio:guestCartId` na primeira tela que lê o carrinho (o contador do
-header); o `withGuestCart` só lê, nunca cria. O merge do passo 6 roda com o token novo; falhou, o login
-segue e o UUID fica para a próxima tentativa; deu certo, o UUID é apagado e os ajustes são anunciados.
+O visitante ganha um UUID em `kurio:guestCartId` só no primeiro "Adicionar ao carrinho"; antes disso o
+carrinho aparece vazio sem requisição, e o `withGuestCart` só lê, nunca cria. O merge do passo 6 roda
+com o token novo; falhou, o login segue e o UUID fica para a próxima tentativa; deu certo, cancela a
+leitura do carrinho em voo (que traria o estado anterior ao merge), grava o resultado, apaga o UUID e
+anuncia os ajustes.
 
 `switchIdentity(next)` é a única troca de identidade, nesta ordem:
 
