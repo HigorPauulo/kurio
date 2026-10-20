@@ -3,7 +3,12 @@ import { expectNoA11yViolations, login, startFresh } from "./support/kurio.js";
 
 type ServerCart = { items: { editionId: string; quantity: number }[]; coupon: { code: string } | null } | null;
 
-type KurioWindow = { __kurio: { inspect: { cart: (owner: string) => ServerCart } } };
+type KurioWindow = {
+  __kurio: {
+    inspect: { cart: (owner: string) => ServerCart };
+    catalog: { setAvailable: (nftId: string, editionId: string, available: number) => void };
+  };
+};
 
 async function serverCart(page: Page, owner: string): Promise<ServerCart> {
   return page.evaluate((key) => (window as unknown as KurioWindow).__kurio.inspect.cart(key), owner);
@@ -108,4 +113,18 @@ test("login une o carrinho do visitante, limita ao disponível e anuncia o ajust
     ],
   });
   expect(await serverCart(page, guest)).toBeNull();
+});
+
+test("item acima do estoque avisa e se ajusta ao limite", async ({ page }) => {
+  await login(page, "ana@kurio.test", "/cart");
+  await expect(page.getByRole("group", { name: "Quantidade de Lo-fi Noturno" })).toContainText("2");
+  await page.evaluate(() => (window as unknown as KurioWindow).__kurio.catalog.setAvailable("nft_012", "ed_012_1", 1));
+  await page.reload();
+
+  await expect(page.getByText("Só resta 1 unidade para este pedido. Ajuste a quantidade.")).toBeVisible();
+  await expect(summary(page).getByText("Valores calculados pelo servidor.")).toBeVisible();
+  await page.getByRole("button", { name: "Ajustar para 1" }).click();
+  await expect(page.getByRole("group", { name: "Quantidade de Lo-fi Noturno" })).toContainText("1");
+  await expect(page.getByText("Só resta 1 unidade para este pedido. Ajuste a quantidade.")).toHaveCount(0);
+  expect(await serverCart(page, "usr_ana")).toMatchObject({ items: [{ quantity: 1 }, { editionId: "ed_012_1", quantity: 1 }] });
 });
