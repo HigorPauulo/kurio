@@ -8,6 +8,7 @@ import type { Cart, CartItem, Quote } from "@/contracts/cart";
 import { purchaseLimit } from "@/contracts/nft";
 import { formatEth } from "@/lib/eth";
 import { getApiFieldError } from "@/lib/forms";
+import { cn } from "@/lib/utils";
 import { useNftSubscription } from "@/lib/realtime/instance";
 import {
   cartQuery,
@@ -17,6 +18,8 @@ import {
   useRemoveCouponMutation,
   useUpdateQuantityMutation,
 } from "../queries";
+
+const ROW = "grid grid-cols-[auto_1fr] md:grid-cols-[minmax(0,1fr)_7.5rem_8rem_7.5rem_2.5rem]";
 
 function itemLimit(item: CartItem): number {
   return purchaseLimit({ ...item, status: item.status === "sold_out" ? "sold_out" : "available" });
@@ -36,7 +39,7 @@ function ItemNotice({ item, quote }: { item: CartItem; quote: Quote | undefined 
 
   if (!message) return null;
   return (
-    <p className="flex items-center gap-1 text-sm font-medium text-destructive">
+    <p className="flex items-center gap-1 text-sm text-destructive">
       <AlertTriangle aria-hidden="true" className="size-4 shrink-0" />
       {message}
     </p>
@@ -51,44 +54,55 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
   const isBlocked = item.status === "sold_out";
 
   return (
-    <li className="flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center">
-      <img src={item.cover.url} alt={item.cover.alt} width={64} height={64} className="size-16 rounded-lg object-cover" />
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <Link to="/nft/$nftId" params={{ nftId: item.nftId }} className="font-medium underline-offset-4 hover:underline">
-          {item.nftName}
-        </Link>
-        <span className="text-sm text-muted-foreground">
-          Edição {item.editionLabel} · {formatEth(line?.unitPrice ?? item.unitPrice)} ETH cada
-        </span>
-        <ItemNotice item={item} quote={quote} />
-        {item.status === "insufficient" && limit > 0 && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="self-start"
-            onClick={() => update.mutate({ itemId: item.id, quantity: limit, nftName: item.nftName })}
-          >
-            Ajustar para {limit}
-          </Button>
-        )}
+    <li className={cn(ROW, "relative items-center gap-x-4 gap-y-2 bg-surface-card p-0 pr-3")}>
+      <div className="col-span-2 flex min-w-0 items-start gap-4 md:col-span-1">
+        <img
+          src={item.cover.url}
+          alt={item.cover.alt}
+          width={96}
+          height={96}
+          className="aspect-square w-24 shrink-0 object-cover md:w-17.5"
+        />
+        <div className="flex min-w-0 flex-1 flex-col gap-1 py-2">
+          <Link to="/nft/$nftId" params={{ nftId: item.nftId }} className="font-bold hover:text-text-accent">
+            {item.nftName}
+          </Link>
+          <span className="text-sm text-secondary-base">Edição: {item.editionLabel}</span>
+          <span className="text-lg font-bold text-text-accent md:hidden">
+            {formatEth(line?.unitPrice ?? item.unitPrice)} ETH
+          </span>
+          <ItemNotice item={item} quote={quote} />
+          {item.status === "insufficient" && limit > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onClick={() => update.mutate({ itemId: item.id, quantity: limit, nftName: item.nftName })}
+            >
+              Ajustar para {limit}
+            </Button>
+          )}
+        </div>
       </div>
-      <div className="flex items-center gap-2" role="group" aria-label={`Quantidade de ${item.nftName}`}>
+      <p className="hidden text-base font-bold text-text-accent md:block">
+        <span className="sr-only">Preço unitário: </span>
+        {formatEth(line?.unitPrice ?? item.unitPrice)} ETH
+      </p>
+      <div className="flex items-center gap-2 pb-3 pl-3 md:p-0" role="group" aria-label={`Quantidade de ${item.nftName}`}>
         <Button
           type="button"
-          variant="outline"
-          size="icon"
+          size="icon-xs"
           aria-label={`Diminuir quantidade de ${item.nftName}`}
           disabled={isBlocked || item.quantity <= 1}
           onClick={() => update.mutate({ itemId: item.id, quantity: item.quantity - 1, nftName: item.nftName })}
         >
           <Minus aria-hidden="true" />
         </Button>
-        <span className="w-8 text-center">{item.quantity}</span>
+        <span className="w-6 text-center text-lg">{item.quantity}</span>
         <Button
           type="button"
-          variant="outline"
-          size="icon"
+          size="icon-xs"
           aria-label={`Aumentar quantidade de ${item.nftName}`}
           disabled={isBlocked || item.quantity >= limit}
           onClick={() => update.mutate({ itemId: item.id, quantity: item.quantity + 1, nftName: item.nftName })}
@@ -96,19 +110,20 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
           <Plus aria-hidden="true" />
         </Button>
       </div>
-      <p className="w-32 text-sm font-medium sm:text-right">
+      <p className="pb-3 text-right text-base font-bold text-text-accent md:p-0 md:text-left">
         <span className="sr-only">Total da linha: </span>
         {line ? `${formatEth(line.lineTotal)} ETH` : "..."}
       </p>
       <Button
         type="button"
         variant="ghost"
-        size="icon"
+        size="icon-sm"
         aria-label={`Remover ${item.nftName}`}
         disabled={remove.isPending}
         onClick={() => remove.mutate(item.id)}
+        className="absolute top-2 right-2 text-text-secondary md:static"
       >
-        <Trash2 aria-hidden="true" />
+        <Trash2 aria-hidden="true" className="size-5" />
       </Button>
     </li>
   );
@@ -137,7 +152,7 @@ function CouponForm({ owner, cart, quote }: { owner: string; cart: Cart; quote: 
     return (
       <div className="flex flex-col gap-2">
         <p className="text-sm">
-          Cupom <strong>{cart.coupon.code}</strong> aplicado{quote?.coupon ? `: ${quote.coupon.description}` : "."}
+          Cupom <strong className="text-text-accent">{cart.coupon.code}</strong> aplicado{quote?.coupon ? `: ${quote.coupon.description}` : "."}
         </p>
         {issue?.kind === "COUPON_EXPIRED" && <p className="text-sm text-destructive">Este cupom expirou e não dá mais desconto.</p>}
         {issue?.kind === "COUPON_MINIMUM_NOT_MET" && (
@@ -154,18 +169,23 @@ function CouponForm({ owner, cart, quote }: { owner: string; cart: Cart; quote: 
 
   return (
     <form noValidate className="flex flex-col gap-2" onSubmit={(event) => void handleSubmit(event)}>
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+      <div className="flex items-end">
+        <div className="min-w-0 flex-1 [&_input]:rounded-r-none [&_input]:border-primary [&_label]:text-sm [&_label]:font-bold">
           <TextField
             label="Tem um código promocional?"
             autoComplete="off"
-            placeholder="Digite o código promocional"
+            placeholder="Digite o código promocional..."
             value={code}
             error={error}
             onChange={(event) => setCode(event.target.value)}
           />
         </div>
-        <Button type="submit" disabled={apply.isPending} aria-busy={apply.isPending} className={error ? "mb-7" : undefined}>
+        <Button
+          type="submit"
+          disabled={apply.isPending}
+          aria-busy={apply.isPending}
+          className={cn("rounded-l-none", error && "mb-7")}
+        >
           Aplicar
         </Button>
       </div>
@@ -178,8 +198,8 @@ function Summary({ owner, cart }: { owner: string; cart: Cart }): JSX.Element {
   const isRefreshing = quote.isPlaceholderData || quote.isFetching;
 
   return (
-    <section aria-labelledby="summary-title" aria-busy={isRefreshing} className="flex flex-col gap-4 rounded-xl border p-4">
-      <h2 id="summary-title" className="text-lg font-semibold">
+    <section aria-labelledby="summary-title" aria-busy={isRefreshing} className="flex flex-col gap-5 bg-surface-card p-4 md:bg-transparent md:p-0">
+      <h2 id="summary-title" className="border-b border-border-strong pb-3 text-lg font-bold">
         Resumo do pedido
       </h2>
       <CouponForm owner={owner} cart={cart} quote={quote.data} />
@@ -191,26 +211,28 @@ function Summary({ owner, cart }: { owner: string; cart: Cart }): JSX.Element {
           </Button>
         </div>
       ) : (
-        <dl className="grid grid-cols-[1fr_auto] gap-y-2 text-sm">
+        <dl className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-3 text-base">
           <dt>Subtotal</dt>
-          <dd className="text-right">{quote.data ? `${formatEth(quote.data.subtotal)} ETH` : "..."}</dd>
+          <dd className="text-right text-lg">{quote.data ? `${formatEth(quote.data.subtotal)} ETH` : "..."}</dd>
           <dt>Desconto</dt>
           <dd className="text-right">{quote.data ? `- ${formatEth(quote.data.discount)} ETH` : "..."}</dd>
           <dt>
-            Taxa de rede <span className="text-muted-foreground">(Ethereum, estimada)</span>
+            Taxa de rede <span className="block text-xs text-text-accent">Ethereum, estimada</span>
           </dt>
-          <dd className="text-right">{quote.data ? `${formatEth(quote.data.networkFee)} ETH` : "..."}</dd>
-          <dt className="text-base font-semibold">Total</dt>
-          <dd className="text-right text-base font-semibold">{quote.data ? `${formatEth(quote.data.total)} ETH` : "..."}</dd>
+          <dd className="text-right text-lg">{quote.data ? `${formatEth(quote.data.networkFee)} ETH` : "..."}</dd>
+          <dt className="mt-3 font-bold">Total</dt>
+          <dd className="mt-3 text-right text-lg font-bold text-text-accent">
+            {quote.data ? `${formatEth(quote.data.total)} ETH` : "..."}
+          </dd>
         </dl>
       )}
-      <p role="status" className="text-xs text-muted-foreground">
+      <p role="status" className="text-xs text-secondary-base">
         {isRefreshing ? "Atualizando o resumo..." : "Valores calculados pelo servidor."}
       </p>
-      <Link to="/checkout" className={buttonVariants()}>
+      <Link to="/checkout" className={cn(buttonVariants({ size: "lg" }), "w-full rounded-full md:h-10 md:rounded-md")}>
         Conectar e finalizar
       </Link>
-      <Link to="/" className="text-sm underline underline-offset-4">
+      <Link to="/" className="self-center text-base text-text-accent hover:underline">
         Continuar explorando
       </Link>
     </section>
@@ -219,9 +241,9 @@ function Summary({ owner, cart }: { owner: string; cart: Cart }): JSX.Element {
 
 function EmptyCart(): JSX.Element {
   return (
-    <div className="flex flex-col items-start gap-2">
-      <p>Seu carrinho está vazio.</p>
-      <Link to="/" className="underline underline-offset-4">
+    <div className="flex flex-col items-start gap-4 bg-surface-card p-6">
+      <p className="text-lg font-bold">Seu carrinho está vazio.</p>
+      <Link to="/" className={buttonVariants()}>
         Explorar o catálogo
       </Link>
     </div>
@@ -233,7 +255,7 @@ function CartContent({ owner }: { owner: string }): JSX.Element {
   const quote = useQuery({ ...quoteQuery(owner, cart.data?.version ?? 0), enabled: false });
   useNftSubscription(cart.data?.items.map((item) => item.nftId) ?? []);
 
-  if (cart.isPending) return <p>Carregando o carrinho...</p>;
+  if (cart.isPending) return <CartSkeleton />;
   if (cart.isError) {
     return (
       <div role="alert" className="flex flex-col items-start gap-2">
@@ -247,30 +269,61 @@ function CartContent({ owner }: { owner: string }): JSX.Element {
   if (cart.data.items.length === 0) return <EmptyCart />;
 
   return (
-    <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-      <ul aria-label="Itens do carrinho" className="flex min-w-0 flex-1 flex-col gap-3">
-        {cart.data.items.map((item) => (
-          <CartLine key={item.id} owner={owner} item={item} quote={quote.data} />
-        ))}
-      </ul>
-      <div className="lg:w-96">
+    <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-21">
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <div aria-hidden="true" className={cn(ROW, "hidden border-b border-border-strong pb-3 font-bold md:grid")}>
+          <span>NFTs</span>
+          <span>Preço</span>
+          <span>Edições</span>
+          <span>Total</span>
+        </div>
+        <ul aria-label="Itens do carrinho" className="flex flex-col gap-3">
+          {cart.data.items.map((item) => (
+            <CartLine key={item.id} owner={owner} item={item} quote={quote.data} />
+          ))}
+        </ul>
+      </div>
+      <div className="lg:w-83">
         <Summary owner={owner} cart={cart.data} />
       </div>
     </div>
   );
 }
 
+function CartSkeleton(): JSX.Element {
+  return (
+    <div aria-busy="true" className="flex flex-col gap-3">
+      <p className="sr-only">Carregando o carrinho...</p>
+      {Array.from({ length: 3 }, (_, index) => (
+        <div key={index} className="skeleton h-24 w-full md:h-17.5" />
+      ))}
+    </div>
+  );
+}
+
 export function CartPage({ owner }: { owner: string | null }): JSX.Element {
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 p-4 md:p-6">
-      <nav aria-label="Trilha" className="text-sm">
-        <Link to="/" className="underline underline-offset-4">
-          Início
-        </Link>
-        <span aria-hidden="true"> / </span>
-        <span aria-current="page">Carrinho</span>
+    <main className="mx-auto flex w-full max-w-300 flex-col gap-6 px-4 pt-6 lg:pt-8">
+      <nav aria-label="Trilha" className="text-sm font-bold">
+        <ol className="flex flex-wrap gap-1">
+          <li>
+            <Link to="/" className="hover:text-text-accent">
+              Início
+            </Link>
+            <span aria-hidden="true"> / </span>
+          </li>
+          <li>
+            <Link to="/" hash="mercado" className="hover:text-text-accent">
+              Mercado
+            </Link>
+            <span aria-hidden="true"> / </span>
+          </li>
+          <li aria-current="page" className="text-text-accent">
+            Carrinho
+          </li>
+        </ol>
       </nav>
-      <h1 className="text-2xl font-semibold md:text-3xl">Carrinho</h1>
+      <h1 className="text-2xl font-bold md:sr-only">Carrinho de NFTs</h1>
       {owner ? <CartContent owner={owner} /> : <EmptyCart />}
     </main>
   );
