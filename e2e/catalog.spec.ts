@@ -151,3 +151,29 @@ test("NFT inexistente e rota inexistente mostram não encontrado", async ({ page
   await page.goto("/rota/que/nao/existe");
   await expect(page.getByRole("heading", { name: "Página não encontrada" })).toBeVisible();
 });
+
+test("carrossel do hero gira sozinho, pausa e troca de slide ao arrastar", async ({ page }) => {
+  await page.clock.install();
+  await startFresh(page);
+  const carousel = page.locator('section[aria-roledescription="carrossel"]');
+  const current = carousel.locator('[aria-current="true"]');
+  await expect(current).toHaveAccessibleName("Mostrar o slide 1 de 3");
+
+  await page.clock.fastForward(6000);
+  await expect(current).toHaveAccessibleName("Mostrar o slide 2 de 3");
+
+  await carousel.getByRole("button", { name: "Pausar o carrossel" }).click();
+  await page.mouse.move(0, 0);
+  await page.clock.fastForward(12_000);
+  await expect(current).toHaveAccessibleName("Mostrar o slide 2 de 3");
+
+  const box = await carousel.boundingBox();
+  if (!box) throw new Error("Carrossel sem caixa");
+  const y = box.y + box.height / 2;
+  await page.mouse.move(box.x + box.width * 0.7, y);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width * 0.3, y, { steps: 8 });
+  await page.mouse.up();
+  await expect(current).toHaveAccessibleName("Mostrar o slide 3 de 3");
+  await expect(page).not.toHaveURL(/#mercado/);
+});
