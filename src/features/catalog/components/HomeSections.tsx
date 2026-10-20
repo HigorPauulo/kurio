@@ -58,7 +58,7 @@ function Promos(): JSX.Element {
   return (
     <section aria-label="Lançamentos" className="grid gap-8 lg:grid-cols-2 lg:gap-7">
       {PROMOS.map((promo) => (
-        <article key={promo.from} className="relative flex min-h-62.5 overflow-hidden rounded-lg bg-surface-card">
+        <article key={promo.from} className="relative flex flex-col overflow-hidden rounded-lg bg-surface-card sm:min-h-62.5 sm:flex-row">
           <img
             src={promo.image}
             alt=""
@@ -66,16 +66,16 @@ function Promos(): JSX.Element {
             height={640}
             loading="lazy"
             decoding="async"
-            className="w-8/25 shrink-0 rounded-[1.125rem] object-cover sm:w-2/5"
+            className="aspect-4/3 w-full shrink-0 rounded-[1.125rem] object-cover object-top sm:aspect-auto sm:w-2/5"
           />
           <img
             src="/images/icons/promo-arcs.svg"
             alt=""
             width={586}
             height={250}
-            className="pointer-events-none absolute top-0 left-0 h-62.5 w-146.5 max-w-none"
+            className="pointer-events-none absolute top-0 left-0 hidden h-62.5 w-146.5 max-w-none sm:block"
           />
-          <div className="relative flex flex-1 flex-col items-end justify-center gap-3 p-4 text-right sm:px-7.5">
+          <div className="relative flex flex-1 flex-col items-start justify-center gap-3 p-4 text-left sm:items-end sm:px-7.5 sm:text-right">
             <h2 className="max-w-75 text-base leading-6 font-bold sm:text-lg">{promo.title}</h2>
             <p className="max-w-66 text-xs leading-5 text-text-secondary sm:text-sm sm:leading-6">{promo.text}</p>
             <Link
