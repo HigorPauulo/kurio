@@ -568,7 +568,7 @@ export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchas
               favorite={<FavoriteAction nftId={nft.id} />}
             />
             <dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-3 text-sm leading-5 text-secondary-base">
-              <dt>ID do token:</dt>
+              <dt className="whitespace-nowrap">ID do token:</dt>
               <dd>{nft.tokenId}</dd>
               <dt>Coleção:</dt>
               <dd>{nft.collection.name}</dd>

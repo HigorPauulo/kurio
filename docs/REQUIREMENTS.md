@@ -63,7 +63,7 @@ validade, e só ela vira pedido; o **recibo** é snapshot imutável do pedido.
 | PAG-1 | Dados do colecionador validados; carteira cadastrada e rede; conexão e recusa simuladas | `checkout`, `checkout-failures` |
 | PAG-2 | Revisão antes do envio; revalidação no servidor; mudança exige nova confirmação | `realtime` |
 | PAG-3 | Sem pedido duplicado em clique repetido ou reenvio após timeout | `checkout-failures` |
-| PAG-4 | Todos os campos do layout do pagamento renderizados e validados; campo de outro dono somente leitura com link; obrigatório ausente no dono bloqueia a compra com erro no campo | `checkout` |
+| PAG-4 | Todos os campos do layout do pagamento renderizados e validados; campo de outro dono somente leitura; obrigatório ausente no dono bloqueia a compra com erro no campo | `checkout` |
 | PED-1 | Estados pendente, confirmado e recusado (terminais), recuperáveis após refresh ou reconexão | `realtime` |
 | PED-2 | Confirmação só para pedido confirmado pela simulação | `checkout` |
 | PED-3 | Falha preserva o carrinho; confirmação remove só o comprado | `checkout`, `checkout-failures` |

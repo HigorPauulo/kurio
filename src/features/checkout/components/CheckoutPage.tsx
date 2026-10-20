@@ -6,7 +6,7 @@ import { FormError, TextField } from "@/components/form/TextField";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { NativeSelect } from "@/components/ui/native-select";
 import type { Cart, Quote } from "@/contracts/cart";
-import type { Chain } from "@/contracts/common";
+import type { Chain, EthAmount } from "@/contracts/common";
 import type { User } from "@/contracts/user";
 import { walletProviderSchema, type Wallet } from "@/contracts/wallet";
 import { formatEth } from "@/lib/eth";
@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { keys } from "@/lib/query/keys";
 import { useNftSubscription } from "@/lib/realtime/instance";
 import { meQuery, useConnectWalletMutation, walletsQuery } from "../../account/queries";
-import { cartQuery } from "../../cart/queries";
+import { CART_NETWORK, cartQuery, quoteQuery } from "../../cart/queries";
 import { CHAIN_LABELS } from "../../catalog/labels";
 import { PROVIDER_LABELS } from "../labels";
 import { checkoutQuoteQuery, submitAttempt } from "../queries";
@@ -155,6 +155,18 @@ function WalletConnection({ userId, wallet, network, error }: ConnectionProps): 
   );
 }
 
+function QuantityAndTotal({ quantity, total, className }: { quantity: number; total: EthAmount | undefined; className: string }): JSX.Element {
+  return (
+    <span className={cn("shrink-0 items-baseline gap-3 whitespace-nowrap", className)}>
+      <span className="text-xs text-text-secondary sm:text-sm">(x {quantity})</span>
+      <span className="text-base font-bold text-text-accent sm:text-lg">
+        <span className="sr-only">Subtotal: </span>
+        {total ? `${formatEth(total)} ETH` : "..."}
+      </span>
+    </span>
+  );
+}
+
 type DetailsProps = {
   userId: string;
   user: User;
@@ -169,6 +181,7 @@ type DetailsProps = {
 
 function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors, onErrorsChange, onReview }: DetailsProps): JSX.Element {
   const { secondary, wallet, network } = choice;
+  const quote = useQuery(quoteQuery(userId, cart.version, network ?? CART_NETWORK));
   const setErrors = onErrorsChange;
   const noteId = useId();
 
@@ -185,14 +198,12 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
     onReview();
   }
 
-  const walletLink = { to: "/account/wallets", label: "Editar em Carteiras" } as const;
-  const profileLink = { to: "/account/profile", label: "Editar no Perfil" } as const;
 
   return (
     <form
       noValidate
       aria-labelledby="buyer-title"
-      className="grid gap-10 lg:grid-cols-[1fr_25.3rem] lg:gap-8"
+      className="grid gap-10 lg:grid-cols-[1fr_29rem] lg:gap-8"
       onSubmit={(event) => {
         event.preventDefault();
         handleReview();
@@ -203,8 +214,8 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
           Perfil do colecionador
         </h2>
         <div className="grid gap-x-6 gap-y-5 sm:grid-cols-2">
-          <TextField label="Nome de exibição" value={user.name} readOnly required editIn={profileLink} />
-          <TextField label="Nome de usuário" value={user.username} readOnly required editIn={profileLink} />
+          <TextField label="Nome de exibição" value={user.name} readOnly required />
+          <TextField label="Nome de usuário" value={user.username} readOnly required />
           <div className="flex flex-col gap-2">
             <label htmlFor="checkout-network" className="flex items-center gap-1 text-body leading-4">
               Rede
@@ -233,19 +244,24 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
               </p>
             )}
           </div>
-          <TextField label="Nome do perfil" value={wallet?.profileName ?? ""} readOnly required editIn={walletLink} />
-          <TextField label="Endereço da carteira" value={wallet?.address ?? ""} readOnly required editIn={walletLink} error={errors.wallet} />
-          <TextField label="ENS ou carteira secundária (opcional)" value={wallet?.backupAddress ?? ""} readOnly editIn={walletLink} />
+          <TextField label="Nome do perfil" value={wallet?.profileName ?? ""} readOnly required />
+          <TextField label="Endereço da carteira" value={wallet?.address ?? ""} readOnly required error={errors.wallet} />
+          <TextField
+            label="ENS ou carteira secundária"
+            placeholder="ENS ou carteira secundária (opcional)"
+            value={wallet?.backupAddress ?? ""}
+            readOnly
+          />
           <TextField
             label="Tipo de carteira"
             value={wallet ? PROVIDER_LABELS[wallet.provider] : ""}
             readOnly
             required
-            editIn={walletLink}
+           
           />
-          <TextField label="Código de indicação" value={wallet?.referralCode ?? ""} readOnly required editIn={walletLink} />
-          <TextField label="E-mail" value={user.email} readOnly required editIn={profileLink} />
-          <TextField label="Nome ENS" value={user.ensName ?? ""} readOnly required editIn={profileLink} error={errors.ensName} />
+          <TextField label="Código de indicação" value={wallet?.referralCode ?? ""} readOnly required />
+          <TextField label="E-mail" value={user.email} readOnly required />
+          <TextField label="Nome ENS" value={user.ensName ?? ""} readOnly required error={errors.ensName} />
         </div>
         <label className="flex items-center gap-2 self-start text-body">
           <input
@@ -291,28 +307,56 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
           <h2 id="items-title" className="text-lg font-bold">
             Seus NFTs
           </h2>
+          <div aria-hidden="true" className="flex justify-between text-base font-bold">
+            <span>NFTs</span>
+            <span>Subtotal</span>
+          </div>
           <ul className="flex flex-col gap-3">
-            {cart.items.map((item) => (
-              <li key={item.id} className="flex items-center gap-3 bg-surface-card pr-4">
-                <img src={item.cover.url} alt="" width={70} height={70} className="aspect-square w-17.5 shrink-0 object-cover" />
-                <span className="flex min-w-0 flex-1 flex-col gap-1">
-                  <span className="font-bold">{item.nftName}</span>
-                  <span className="text-sm text-secondary-base">ID do token: {item.tokenId}</span>
-                  <span className="text-xs text-secondary-base">Edição: {item.editionLabel}</span>
-                </span>
-                <span className="text-sm text-text-secondary">(x {item.quantity})</span>
-              </li>
-            ))}
+            {cart.items.map((item) => {
+              const line = quote.data?.lines.find((candidate) => candidate.itemId === item.id);
+              return (
+                <li key={item.id} className="flex items-center gap-2.5 bg-surface-card pr-3 sm:gap-3 sm:pr-4">
+                  <img src={item.cover.url} alt="" width={70} height={70} className="aspect-square w-14 shrink-0 rounded-md object-cover sm:w-17.5" />
+                  <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+                    <span className="truncate font-bold">{item.nftName}</span>
+                    <span className="truncate text-sm text-secondary-base">ID do token: {item.tokenId}</span>
+                    <QuantityAndTotal quantity={item.quantity} total={line?.lineTotal} className="flex sm:hidden" />
+                  </span>
+                  <QuantityAndTotal quantity={item.quantity} total={line?.lineTotal} className="hidden sm:flex" />
+                </li>
+              );
+            })}
           </ul>
           <p className="text-center text-sm">
             {cart.coupon ? `Cupom ${cart.coupon.code} aplicado.` : "Tem um código promocional?"}{" "}
             <Link to="/cart" className="text-text-accent underline underline-offset-4">
-              {cart.coupon ? "Editar no carrinho" : "Aplique no carrinho"}
+              {cart.coupon ? "Editar no carrinho" : "Aplique aqui"}
             </Link>
           </p>
-          <p className="text-center text-xs text-text-accent">
-            O resumo com taxa e total aparece na revisão, cotado na rede escolhida.
-          </p>
+          {quote.isError && !quote.data ? (
+            <div role="alert" className="flex flex-col items-start gap-2 text-sm">
+              <p>Não foi possível calcular o resumo.</p>
+              <Button type="button" variant="outline" size="sm" onClick={() => void quote.refetch()}>
+                Tentar de novo
+              </Button>
+            </div>
+          ) : (
+            <dl aria-label="Resumo do pedido" className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-3 border-b border-border-strong pb-4 text-base">
+              <dt>Subtotal</dt>
+              <dd className="text-right text-lg">{quote.data ? `${formatEth(quote.data.subtotal)} ETH` : "..."}</dd>
+              <dt>Desconto{quote.data?.coupon ? ` (${quote.data.coupon.code})` : ""}</dt>
+              <dd className="text-right">{quote.data ? `- ${formatEth(quote.data.discount)} ETH` : "..."}</dd>
+              <dt>Taxa de rede</dt>
+              <dd className="text-right text-lg">
+                {quote.data ? `${formatEth(quote.data.networkFee)} ETH` : "..."}
+                <span className="block text-xs text-text-accent">Taxa estimada</span>
+              </dd>
+              <dt className="mt-2 font-bold">Total</dt>
+              <dd className="mt-2 text-right text-lg font-bold text-text-accent">
+                {quote.data ? `${formatEth(quote.data.total)} ETH` : "..."}
+              </dd>
+            </dl>
+          )}
         </section>
         <WalletConnection
           userId={userId}
@@ -419,9 +463,9 @@ function ReviewStep({ userId, cart, wallet, network, note, phase, message, onBac
             <li key={line.itemId} className="flex items-center gap-3">
               {item && <img src={item.cover.url} alt="" width={56} height={56} className="size-14 shrink-0 rounded-md object-cover" />}
               <span className="min-w-0 flex-1">
-                <span className="block font-bold">{item?.nftName ?? line.nftId}</span>
+                <span className="block truncate font-bold">{item?.nftName ?? line.nftId}</span>
                 <span className="text-secondary-base">
-                  {item?.editionLabel} · (x {line.quantity})
+                  <span className="whitespace-nowrap">ID do token: {item?.tokenId}</span> · (x {line.quantity})
                 </span>
               </span>
               <span className="font-bold whitespace-nowrap text-text-accent">{formatEth(line.lineTotal)} ETH</span>
@@ -540,7 +584,7 @@ export function CheckoutPage({ userId, step, onStepChange, onOrderPlaced }: Chec
       );
   } else if (me.isPending || wallets.isPending || cart.isPending) {
     content = (
-      <div aria-busy="true" className="grid gap-10 lg:grid-cols-[1fr_25.3rem] lg:gap-8">
+      <div aria-busy="true" className="grid gap-10 lg:grid-cols-[1fr_29rem] lg:gap-8">
         <p className="sr-only">Carregando o pagamento...</p>
         <div className="grid gap-5 sm:grid-cols-2">
           {Array.from({ length: 10 }, (_, index) => (

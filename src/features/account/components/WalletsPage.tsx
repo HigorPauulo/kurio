@@ -126,7 +126,7 @@ function WalletForm({ role, title, wallet, user }: WalletFormProps): JSX.Element
           {...form.register("address")}
         />
         <TextField
-          label="ENS ou carteira secundária (opcional)"
+          label="ENS ou carteira secundária"
           placeholder="ENS ou carteira secundária (opcional)"
           autoComplete="off"
           error={errors.backupAddress?.message}

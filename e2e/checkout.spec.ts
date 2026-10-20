@@ -24,7 +24,7 @@ test("do carrinho ao recibo: campos do layout, revisão, pedido confirmado e rec
   await expect(ens).toHaveAttribute("readonly");
   await expect(page.getByLabel("Endereço da carteira")).toHaveAttribute("readonly");
   await expect(page.getByLabel("Rede")).toHaveValue("ethereum");
-  await expect(page.getByRole("link", { name: "Editar em Carteiras" }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Editar em Carteiras" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Conectar Coinbase/ })).toHaveCount(0);
   await expect(page.getByText("A carteira escolhida é MetaMask.").first()).toBeVisible();
   await expectNoA11yViolations(page);

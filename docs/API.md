@@ -98,8 +98,8 @@ listas são fechadas: valor fora delas é 400 na API e default na URL ([DECISION
 ## Campos do layout
 
 Todo campo do protótipo é renderizado e validado, e cada um tem um dono só
-([DECISIONS](DECISIONS.md)). Fora do dono, o campo aparece preenchido, somente leitura, com link
-"Editar em ..." para a tela do dono. Campo obrigatório vazio no dono vira erro no campo da tela que o
+([DECISIONS](DECISIONS.md)). Fora do dono, o campo aparece preenchido e somente leitura; em perfil e
+carteiras, com link "Editar em ..." para a tela do dono, e no pagamento sem link. Campo obrigatório vazio no dono vira erro no campo da tela que o
 exibe (ex.: pagamento com `ensName` nulo mostra "Complete o Nome ENS no perfil").
 
 | Campo (rótulo do protótipo) | Dono e propriedade | Telas que o exibem | Regra |

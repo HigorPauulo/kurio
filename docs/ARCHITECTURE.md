@@ -371,8 +371,11 @@ Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lan�
   `formatEthInput` (`1234,5`, sem milhar), que volta igual pelo `parseEthInput`; o `formatEth` é só para
   exibição.
 - Campos do layout: todos renderizados; campo de outro dono aparece `readOnly` (focável e lido pelo
-  leitor de tela, ao contrário de `disabled`) com link "Editar em ..." ([mapa](API.md#campos-do-layout)).
-  No pagamento, só Rede, "Usar outra carteira?", conexão e Observação são editáveis.
+  leitor de tela, ao contrário de `disabled`), com a mesma aparência dos editáveis, como no protótipo
+  ([mapa](API.md#campos-do-layout)). Em perfil e carteiras, o campo do outro dono tem link "Editar em
+  ..."; no pagamento não, e o perfil e as carteiras ficam no menu. No pagamento, só Rede, "Usar outra
+  carteira?", conexão e Observação são editáveis; a coluna "Seus NFTs" já mostra subtotal por linha e o
+  resumo pela cotação do carrinho na rede escolhida, e a revisão confirma com cotação própria.
 
 ## 15. Desvios do layout
 
@@ -393,7 +396,6 @@ mantido durante a implementação.
 | Detalhe | "Mais desta coleção" sem assinatura de tempo real; o preço dos cards segue o `staleTime` da lista (60 s) | Assinar até 15 NFTs a mais por tela para cards secundários não paga o custo; o detalhe aberto segue ao vivo |
 | Detalhe | Para o visitante, "Favoritar" leva ao login e volta ao NFT (o nome acessível avisa que exige entrar) | Favorito é dado de pessoa (`['u', owner]`) e exige sessão |
 | Detalhe | "Comprar" adiciona ao carrinho a quantidade escolhida e mostra "Adicionado. Ver carrinho"; o nome acessível diz "(adiciona ao carrinho)" | A compra passa pelo carrinho e pela cotação; não há compra direta no contrato |
-| Pagamento e recibo | Linhas mostram a edição abaixo do ID do token; no carrinho, só o ID, como no protótipo | A compra é por edição, e a revisão é onde a edição precisa estar à vista |
 | Carrinho | "Colecionadores também viram" mostra os NFTs mais curtidos (`sort=popular`) que não estão no carrinho, sem assinatura de tempo real | O protótipo não define a origem da lista; "mais curtidos" é o dado de interesse que a API tem |
 | Carrinho | "Resumo da carteira" vira "Resumo do pedido" | O bloco mostra a cotação do pedido, não a carteira |
 | Todas | Tema escuro único, sem alternância claro e escuro | O protótipo só desenha o tema escuro |
