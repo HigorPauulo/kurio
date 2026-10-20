@@ -51,6 +51,16 @@
     --tracking-brand: 0.1em;
 
     --animate-shimmer: shimmer 1.6s linear infinite;
+    --animate-construction: construction-stripes 1s linear infinite;
+
+    @keyframes construction-stripes {
+        from {
+            background-position: 0 0;
+        }
+        to {
+            background-position: 28px 0;
+        }
+    }
 
     @keyframes shimmer {
         from {

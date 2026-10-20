@@ -13,8 +13,9 @@ dono e regra em [API](API.md#campos-do-layout); comportamento e larguras por est
 sem representação visual segue os padrões dos componentes existentes e é registrado (VIS-4).
 
 **Fora de escopo:** blockchain, carteira e gateway reais; páginas editoriais, suporte, atividade,
-ofertas e downloads. Link para elas leva a `/unavailable`, que diz que a seção não faz parte da
-demonstração: nada aparenta sucesso funcional.
+ofertas e downloads. Link para elas leva a `/unavailable`, que mostra a seção "em cunhagem" (em construção) e, quando a
+origem é uma ação (newsletter, login social, recuperar senha), diz que nada foi enviado: nada aparenta
+sucesso funcional.
 
 **Domínio:** NFT se compra por **edição** (preço, disponibilidade e limite por pedido próprios); valor
 em ETH tem 18 casas; a **cotação** do servidor fixa subtotal, desconto, taxa de rede e total com
