@@ -164,3 +164,17 @@ test("queda do socket com pedido pendente: reload mantém o pedido e a reconexã
   await expect(page.getByRole("heading", { level: 1, name: "Seus NFTs agora estão na sua carteira" })).toBeVisible({ timeout: 15_000 });
   await expect.poll(async () => (await stats(page)).subscriptions).toBe(0);
 });
+
+test("estoque que muda na revisão sem mudar valores não pede novo aceite", async ({ page }) => {
+  await startFresh(page);
+  await login(page, "ana@kurio.test");
+  await goToReview(page);
+  await waitForSubscriptions(page, 2);
+  await page.evaluate(() =>
+    (window as unknown as { __kurio: { catalog: { setAvailable: (n: string, e: string, a: number) => void } } }).__kurio.catalog.setAvailable("nft_004", "ed_004_1", 10),
+  );
+
+  await expect.poll(async () => (await stats(page)).delivered).toBeGreaterThan(0);
+  await expect(page.getByRole("button", { name: "Confirmar compra" })).toBeEnabled();
+  await expect(page.getByText("Os valores mudaram desde a sua revisão.")).toHaveCount(0);
+});

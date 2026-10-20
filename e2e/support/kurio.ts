@@ -53,7 +53,9 @@ export async function goToReview(page: Page): Promise<void> {
   await page.goto("/cart");
   await page.getByRole("link", { name: "Conectar e finalizar" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Pagamento" })).toBeVisible();
-  await page.getByRole("button", { name: "Conectar MetaMask na Ethereum" }).click();
+  await expect(page.getByRole("button", { name: "Revisar pedido" })).toBeVisible();
+  const connect = page.getByRole("button", { name: "Conectar MetaMask na Ethereum" });
+  if (await connect.isVisible()) await connect.click();
   await expect(page.getByText("Conectada na Ethereum")).toBeVisible();
   await page.getByRole("button", { name: "Revisar pedido" }).click();
   await expect(page.getByRole("heading", { name: "Revise o pedido" })).toBeVisible();

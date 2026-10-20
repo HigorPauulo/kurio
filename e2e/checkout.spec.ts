@@ -35,6 +35,7 @@ test("do carrinho ao recibo: campos do layout, revisão, pedido confirmado e rec
   await page.getByLabel("Observação do colecionador (opcional)").fill("Presente de aniversário");
   await page.getByRole("button", { name: "Conectar MetaMask na Ethereum" }).click();
   await expect(page.getByText("Conectada na Ethereum")).toBeVisible();
+  await expect(page.getByText("Conecte a carteira na rede escolhida para continuar.")).toHaveCount(0);
   await page.getByRole("button", { name: "Revisar pedido" }).click();
   await expect(page).toHaveURL(/step=review/);
   const summary = page.getByRole("definition").filter({ hasText: "0,8724 ETH" });
