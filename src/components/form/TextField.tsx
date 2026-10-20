@@ -18,6 +18,7 @@ export function TextField({
   suffix,
   editIn,
   readOnly,
+  required,
   ...inputProps
 }: TextFieldProps): JSX.Element {
   const id = useId();
@@ -26,24 +27,36 @@ export function TextField({
   const describedBy = [error && errorId, (hint ?? editIn) && hintId].filter(Boolean).join(" ") || undefined;
 
   return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      <div className="flex items-center gap-2">
+    <div className="flex min-w-0 flex-col gap-2">
+      <Label htmlFor={id}>
+        {label}
+        {required && (
+          <span aria-hidden="true" className="text-lg leading-none text-destructive">
+            *
+          </span>
+        )}
+      </Label>
+      <div className="flex items-stretch">
         <Input
           id={id}
           readOnly={readOnly}
+          required={required}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          className={readOnly ? "bg-muted" : undefined}
+          className={suffix ? "rounded-r-none" : undefined}
           {...inputProps}
         />
-        {suffix && <span className="text-sm text-muted-foreground">{suffix}</span>}
+        {suffix && (
+          <span className="flex items-center rounded-r-md border border-l-0 border-input px-3 text-sm text-foreground">
+            {suffix}
+          </span>
+        )}
       </div>
       {(hint ?? editIn) && (
-        <p id={hintId} className="text-xs text-muted-foreground">
+        <p id={hintId} className="text-xs text-secondary-base">
           {hint}
           {editIn && (
-            <Link to={editIn.to} className="underline underline-offset-4">
+            <Link to={editIn.to} className="text-text-accent underline underline-offset-4">
               {editIn.label}
             </Link>
           )}
