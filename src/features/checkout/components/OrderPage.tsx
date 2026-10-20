@@ -56,7 +56,7 @@ function Receipt({ order }: { order: Order }): JSX.Element {
         </h2>
         <div aria-hidden="true" className="flex justify-between border-b-[0.3px] border-primary pb-3 font-bold">
           <span>NFTs</span>
-          <span className="flex gap-12">
+          <span className="hidden gap-12 sm:flex">
             <span>Edições</span>
             <span className="font-medium">Subtotal</span>
           </span>
@@ -67,10 +67,13 @@ function Receipt({ order }: { order: Order }): JSX.Element {
               <img src={line.cover.url} alt={line.cover.alt} width={70} height={70} className="size-17.5 shrink-0 rounded-lg object-cover" />
               <span className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <span className="font-bold">{line.nftName}</span>
-                <span className="text-sm text-secondary-base">Edição: {line.editionLabel}</span>
+                <span className="text-sm text-secondary-base">
+                  Edição: {line.editionLabel}
+                  <span className="sm:hidden"> · (x {line.quantity})</span>
+                </span>
               </span>
-              <span className="text-sm text-text-secondary">(x {line.quantity})</span>
-              <span className="w-28 text-right text-lg font-bold text-text-accent">{formatEth(line.lineTotal)} ETH</span>
+              <span className="hidden text-sm text-text-secondary sm:inline">(x {line.quantity})</span>
+              <span className="text-right text-lg font-bold whitespace-nowrap text-text-accent sm:w-28">{formatEth(line.lineTotal)} ETH</span>
             </li>
           ))}
         </ul>
