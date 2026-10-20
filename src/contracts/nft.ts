@@ -100,3 +100,8 @@ export type NftSummary = z.infer<typeof nftSummarySchema>;
 export type NftListQuery = z.infer<typeof nftListQuerySchema>;
 export type NftListQueryInput = z.input<typeof nftListQuerySchema>;
 export type NftListResponse = z.infer<typeof nftListResponseSchema>;
+
+export function purchaseLimit(edition: Pick<Edition, "available" | "maxPerOrder" | "status">): number {
+  if (edition.status !== "available") return 0;
+  return Math.min(edition.available, edition.maxPerOrder);
+}

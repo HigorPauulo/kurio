@@ -11,5 +11,8 @@ export const keys = {
     me: ["u", owner, "me"] as const,
     wallets: ["u", owner, "wallets"] as const,
     favorites: ["u", owner, "favorites"] as const,
+    cart: ["u", owner, "cart"] as const,
+    quotes: ["u", owner, "quote"] as const,
+    quote: (network: string, cartVersion: number) => ["u", owner, "quote", network, cartVersion] as const,
   }),
 };

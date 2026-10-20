@@ -1,18 +1,21 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "@tanstack/react-router";
 import { Heart, Minus, Plus } from "lucide-react";
-import { useId, useState, type JSX } from "react";
+import { useId, useState, type JSX, type ReactNode } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import type { Edition, Nft } from "@/contracts/nft";
+import { purchaseLimit, type Edition, type Nft } from "@/contracts/nft";
 import { formatEth } from "@/lib/eth";
 import { useSession } from "@/lib/session/instance";
 import { CATEGORY_LABELS, CHAIN_LABELS } from "../labels";
 import { favoritesQuery, nftQuery, useToggleFavoriteMutation } from "../queries";
 
+export type PurchaseAction = (selection: { nftId: string; editionId: string; quantity: number }) => ReactNode;
+
 type NftDetailPageProps = {
   nftId: string;
   editionId: string | undefined;
   onEditionChange: (editionId: string) => void;
+  renderPurchase: PurchaseAction;
 };
 
 const BLOCK_REASONS: Record<Exclude<Edition["status"], "available">, string> = {
@@ -20,9 +23,6 @@ const BLOCK_REASONS: Record<Exclude<Edition["status"], "available">, string> = {
   unavailable: "Indisponível: esta edição não está à venda.",
 };
 
-function getQuantityLimit(edition: Edition): number {
-  return Math.min(edition.available, edition.maxPerOrder);
-}
 
 function getBlockReason(edition: Edition): string {
   return edition.status === "unavailable" ? BLOCK_REASONS.unavailable : BLOCK_REASONS.sold_out;
@@ -113,10 +113,12 @@ function EditionPicker({ nft, selected, onChange }: { nft: Nft; selected: Editio
   );
 }
 
-function QuantityField({ edition }: { edition: Edition }): JSX.Element {
+type QuantityFieldProps = { nftId: string; edition: Edition; renderPurchase: PurchaseAction };
+
+function QuantityField({ nftId, edition, renderPurchase }: QuantityFieldProps): JSX.Element {
   const inputId = useId();
   const hintId = `${inputId}-hint`;
-  const limit = getQuantityLimit(edition);
+  const limit = purchaseLimit(edition);
   const [draft, setDraft] = useState("1");
 
   if (edition.status !== "available" || limit < 1) {
@@ -176,6 +178,7 @@ function QuantityField({ edition }: { edition: Edition }): JSX.Element {
       <p id={hintId} className="text-xs text-muted-foreground">
         Até {limit} {limit === 1 ? "unidade" : "unidades"} por pedido nesta edição.
       </p>
+      {renderPurchase({ nftId, editionId: edition.id, quantity })}
     </div>
   );
 }
@@ -225,7 +228,7 @@ function FavoriteAction({ nftId }: { nftId: string }): JSX.Element {
   );
 }
 
-export function NftDetailPage({ nftId, editionId, onEditionChange }: NftDetailPageProps): JSX.Element {
+export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchase }: NftDetailPageProps): JSX.Element {
   const { data: nft } = useQuery(nftQuery(nftId));
   if (!nft) return <main className="p-6">Carregando o NFT...</main>;
   const edition = pickEdition(nft, editionId);
@@ -260,7 +263,7 @@ export function NftDetailPage({ nftId, editionId, onEditionChange }: NftDetailPa
             <p className="text-sm">{nft.description}</p>
           </section>
           <EditionPicker nft={nft} selected={edition} onChange={onEditionChange} />
-          <QuantityField key={edition.id} edition={edition} />
+          <QuantityField key={edition.id} nftId={nft.id} edition={edition} renderPurchase={renderPurchase} />
           <div>
             <FavoriteAction nftId={nft.id} />
           </div>

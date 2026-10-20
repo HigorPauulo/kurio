@@ -44,7 +44,7 @@ flowchart LR
 | `src/lib/a11y` | `announce()` e a live region única | nada |
 | `src/lib/query` | `queryClient`, `keys.ts`, política de retry, wrapper de `queryFn` que semeia versões | `contracts`, `lib/realtime/eventStore` (módulo puro: não há ciclo) |
 | `src/lib/realtime` | `socketManager`, `eventStore`, `useNftSubscription`, ponte com o cache | `contracts`, `lib/query` |
-| `src/lib/session` | `sessionStore`, `switchIdentity`, `completeLogin`, guards de rota (`requireUserId`, `redirectIfAuthenticated`) | `http`, `realtime`, `query`, `url`, `contracts` |
+| `src/lib/session` | `sessionStore`, `switchIdentity`, `completeLogin`, carrinho de visitante (`guestCart`, `getCartOwner`, `useCartOwner`), guards de rota (`requireUserId`, `redirectIfAuthenticated`) | `http`, `realtime`, `query`, `url`, `contracts` |
 | `src/lib/forms` | `applyApiError`: `fieldErrors` da API no campo, o resto na mensagem do formulário | `http` |
 | `src/features/<domínio>/api.ts` | Uma função por endpoint: Axios + `schema.parse` | `lib/http`, `contracts` |
 | `src/features/<domínio>/queries.ts` | `queryOptions` e mutations, com `lib/query/keys` | `api.ts`, `lib/query` |
@@ -125,7 +125,8 @@ que URLs equivalentes compartilhem cache.
 |---|---|---|---|
 | `catalog.list` | 30 s | 5 min | `keepPreviousData` |
 | `catalog.featured`, `nft` | 60 s | 5 min | `nft` atualizado por evento |
-| `cart`, `quote` | 0 | 1 min | sempre a resposta do servidor |
+| `cart` | 0 | 1 min | sempre a resposta do servidor |
+| `quote` | até o `expiresAt` | 1 min | key por rede e `cartVersion`, então mutation de carrinho não precisa invalidar; sem refetch no foco (cada busca cria uma cotação); renova sozinha no vencimento |
 | `order` | 0 | 5 min | polling de 5 s só se `pending` e socket desconectado |
 | `favorites`, `me`, `wallets` | 5 min | 5 min | |
 
@@ -136,7 +137,7 @@ Mutation não repete, exceto `createOrder` (§9.2).
 
 | Gatilho | Operação no cache |
 |---|---|
-| Mutation de carrinho | grava `cart` com a resposta; invalida `quote` do dono |
+| Mutation de carrinho | grava `cart` com a resposta; a `cartVersion` nova muda a key da `quote` |
 | `POST /cart/merge` | grava `cart` do usuário; remove o escopo `guest:<id>` |
 | Favorito | otimista (§6.4) |
 | Perfil, avatar | grava `me` com a resposta |
@@ -185,6 +186,12 @@ stateDiagram-v2
   Expired --> Anonymous: descartar
   Authenticated --> Anonymous: logout
 ```
+
+O visitante ganha um UUID em `kurio:guestCartId` só no primeiro "Adicionar ao carrinho"; antes disso o
+carrinho aparece vazio sem requisição, e o `withGuestCart` só lê, nunca cria. O merge do passo 6 roda
+com o token novo; falhou, o login segue e o UUID fica para a próxima tentativa; deu certo, cancela a
+leitura do carrinho em voo (que traria o estado anterior ao merge), grava o resultado, apaga o UUID e
+anuncia os ajustes.
 
 `switchIdentity(next)` é a única troca de identidade, nesta ordem:
 
@@ -350,6 +357,9 @@ mantido durante a implementação.
 | Início | Faixa de preço por dois campos (mínimo e máximo) em vez de slider | Slider não digita valor exato em ETH; os campos aceitam vírgula e 18 casas |
 | Detalhe | Aba "Avaliações de colecionadores", estrelas e "Mais desta coleção" ausentes | Avaliações não existem no contrato; `GET /nfts` não filtra por coleção |
 | Detalhe | Visitante vê "Entrar para favoritar", que leva ao login e volta ao NFT | Favorito é dado de pessoa (`['u', owner]`) e exige sessão |
+| Detalhe | "Comprar" vira "Adicionar ao carrinho", com a quantidade escolhida | A compra passa pelo carrinho e pela cotação; não há compra direta no contrato |
+| Carrinho | "ID do token" ausente nas linhas; a linha mostra a edição | O contrato não tem ID de token, e a compra é por edição |
+| Carrinho | "Conectar e finalizar" ausente até a fatia 7 | O pagamento nasce com o checkout; até lá, só "Continuar explorando" |
 
 ## 16. Limitações
 
