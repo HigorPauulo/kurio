@@ -1,7 +1,4 @@
-import { ws } from "msw";
 import { setupWorker } from "msw/browser";
-import { toSocketIo } from "@mswjs/socket.io-binding";
-import { isConnectPacket, readConnectToken } from "./handshake";
 import { createControl } from "./control";
 import { authHandlers } from "./handlers/auth";
 import { cartHandlers } from "./handlers/cart";
@@ -14,6 +11,7 @@ import { createMockDb } from "./db/mockDb";
 import { createSeed } from "./db/seed";
 import { openStorage } from "./db/storage";
 import { createNetworkConditions } from "./network/conditions";
+import { createRealtimeServer, type RealtimeServer } from "./realtime/server";
 import { buildScenario, type PresetName } from "./scenarios/presets";
 import {
   DEFAULT_SCENARIO,
@@ -23,58 +21,9 @@ import {
   stripScenarioParams,
 } from "./scenarios/selection";
 
-const VALID_TOKEN = "spike-token";
-const PING_INTERVAL_MS = 25_000;
-const ENGINE_IO_PING = "2";
+type Backend = { deps: HandlerDeps; realtime: RealtimeServer };
 
-const realtime = ws.link("wss://realtime.kurio.mock/*");
-
-const handlers = [
-  realtime.addEventListener("connection", (connection) => {
-    const heartbeat = setInterval(
-      () => connection.client.send(ENGINE_IO_PING),
-      PING_INTERVAL_MS,
-    );
-    connection.client.addEventListener("close", () => clearInterval(heartbeat));
-
-    let pendingAckId: number | null = null;
-
-    connection.client.addEventListener("message", (event) => {
-      if (typeof event.data !== "string") return;
-      const packet = event.data;
-
-      if (isConnectPacket(packet)) {
-        if (readConnectToken(packet) !== VALID_TOKEN) {
-          const refusal = {
-            message: "SESSION_EXPIRED",
-            data: { code: "SESSION_EXPIRED" },
-          };
-          connection.client.send(`44${JSON.stringify(refusal)}`);
-        }
-        return;
-      }
-
-      const ackMatch = /^42(\d+)\["nft\.subscribe"/.exec(packet);
-      if (ackMatch) pendingAckId = Number(ackMatch[1]);
-    });
-
-    const io = toSocketIo(connection);
-
-    io.client.on("ping-spike", () => {
-      io.client.emit("pong-spike", "olá do servidor simulado");
-    });
-
-    io.client.on("nft.subscribe", () => {
-      if (pendingAckId === null) return;
-      connection.client.send(
-        `43${pendingAckId}${JSON.stringify([{ ok: true }])}`,
-      );
-      pendingAckId = null;
-    });
-  }),
-];
-
-function setUpBackend(): HandlerDeps {
+function setUpBackend(): Backend {
   const storage = openStorage(() => localStorage);
   const initial = resolveInitialScenario({
     search: location.search,
@@ -99,6 +48,8 @@ function setUpBackend(): HandlerDeps {
 
   const getScenario = () => buildScenario(scenarioNames);
   const conditions = createNetworkConditions({ getScenario });
+  const now = () => Date.now();
+  const realtime = createRealtimeServer({ db, getScenario, now });
 
   window.__kurio = createControl({
     db,
@@ -106,14 +57,15 @@ function setUpBackend(): HandlerDeps {
     getScenarioNames: () => scenarioNames,
     setScenarioNames: saveScenario,
     defaultScenarioNames: parseScenario(import.meta.env.VITE_MOCK_DEFAULT_SCENARIO) ?? [DEFAULT_SCENARIO],
+    realtime,
     build: import.meta.env.VITE_BUILD_SHA,
   });
 
-  return { db, conditions, getScenario, now: () => Date.now() };
+  return { deps: { db, conditions, getScenario, now }, realtime };
 }
 
 export function start(): Promise<unknown> {
-  const deps = setUpBackend();
+  const { deps, realtime } = setUpBackend();
   return setupWorker(
     ...authHandlers(deps),
     ...nftHandlers(deps),
@@ -121,7 +73,7 @@ export function start(): Promise<unknown> {
     ...cartHandlers(deps),
     ...meHandlers(deps),
     ...walletHandlers(deps),
-    ...handlers,
+    realtime.handler,
   ).start({
     onUnhandledRequest(request, print) {
       const url = new URL(request.url);

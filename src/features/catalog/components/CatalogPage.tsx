@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { catalogSortSchema } from "@/contracts/nft";
+import { useNftSubscription } from "@/lib/realtime/instance";
 import { useDelayedFlag } from "@/lib/useDelayedFlag";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { SORT_LABELS } from "../labels";
@@ -132,6 +133,7 @@ function Pagination({ page, totalPages }: { page: number; totalPages: number }):
 
 function FeaturedNfts(): JSX.Element | null {
   const featured = useQuery(featuredNftsQuery());
+  useNftSubscription(featured.data?.map((nft) => nft.id) ?? []);
 
   if (featured.isError && !featured.data) {
     return (
@@ -166,6 +168,7 @@ function FeaturedNfts(): JSX.Element | null {
 
 function CatalogResults({ search, onSearchChange }: CatalogPageProps): JSX.Element {
   const list = useQuery(catalogListQuery(search));
+  useNftSubscription(list.data?.items.map((nft) => nft.id) ?? []);
   const isSkeletonVisible = useDelayedFlag(list.isPending, SKELETON_DELAY_MS);
   const page = search.page ?? 1;
 

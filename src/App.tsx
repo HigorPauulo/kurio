@@ -4,6 +4,7 @@ import type { JSX } from "react";
 import { queryClient } from "@/lib/query/queryClient";
 import { router } from "@/router";
 import { configureHttp } from "@/lib/http/client";
+import { configureRealtime, realtime } from "@/lib/realtime/instance";
 import { guestCart, sessionStore } from "@/lib/session/instance";
 
 configureHttp({
@@ -11,6 +12,18 @@ configureHttp({
   getGuestCartId: () => guestCart.peek(),
   onSessionExpired: () => sessionStore.expire(),
 });
+
+configureRealtime({ onSessionExpired: () => sessionStore.expire() });
+
+function syncRealtime(): void {
+  const state = sessionStore.getState();
+  realtime.connect(state.status === "authenticated" ? state.session.token : null);
+}
+
+const initialSession = sessionStore.getState();
+realtime.reset(initialSession.status === "anonymous" ? null : initialSession.session.user.id);
+sessionStore.subscribe(syncRealtime);
+syncRealtime();
 
 export default function App(): JSX.Element {
   return (

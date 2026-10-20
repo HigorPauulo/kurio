@@ -3,11 +3,6 @@
 Para onde o projeto vai. Onde ele está é o [STATUS](STATUS.md); o porquê das escolhas, o
 [DECISIONS](DECISIONS.md).
 
-## A linha de chegada
-
-**Entrega em até 24 h:** o avaliador recebe o link do repositório e a URL pública, com mocks e tempo
-real funcionando no ambiente publicado. Critérios em [Entrega](#entrega).
-
 ## A fila
 
 **Esta tabela é a única fonte de ordem.** Lê-se de cima para baixo.
@@ -21,7 +16,7 @@ real funcionando no ambiente publicado. Critérios em [Entrega](#entrega).
 | 3 | ✅ **Sessão e conta** | `configureHttp`, login, cadastro, expiração, `switchIdentity`, perfil e carteiras com os campos do layout | AUT-1..4, PER, WAL, NAV-2 | 2 | 2,5 |
 | 4 | ✅ **Catálogo e detalhe** | Filtros, ordenação e página na URL; detalhe; favoritos otimistas | CAT, DET, NAV-1, NAV-3 | 2 | 2 |
 | 5 | ✅ **Carrinho e cotação** | Visitante e usuário, merge, cupom, resumo pela cotação | CRT-1..4, NF-5 | 2 | 1,5 |
-| 6 | ⬜ **Tempo real** | Socket por sessão, `eventStore`, subscriptions, reconciliação | RT, CRT-5 | 4, 5 | 1,5 |
+| 6 | ✅ **Tempo real** | Socket por sessão, `eventStore`, subscriptions, reconciliação | RT, CRT-5 | 4, 5 | 1,5 |
 | 7 | ⬜ **Checkout e pedido** | Campos do layout, revisão, idempotência, recibo, pedido alheio | PAG, PED, AUT-5 | 3, 6 | 2,5 |
 | 8 | ⬜ **Visual e responsivo** | Tokens do Figma, composição em 390 e 1440, 768 sem quebra, estados de carregamento | VIS, NF-1, NF-2, NF-3 | 7 | 2 |
 | 9 | ⬜ **Publicação** | Vercel, smoke, Lighthouse, roteiro manual, documentação conferida com o código | NF-4, NF-6, NF-7, MOC-8, VIS-4 | 8 | 1 |
@@ -88,3 +83,4 @@ detalhe aberto; `__kurio.build` igual ao SHA da `main`.
 | 2026-10-19 | `7237d0c` | ok: fatia 2 e correções da revisão; `__kurio.build` igual ao SHA; cenário da URL, persistência e reset; rotas, socket e ack; console sem erro |
 | 2026-10-19 | `6b10280` | ok: fatia 3 e correções da revisão, em 1440 e 390; `__kurio.build` igual ao SHA; rota privada leva ao login e Esc volta ao início; perfil persiste após refresh na rota profunda; carteiras sem overflow; expiração mostra o aviso; console só com os 401 provocados |
 | 2026-10-19 | `b1219e3` | ok: fatia 4 e correções da revisão, em 1440 e 390; `__kurio.build` igual ao SHA; filtros, ordenação e preço na URL sobrevivem ao refresh; edição da URL no detalhe; NFT e rota inexistentes com não encontrado; sem overflow; console só com o 404 provocado do `nft_999` |
+| 2026-10-19 | `547965c` | ok: fatia 5 e correções da revisão, em 1440 e 390; `__kurio.build` igual ao SHA; visitante sem carrinho até adicionar; carrinho do visitante persiste no refresh com total `0,1221 ETH`; login da Ana une os carrinhos (5 itens, `0,993 ETH`) e apaga o visitante; sem overflow; nenhuma resposta de erro e console sem exceção |

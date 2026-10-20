@@ -69,3 +69,7 @@ export type OrderStatus = z.infer<typeof orderStatusSchema>;
 export type Buyer = z.infer<typeof buyerSchema>;
 export type Order = z.infer<typeof orderSchema>;
 export type CreateOrderBody = z.infer<typeof createOrderBodySchema>;
+
+export function isTerminalOrderStatus(status: string): boolean {
+  return status === "confirmed" || status === "refused";
+}

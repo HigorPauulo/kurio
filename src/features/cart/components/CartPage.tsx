@@ -8,6 +8,7 @@ import type { Cart, CartItem, Quote } from "@/contracts/cart";
 import { purchaseLimit } from "@/contracts/nft";
 import { formatEth } from "@/lib/eth";
 import { getApiFieldError } from "@/lib/forms";
+import { useNftSubscription } from "@/lib/realtime/instance";
 import {
   cartQuery,
   quoteQuery,
@@ -66,7 +67,7 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
             variant="outline"
             size="sm"
             className="self-start"
-            onClick={() => update.mutate({ itemId: item.id, quantity: limit })}
+            onClick={() => update.mutate({ itemId: item.id, quantity: limit, nftName: item.nftName })}
           >
             Ajustar para {limit}
           </Button>
@@ -79,20 +80,18 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
           size="icon"
           aria-label={`Diminuir quantidade de ${item.nftName}`}
           disabled={isBlocked || item.quantity <= 1}
-          onClick={() => update.mutate({ itemId: item.id, quantity: item.quantity - 1 })}
+          onClick={() => update.mutate({ itemId: item.id, quantity: item.quantity - 1, nftName: item.nftName })}
         >
           <Minus aria-hidden="true" />
         </Button>
-        <output aria-live="polite" className="w-8 text-center">
-          {item.quantity}
-        </output>
+        <span className="w-8 text-center">{item.quantity}</span>
         <Button
           type="button"
           variant="outline"
           size="icon"
           aria-label={`Aumentar quantidade de ${item.nftName}`}
           disabled={isBlocked || item.quantity >= limit}
-          onClick={() => update.mutate({ itemId: item.id, quantity: item.quantity + 1 })}
+          onClick={() => update.mutate({ itemId: item.id, quantity: item.quantity + 1, nftName: item.nftName })}
         >
           <Plus aria-hidden="true" />
         </Button>
@@ -229,6 +228,7 @@ function EmptyCart(): JSX.Element {
 function CartContent({ owner }: { owner: string }): JSX.Element {
   const cart = useQuery(cartQuery(owner));
   const quote = useQuery({ ...quoteQuery(owner, cart.data?.version ?? 0), enabled: false });
+  useNftSubscription(cart.data?.items.map((item) => item.nftId) ?? []);
 
   if (cart.isPending) return <p>Carregando o carrinho...</p>;
   if (cart.isError) {
