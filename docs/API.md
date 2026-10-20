@@ -144,16 +144,20 @@ refresh token.
 
 | Endpoint | Sucesso | Erros |
 |---|---|---|
-| `GET /nfts` | 200 `Page<NftSummary> & { appliedQuery }` | 400 |
+| `GET /nfts` | 200 `Page<NftSummary> & { appliedQuery, facets }` | 400 |
 | `GET /nfts/featured` | 200 `NftSummary[]` (até 6) | |
 | `GET /nfts/:id` | 200 `Nft` | 404 |
 
 Parâmetros de `GET /nfts`: `q` (1 a 80 caracteres, sem acento e sem caixa, em nome, coleção e
 criador); `category` e `chain` (listas separadas por vírgula, OR dentro do filtro); `status`
-(`available`, `sold_out`); `priceMin` e `priceMax` (`EthAmount`, sobre `priceFrom`, min ≤ max ou 400);
+(`available`, `sold_out`); `view` (`trending`: só os destaques, `featured`; `new`: listados nos 7 dias
+anteriores ao `createdAt` mais recente do catálogo); `priceMin` e `priceMax` (`EthAmount`, sobre `priceFrom`, min ≤ max ou 400);
 `sort` (`recent` por `createdAt` decrescente, padrão; `price_asc`; `price_desc`; `popular` por `likes`
 decrescente; desempate sempre por `id`); `page` (≥ 1); `pageSize` (1 a 48, padrão 12). Filtros
-diferentes combinam por AND. `appliedQuery` ecoa os parâmetros normalizados. Página além do fim
+diferentes combinam por AND. `appliedQuery` ecoa os parâmetros normalizados. `facets` traz
+`category` e `chain` (contagem de cada valor, todos presentes, calculada com os demais filtros mas sem o
+próprio, para não zerar as opções vizinhas) e `price` (`{ min, max }` do `priceFrom` sem o filtro de
+preço, ou `null` sem resultados). Página além do fim
 devolve `items: []` com o `total` real.
 
 ### Favoritos (privado)

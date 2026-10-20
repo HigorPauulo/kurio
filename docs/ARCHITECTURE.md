@@ -175,8 +175,10 @@ refetch: mantém o conteúdo com indicador, nunca volta ao skeleton. Vazio é su
 
 A busca da URL é texto puro, sem JSON (`?priceMin=0.10`, não `?priceMin=%220.10%22`): o parser padrão do
 router converte `0.10` em número e perde casas do `EthAmount`. Search params validados por Zod com `.catch` (inválido degrada ao default, nunca lança) e defaults
-removidos da URL. `q` usa `replace` após debounce de 300 ms; filtro, ordenação e página usam `push`;
-mudar qualquer coisa que não seja `page` volta a `page=1`. Preço vai à URL com ponto (§14).
+removidos da URL. `q` usa `replace` após debounce de 300 ms no campo do mobile e `push` no Enter da
+busca do cabeçalho; filtro, vista, ordenação e página usam `push`; mudar qualquer coisa que não seja
+`page` volta a `page=1`. Mudança de busca dentro do catálogo não volta ao topo (`resetScroll: false`); a
+paginação e os links de coleção do rodapé levam à âncora `#mercado`. Preço vai à URL com ponto (§14).
 
 ## 8. Sessão
 
@@ -349,9 +351,14 @@ Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lan�
 
 ## 14. Comportamento de interface
 
-- Filtros: um formulário com "Aplicar filtros" e "Limpar filtros", uma requisição por aplicação; a partir
-  de 768 fica na coluna lateral, abaixo dele num diálogo aberto por "Filtros". Busca e ordenação
-  aplicam sozinhas (busca com debounce).
+- Filtros: a partir de 768 ficam na coluna lateral, em que coleção e rede aplicam ao clicar e a faixa de
+  preço aplica no "Aplicar"; abaixo de 768 ficam num diálogo aberto por "Filtros", em que o "Aplicar"
+  aplica tudo de uma vez e fecha. Coleção e rede em ordem alfabética, com a contagem das `facets` da
+  API. A faixa de preço é um controle deslizante de duas alças em passos de 0,001 ETH, calculados em
+  wei (`toEthSteps`, `fromEthSteps`), entre o menor e o maior preço que a API devolve; alça no limite
+  não vai à URL. Abas "Todos os NFTs", "Novos lançamentos" e "Em alta" mudam a vista (`view`);
+  "Ordenar por" muda só a ordem. Busca pela lupa do cabeçalho no desktop e pelo campo do topo no
+  mobile; busca ativa aparece numa etiqueta que a limpa.
 - `prefers-reduced-motion` remove shimmer e transições.
 - Login e cadastro são rotas próprias renderizadas como diálogo sobre o layout. Entrar vai ao `redirect`;
   fechar sem entrar volta a ele só se for público, senão vai a `/` (`getDismissTarget`), para o guard não
@@ -378,9 +385,10 @@ mantido durante a implementação.
 | Pagamento | Duas etapas na mesma rota (`step`): dados e revisão; subtotal, taxa e total ficam na revisão, cotados na rede escolhida | PAG-2 pede revisão antes do envio e novo aceite quando o valor muda; o protótipo mostra uma tela só |
 | Pagamento | "Carteira e rede" mostra os três provedores, só o da carteira escolhida com "Conectar"; os outros dizem qual é o escolhido | Conexão simulada por carteira cadastrada (API) |
 | Confirmação | Recibo é a página `/orders/$orderId`, não um modal; "Ver no Etherscan" vira "Ver no {explorador} (simulado)" | A URL do pedido sobrevive a refresh e reconexão (PED-1); o hash é simulado |
-| Início | Contagem por categoria e por rede na coluna de filtros ausente | `GET /nfts` não devolve facetas; contar no cliente exigiria baixar o catálogo inteiro |
-| Início | Abas "Todos os NFTs", "Novos lançamentos" e "Em alta" viram o "Ordenar por" (Mais recentes, Mais curtidos) | As abas e a ordenação do protótipo disputam o mesmo parâmetro `sort` |
-| Início | Faixa de preço por dois campos (mínimo e máximo) em vez de slider | Slider não digita valor exato em ETH; os campos aceitam vírgula e 18 casas |
+| Início | Filtro de disponibilidade sem controle na coluna; continua aceito pela URL (`status`) | O protótipo não desenha o controle |
+| Início | Rede lista Ethereum, Polygon e Base, não Solana | Redes do escopo ([DECISIONS](DECISIONS.md)) |
+| Início | Filtro escolhido marcado também com ícone de seleção | Estado nunca só por cor (QUALITY §5) |
+| Início | Faixa de preço sem digitação; alças movem em passos de 0,001 ETH | O protótipo desenha um controle deslizante; a precisão de 18 casas segue no fio e no cálculo |
 | Detalhe | Aba "Avaliações de colecionadores", estrelas e "Mais desta coleção" ausentes | Avaliações não existem no contrato; `GET /nfts` não filtra por coleção |
 | Detalhe | Visitante vê "Entrar para favoritar", que leva ao login e volta ao NFT | Favorito é dado de pessoa (`['u', owner]`) e exige sessão |
 | Detalhe | "Comprar" vira "Adicionar ao carrinho", com a quantidade escolhida | A compra passa pelo carrinho e pela cotação; não há compra direta no contrato |
@@ -395,9 +403,7 @@ mantido durante a implementação.
 | Início | Seções "Lançamentos" e "Diário da Cunhagem" com links para `/unavailable` | Conteúdo editorial fora de escopo |
 | Início | Hero é um carrossel de 3 slides que gira a cada 6 s e troca ao arrastar (mouse ou toque, 50 px), com botão de pausar ao lado dos pontos centralizados; para ao passar o mouse, ao focar e com movimento reduzido; o título visível de cada slide é `h2`, e o `h1` da rota fica só para leitor de tela | WCAG 2.2.2 exige pausar movimento automático acima de 5 s; um `h1` estável por rota (QUALITY §5) |
 | Início | "NFT em destaque" mostra o primeiro destaque da API com nome e preço sobre a arte | O destaque é dado do servidor; nome e preço tornam o bloco um link útil |
-| Início | Busca no topo da coluna de resultados no desktop (o protótipo só tem o ícone no cabeçalho, que leva a ela) | CAT-1 exige busca por texto |
-| Início | Contagem de resultados no lugar das abas | As abas viraram o "Ordenar por" (linha acima) |
-| Cards | "A partir de" antes do preço | `priceFrom` é o menor preço entre as edições |
+| Início | A lupa do cabeçalho abre um campo de busca; busca ativa vira uma etiqueta ao lado das abas | CAT-1 exige busca por texto, e quem buscou precisa ver e desfazer a busca |
 | Detalhe | Botões de quantidade com rótulo "Quantidade" visível e limite por pedido; disponibilidade da edição escolhida abaixo das pílulas | DET-2 pede o limite e o motivo do bloqueio na tela |
 | Detalhe | "ID do token", "Atributos", compartilhamento e zoom ausentes; "Detalhes do NFT" mostra descrição, categoria e rede | O contrato não tem esses campos |
 | Detalhe (mobile) | Barra de compra fixa vira bloco no fluxo da página | A barra de abas ocupa a base da tela |
