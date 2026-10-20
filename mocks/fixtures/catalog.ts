@@ -1,19 +1,26 @@
 import type { Category, Chain, EthAmount } from "@/contracts/common";
+import type { Image } from "@/contracts/common";
 import type { Edition, Nft } from "@/contracts/nft";
 import { refreshNft } from "../db/nftUpdates";
 import { stripAccents } from "../text";
 
-const PLACEHOLDER_IMAGE = "/images/nfts/placeholder.svg";
+const ARTWORKS = [
+  "/images/nfts/emerald-ape.webp",
+  "/images/nfts/sage-nomad.webp",
+  "/images/nfts/ivory-baron.webp",
+  "/images/nfts/golden-beat.webp",
+] as const;
+const ARTWORK_SIZE = 640;
 const FIRST_CREATED_AT = Date.parse("2026-09-01T12:00:00.000Z");
 const DAY_MS = 86_400_000;
 
 const CREATORS = {
-  lia: { id: "cre_lia", name: "Lia Monteiro", avatarUrl: PLACEHOLDER_IMAGE },
-  kenji: { id: "cre_kenji", name: "Kenji Duarte", avatarUrl: PLACEHOLDER_IMAGE },
-  noa: { id: "cre_noa", name: "Noa Ferraz", avatarUrl: PLACEHOLDER_IMAGE },
-  iris: { id: "cre_iris", name: "Íris Calado", avatarUrl: PLACEHOLDER_IMAGE },
-  theo: { id: "cre_theo", name: "Theo Brandão", avatarUrl: PLACEHOLDER_IMAGE },
-  maya: { id: "cre_maya", name: "Maya Sato", avatarUrl: PLACEHOLDER_IMAGE },
+  lia: { id: "cre_lia", name: "Lia Monteiro", avatarUrl: ARTWORKS[0] },
+  kenji: { id: "cre_kenji", name: "Kenji Duarte", avatarUrl: ARTWORKS[0] },
+  noa: { id: "cre_noa", name: "Noa Ferraz", avatarUrl: ARTWORKS[0] },
+  iris: { id: "cre_iris", name: "Íris Calado", avatarUrl: ARTWORKS[0] },
+  theo: { id: "cre_theo", name: "Theo Brandão", avatarUrl: ARTWORKS[0] },
+  maya: { id: "cre_maya", name: "Maya Sato", avatarUrl: ARTWORKS[0] },
 } as const;
 
 type EditionRow = [
@@ -84,6 +91,15 @@ function buildEdition(nftNumber: string, index: number, row: EditionRow): Editio
   };
 }
 
+function artwork(name: string, artIndex: number, imageIndex: number): Image {
+  return {
+    url: ARTWORKS[artIndex % ARTWORKS.length],
+    alt: `${name}, imagem ${imageIndex + 1}`,
+    width: ARTWORK_SIZE,
+    height: ARTWORK_SIZE,
+  };
+}
+
 function buildNft(row: NftRow, index: number): Nft {
   const number = String(index + 1).padStart(3, "0");
   const editions = row.editions.map((edition, editionIndex) =>
@@ -97,12 +113,7 @@ function buildNft(row: NftRow, index: number): Nft {
     creator: CREATORS[row.creator],
     category: row.category,
     chain: row.chain,
-    images: Array.from({ length: row.images ?? 1 }, (_, imageIndex) => ({
-      url: PLACEHOLDER_IMAGE,
-      alt: `${row.name}, imagem ${imageIndex + 1}`,
-      width: 600,
-      height: 600,
-    })),
+    images: Array.from({ length: row.images ?? 1 }, (_, imageIndex) => artwork(row.name, index + imageIndex, imageIndex)),
     editions,
     priceFrom: editions[0].price,
     featured: row.featured ?? false,
@@ -115,3 +126,9 @@ function buildNft(row: NftRow, index: number): Nft {
 }
 
 export const NFT_FIXTURES: readonly Nft[] = ROWS.map(buildNft);
+
+export function getCoverFixture(nftId: string): Image {
+  const nft = NFT_FIXTURES.find((candidate) => candidate.id === nftId);
+  if (!nft) throw new Error(`NFT de fixture inexistente: ${nftId}`);
+  return nft.images[0];
+}
