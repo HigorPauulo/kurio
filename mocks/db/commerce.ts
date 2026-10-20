@@ -1,6 +1,6 @@
 import type { CartItem, Cart, Quote, QuoteIssue } from "@/contracts/cart";
 import type { Chain, EthAmount } from "@/contracts/common";
-import type { Edition, Nft } from "@/contracts/nft";
+import { purchaseLimit, type Edition, type Nft } from "@/contracts/nft";
 import { addEth, compareEth, minEth, multiplyEth, percentOfEth, subtractEth } from "@/lib/eth";
 import { COUPON_FIXTURES, NETWORK_FEE_FIXTURES, type CouponFixture } from "../fixtures/commerce";
 import type { CartRecord, Tables } from "./tables";
@@ -10,8 +10,7 @@ export const QUOTE_TTL_MS = 5 * 60_000;
 const ZERO = "0" as EthAmount;
 
 export function editionLimit(edition: Edition): number {
-  if (edition.status !== "available") return 0;
-  return Math.min(edition.available, edition.maxPerOrder);
+  return purchaseLimit(edition);
 }
 
 export function findEdition(tables: Readonly<Tables>, nftId: string, editionId: string): { nft: Nft; edition: Edition } | null {
@@ -20,8 +19,8 @@ export function findEdition(tables: Readonly<Tables>, nftId: string, editionId: 
   return nft && edition ? { nft, edition } : null;
 }
 
-function itemStatus(item: CartItem, edition: Edition | undefined): CartItem["status"] {
-  if (!edition || edition.status !== "available" || edition.available === 0) return "sold_out";
+function itemStatus(item: Pick<CartItem, "quantity" | "unitPrice">, edition: Edition | undefined): CartItem["status"] {
+  if (!edition || editionLimit(edition) === 0) return "sold_out";
   if (item.quantity > editionLimit(edition)) return "insufficient";
   if (compareEth(item.unitPrice, edition.price) !== 0) return "price_changed";
   return "ok";
@@ -83,9 +82,10 @@ export function buildQuote(tables: Readonly<Tables>, record: CartRecord, network
     const unitPrice = found?.edition.price ?? item.unitPrice;
     versions.push(`${item.nftId}@${found?.nft.version ?? -1}`);
 
-    if (!found || found.edition.status !== "available" || found.edition.available === 0) {
+    const status = itemStatus(item, found?.edition);
+    if (status === "sold_out") {
       issues.push({ kind: "SOLD_OUT", itemId: item.id });
-    } else if (item.quantity > editionLimit(found.edition)) {
+    } else if (status === "insufficient" && found) {
       issues.push({ kind: "INSUFFICIENT", itemId: item.id, requested: item.quantity, available: editionLimit(found.edition) });
     }
     if (compareEth(item.unitPrice, unitPrice) !== 0) {

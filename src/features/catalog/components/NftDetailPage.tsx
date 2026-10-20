@@ -3,7 +3,7 @@ import { Link, useLocation } from "@tanstack/react-router";
 import { Heart, Minus, Plus } from "lucide-react";
 import { useId, useState, type JSX, type ReactNode } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
-import type { Edition, Nft } from "@/contracts/nft";
+import { purchaseLimit, type Edition, type Nft } from "@/contracts/nft";
 import { formatEth } from "@/lib/eth";
 import { useSession } from "@/lib/session/instance";
 import { CATEGORY_LABELS, CHAIN_LABELS } from "../labels";
@@ -23,9 +23,6 @@ const BLOCK_REASONS: Record<Exclude<Edition["status"], "available">, string> = {
   unavailable: "Indisponível: esta edição não está à venda.",
 };
 
-function getQuantityLimit(edition: Edition): number {
-  return Math.min(edition.available, edition.maxPerOrder);
-}
 
 function getBlockReason(edition: Edition): string {
   return edition.status === "unavailable" ? BLOCK_REASONS.unavailable : BLOCK_REASONS.sold_out;
@@ -121,7 +118,7 @@ type QuantityFieldProps = { nftId: string; edition: Edition; renderPurchase: Pur
 function QuantityField({ nftId, edition, renderPurchase }: QuantityFieldProps): JSX.Element {
   const inputId = useId();
   const hintId = `${inputId}-hint`;
-  const limit = getQuantityLimit(edition);
+  const limit = purchaseLimit(edition);
   const [draft, setDraft] = useState("1");
 
   if (edition.status !== "available" || limit < 1) {

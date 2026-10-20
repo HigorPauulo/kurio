@@ -358,7 +358,7 @@ type CartBody = {
   id: string;
   version: number;
   coupon: { code: string } | null;
-  items: { id: string; editionId: string; quantity: number; status: string; available: number }[];
+  items: { id: string; editionId: string; quantity: number; status: string; available: number; unitPrice: string }[];
 };
 
 type QuoteBody = {
@@ -463,5 +463,37 @@ describe("carrinho", () => {
     expect(merged.cart.coupon).toEqual({ code: "KURIO10" });
     expect(db.read((tables) => tables.carts[`guest:${GUEST}`])).toBeUndefined();
     expect((await call("POST", "/cart/merge")).status).toBe(401);
+  });
+
+  it("aceita diminuir item acima do estoque, mas não aumentar", async () => {
+    const token = await login("ana@kurio.test");
+    db.commit((draft) => {
+      draft.nfts.nft_012.editions[0].available = 1;
+    });
+    const before = (await call("GET", "/cart", { token })).json as unknown as CartBody;
+    const item = before.items.find((candidate) => candidate.editionId === "ed_012_1");
+    expect(item?.status).toBe("insufficient");
+
+    expect((await call("PATCH", `/cart/items/${item?.id}`, { token, body: { quantity: 3 } })).status).toBe(409);
+    const fixed = (await call("PATCH", `/cart/items/${item?.id}`, { token, body: { quantity: 1 } })).json as unknown as CartBody;
+    expect(fixed.items.find((candidate) => candidate.id === item?.id)?.status).toBe("ok");
+  });
+
+  it("no merge, mantém o item esgotado do usuário e grava o preço atual no item alterado", async () => {
+    await call("POST", "/cart/items", { guest: GUEST, body: { nftId: "nft_004", editionId: "ed_004_1", quantity: 1 } });
+    await call("POST", "/cart/items", { guest: GUEST, body: { nftId: "nft_012", editionId: "ed_012_1", quantity: 1 } });
+    db.commit((draft) => {
+      draft.nfts.nft_004.editions[0].available = 0;
+      draft.nfts.nft_012.editions[0].price = "0.07" as never;
+    });
+    const token = await login("ana@kurio.test");
+
+    const { json } = await call("POST", "/cart/merge", { token, body: { guestCartId: GUEST } });
+    const merged = json as unknown as { cart: CartBody; adjustments: unknown[] };
+    expect(merged.adjustments).toEqual([{ editionId: "ed_004_1", requested: 2, kept: 1 }]);
+    expect(merged.cart.items.map((item) => [item.editionId, item.quantity, item.status, item.unitPrice])).toEqual([
+      ["ed_004_1", 1, "sold_out", "0.75"],
+      ["ed_012_1", 3, "ok", "0.07"],
+    ]);
   });
 });

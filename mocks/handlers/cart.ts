@@ -51,8 +51,7 @@ function resolveOwner(deps: HandlerDeps, request: Request): Owner {
   return { owner: guestOwner(guestCartId) };
 }
 
-function availabilityConflict(request: Request, editionId: string, available: number, maxPerOrder: number): Response {
-  const limit = Math.min(available, maxPerOrder);
+function availabilityConflict(request: Request, editionId: string, limit: number, available: number, maxPerOrder: number): Response {
   const message =
     limit === 0
       ? "Esta edição não está disponível para compra."
@@ -107,7 +106,13 @@ export function cartHandlers(deps: HandlerDeps): HttpHandler[] {
         );
         const requested = (existing?.quantity ?? 0) + quantity;
         if (requested > editionLimit(found.edition)) {
-          return availabilityConflict(request, editionId, found.edition.available, found.edition.maxPerOrder);
+          return availabilityConflict(
+            request,
+            editionId,
+            editionLimit(found.edition),
+            found.edition.available,
+            found.edition.maxPerOrder,
+          );
         }
 
         db.commit((draft, { nextId, now: commitNow }) => {
@@ -149,8 +154,10 @@ export function cartHandlers(deps: HandlerDeps): HttpHandler[] {
         const item = db.read((tables) => tables.carts[resolved.owner]?.items.find((candidate) => candidate.id === itemId));
         if (!item) return apiError(request, 404, "NOT_FOUND", "Item não encontrado no carrinho.");
         const found = db.read((tables) => findEdition(tables, item.nftId, item.editionId));
-        if (!found || body.data.quantity > editionLimit(found.edition)) {
-          return availabilityConflict(request, item.editionId, found?.edition.available ?? 0, found?.edition.maxPerOrder ?? 1);
+        const limit = found ? editionLimit(found.edition) : 0;
+        const isDecrease = body.data.quantity <= item.quantity;
+        if (!found || (!isDecrease && body.data.quantity > limit)) {
+          return availabilityConflict(request, item.editionId, limit, found?.edition.available ?? 0, found?.edition.maxPerOrder ?? 1);
         }
 
         db.commit((draft, { now: commitNow }) => {
@@ -253,15 +260,15 @@ export function cartHandlers(deps: HandlerDeps): HttpHandler[] {
               const limit = found ? editionLimit(found.edition) : 0;
               const item = cart.items.find((candidate) => candidate.editionId === guestItem.editionId);
               const requested = (item?.quantity ?? 0) + guestItem.quantity;
-              const kept = Math.min(requested, limit);
+              const kept = limit === 0 ? (item?.quantity ?? 0) : Math.min(requested, limit);
               if (kept < requested) adjustments.push({ editionId: guestItem.editionId, requested, kept });
+              if (!found || limit === 0) continue;
 
-              if (item && kept > 0) {
+              if (item) {
                 item.quantity = kept;
-              } else if (item) {
-                cart.items = cart.items.filter((candidate) => candidate !== item);
-              } else if (kept > 0) {
-                cart.items.push({ ...guestItem, id: nextId("itm"), quantity: kept });
+                item.unitPrice = found.edition.price;
+              } else {
+                cart.items.push({ ...guestItem, id: nextId("itm"), quantity: kept, unitPrice: found.edition.price });
               }
             }
             if (!cart.coupon && guest.coupon) cart.coupon = guest.coupon;
