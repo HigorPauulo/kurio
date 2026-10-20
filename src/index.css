@@ -129,6 +129,10 @@
     }
 }
 
+[data-shell] {
+    visibility: visible;
+}
+
 @utility skeleton {
     background-color: var(--color-surface-raised);
     background-image: linear-gradient(

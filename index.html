@@ -7,11 +7,15 @@
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#140d0a" />
     <link rel="preload" as="image" href="/images/nfts/emerald-ape.webp" type="image/webp" fetchpriority="high" />
+    <style>
+      html { background: #140d0a; color: #f5f1eb; color-scheme: dark; }
+      [data-shell] { visibility: hidden; }
+    </style>
     <title>Kurio · NFT Marketplace</title>
   </head>
   <body>
     <div id="root">
-      <div class="flex min-h-dvh flex-col pb-20 md:pb-0">
+      <div data-shell class="flex min-h-dvh flex-col pb-20 md:pb-0">
         <header class="mx-auto w-full max-w-300 border-b-[0.3px] border-primary px-4">
           <nav aria-label="Principal" class="flex flex-wrap items-center gap-x-4 pt-4 lg:flex-nowrap lg:items-start lg:justify-between lg:pt-6">
             <a href="/" class="flex h-10 w-40 items-center text-sm font-bold tracking-brand lg:h-auto lg:pt-2">KURIO</a>
