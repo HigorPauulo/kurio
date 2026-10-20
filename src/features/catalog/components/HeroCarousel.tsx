@@ -57,7 +57,7 @@ export function HeroCarousel(): JSX.Element {
     <section
       aria-roledescription="carrossel"
       aria-labelledby="hero-title"
-      className="relative overflow-hidden rounded-3xl bg-linear-to-br from-surface-dark to-surface-raised p-4 pb-10 md:rounded-none md:bg-none md:p-0 md:pb-12 md:pl-10"
+      className="relative overflow-hidden rounded-3xl p-4 pb-10 md:rounded-none md:p-0 md:pb-12 md:pl-10"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onFocus={() => setIsFocused(true)}
@@ -65,12 +65,19 @@ export function HeroCarousel(): JSX.Element {
         if (!event.currentTarget.contains(event.relatedTarget)) setIsFocused(false);
       }}
     >
+      <img
+        src="/images/icons/hero-mobile-bg.svg"
+        alt=""
+        width={366}
+        height={190}
+        className="pointer-events-none absolute inset-0 size-full md:hidden"
+      />
       <h1 id="hero-title" className="sr-only">
         Kurio, marketplace de arte digital
       </h1>
       <div
         aria-live={isRotating ? "off" : "polite"}
-        className={cn("grid touch-pan-y select-none", dragOffset !== null && "cursor-grabbing")}
+        className={cn("relative grid touch-pan-y select-none", dragOffset !== null && "cursor-grabbing")}
         {...swipe.handlers}
       >
         {SLIDES.map((slide, index) => {
