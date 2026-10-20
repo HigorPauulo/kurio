@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { useId, type ComponentProps, type JSX, type ReactNode } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { useId, useState, type ComponentProps, type JSX, type ReactNode } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 type TextFieldProps = ComponentProps<"input"> & {
   label: string;
@@ -21,9 +23,12 @@ export function TextField({
   readOnly,
   required,
   isLabelHidden,
+  type,
   ...inputProps
 }: TextFieldProps): JSX.Element {
   const id = useId();
+  const [isRevealed, setIsRevealed] = useState(false);
+  const isPassword = type === "password";
   const errorId = `${id}-error`;
   const hintId = `${id}-hint`;
   const describedBy = [error && errorId, (hint ?? editIn) && hintId].filter(Boolean).join(" ") || undefined;
@@ -38,16 +43,29 @@ export function TextField({
           </span>
         )}
       </Label>
-      <div className="flex items-stretch">
+      <div className="relative flex items-stretch">
         <Input
           id={id}
+          type={isPassword && isRevealed ? "text" : type}
           readOnly={readOnly}
           required={required}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy}
-          className={suffix ? "rounded-r-none" : undefined}
+          className={cn(suffix && "rounded-r-none", isPassword && "pr-11")}
           {...inputProps}
         />
+        {isPassword && (
+          <button
+            type="button"
+            aria-label={isRevealed ? "Ocultar o texto digitado" : "Mostrar o texto digitado"}
+            aria-pressed={isRevealed}
+            aria-controls={id}
+            onClick={() => setIsRevealed((revealed) => !revealed)}
+            className="absolute top-1/2 right-1.5 flex size-8 -translate-y-1/2 items-center justify-center rounded-sm text-secondary-base hover:text-text-accent"
+          >
+            {isRevealed ? <Eye aria-hidden="true" className="size-4.5" /> : <EyeOff aria-hidden="true" className="size-4.5" />}
+          </button>
+        )}
         {suffix && (
           <span className="flex items-center rounded-r-md border border-l-0 border-input px-3 text-sm text-foreground">
             {suffix}

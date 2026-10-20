@@ -411,7 +411,7 @@ mantido durante a implementação.
 | Detalhe | "Atributos" ausente; "Detalhes do NFT" mostra descrição, categoria e rede | O contrato não tem esses campos |
 | Detalhe | Galeria com setas, contador, arrastar e setas do teclado; miniaturas sempre visíveis (inclusive com uma imagem), na altura da imagem principal, arrastáveis e com degradê na borda quando há mais; a lupa abre o mesmo carrossel ampliado | O protótipo mostra miniaturas e lupa sem definir a navegação; com até 6 imagens a coluna precisa rolar sem barra nativa |
 | Detalhe (mobile) | Barra de compra fixa vira bloco no fluxo da página | A barra de abas ocupa a base da tela |
-| Login e cadastro | Ícone de mostrar senha ausente; rótulos dos campos só para leitor de tela, com o texto do protótipo no placeholder | O protótipo não desenha rótulo visível; o ícone não tem função no escopo |
+| Login e cadastro | Rótulos dos campos só para leitor de tela, com o texto do protótipo no placeholder; o botão de olho da senha se chama "Mostrar o texto digitado" | O protótipo não desenha rótulo visível; o nome do botão não repete "senha" para não competir com o rótulo do campo |
 | Perfil | "Alterar senha" com botão próprio; "Sair" fica só no cabeçalho, fora do menu lateral | Perfil e senha são formulários e endpoints separados; uma ação de saída por tela |
 | Carteiras | "Igual à carteira principal" ausente | O contrato exige endereço próprio na secundária |
 
