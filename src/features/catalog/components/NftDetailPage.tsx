@@ -638,7 +638,7 @@ export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchas
               <p className="text-sm leading-[1.375rem] text-text-secondary">{nft.description}</p>
             </section>
             <EditionPicker nft={nft} selected={edition} onChange={onEditionChange} />
-            <div className="max-md:order-last max-md:-mx-6 max-md:-mb-6 max-md:rounded-t-[2.5rem] max-md:bg-surface-card max-md:px-6 max-md:pt-5 max-md:pb-9 max-md:shadow-[0_0_10px_var(--color-ink)]">
+            <div className="max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-40 max-md:rounded-t-[2.5rem] max-md:bg-surface-card max-md:px-6 max-md:pt-5 max-md:pb-[max(2.25rem,env(safe-area-inset-bottom))] max-md:shadow-[0_0_10px_var(--color-ink)]">
               <QuantityField
                 key={edition.id}
                 nftId={nft.id}

@@ -1,7 +1,9 @@
 import { createFileRoute, Link, notFound, useRouter, type ErrorComponentProps } from "@tanstack/react-router";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
+import { ShopFilledIcon } from "@/components/icons/KurioIcons";
 import { AddToCartButton } from "@/features/cart/components/AddToCartButton";
+import { CartLink } from "@/features/cart/components/CartLink";
 import { NftDetailPage } from "@/features/catalog/components/NftDetailPage";
 import { ensureNft } from "@/features/catalog/queries";
 
@@ -26,7 +28,15 @@ function NftRoute() {
       nftId={nftId}
       editionId={edition}
       onEditionChange={(next) => void navigate({ search: { edition: next }, replace: true })}
-      renderPurchase={(selection) => <AddToCartButton key={selection.editionId} {...selection} />}
+      renderPurchase={(selection) => (
+        <>
+          <AddToCartButton key={selection.editionId} {...selection} />
+          <CartLink
+            icon={ShopFilledIcon}
+            className="size-15 shrink-0 rounded-full border border-border-strong bg-surface-raised text-text-secondary md:hidden [&>svg]:size-5"
+          />
+        </>
+      )}
     />
   );
 }

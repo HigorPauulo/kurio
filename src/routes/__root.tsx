@@ -28,15 +28,17 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 function RootLayout() {
   const location = useLocation();
   const isFullScreen = location.pathname.startsWith("/orders/");
+  const hasBuyBar = location.pathname.startsWith("/nft/");
+  const hasTabBar = !isFullScreen && !hasBuyBar;
 
   return (
-    <div className={cn("flex min-h-dvh flex-col", !isFullScreen && "pb-20 md:pb-0")}>
+    <div className={cn("flex min-h-dvh flex-col", hasTabBar && "pb-20 md:pb-0", hasBuyBar && "pb-56 md:pb-0")}>
       {!isFullScreen && <Header />}
       <div className="flex flex-1 flex-col">
         <Outlet />
       </div>
       {!isFullScreen && <Footer />}
-      {!isFullScreen && <MobileTabBar />}
+      {hasTabBar && <MobileTabBar />}
       <AuthOverlay />
       <ExpiredSessionDialog />
       <LiveRegion />
