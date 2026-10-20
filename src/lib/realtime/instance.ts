@@ -5,6 +5,8 @@ import { eventStore } from "./eventStore";
 import { createSocketManager } from "./socketManager";
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "https://realtime.kurio.mock";
+const SUBSCRIBE_ATTEMPTS = 3;
+const SUBSCRIBE_RETRY_MS = 1_000;
 
 type RealtimeConfig = { onSessionExpired: () => void };
 
@@ -15,6 +17,19 @@ export function configureRealtime(next: RealtimeConfig): void {
   config = next;
 }
 
+function stillRetained(nftIds: readonly string[]): string[] {
+  return nftIds.filter((nftId) => nftCounts.has(nftId));
+}
+
+async function subscribeNfts(nftIds: readonly string[], attempt = 1): Promise<void> {
+  const ack = await manager.request("nft.subscribe", { nftIds });
+  if (ack?.ok || attempt >= SUBSCRIBE_ATTEMPTS) return;
+  setTimeout(() => {
+    const pending = stillRetained(nftIds);
+    if (pending.length > 0 && manager.isConnected()) void subscribeNfts(pending, attempt + 1);
+  }, SUBSCRIBE_RETRY_MS);
+}
+
 const manager = createSocketManager({
   url: SOCKET_URL,
   onEvent: (event) => {
@@ -22,7 +37,7 @@ const manager = createSocketManager({
   },
   onConnect: (isReconnect) => {
     const nftIds = [...nftCounts.keys()];
-    if (nftIds.length > 0) void manager.request("nft.subscribe", { nftIds });
+    if (nftIds.length > 0) void subscribeNfts(nftIds);
     if (isReconnect) reconcileAfterReconnect(queryClient);
   },
   onSessionExpired: () => config.onSessionExpired(),
@@ -30,7 +45,6 @@ const manager = createSocketManager({
 
 export const realtime = {
   connect: (token: string | null): void => manager.connect(token),
-  disconnect: (): void => manager.disconnect(),
   reset(userId: string | null): void {
     manager.disconnect();
     eventStore.reset(userId);
@@ -43,7 +57,7 @@ function retainNfts(nftIds: readonly string[]): () => void {
     nftCounts.set(nftId, count + 1);
     return count === 0;
   });
-  if (added.length > 0 && manager.isConnected()) void manager.request("nft.subscribe", { nftIds: added });
+  if (added.length > 0 && manager.isConnected()) void subscribeNfts(added);
 
   return () => {
     const removed = nftIds.filter((nftId) => {

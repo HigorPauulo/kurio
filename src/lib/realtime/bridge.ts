@@ -2,12 +2,12 @@ import type { QueryClient, QueryKey } from "@tanstack/react-query";
 import type { Cart } from "@/contracts/cart";
 import type { NftUpdatedEvent, OrderUpdatedEvent, RealtimeEvent } from "@/contracts/events";
 import type { Nft, NftListResponse, NftSummary } from "@/contracts/nft";
+import { isTerminalOrderStatus } from "@/contracts/order";
 import { announce } from "@/lib/a11y/announcer";
 import { keys } from "@/lib/query/keys";
 
 const PRICE_DEPENDENT_PARAMS = ["priceMin", "priceMax", "status"];
 const PRICE_SORTS = new Set(["price_asc", "price_desc"]);
-const TERMINAL_STATUSES = new Set(["confirmed", "refused"]);
 
 function isPrivateKind(key: QueryKey, kind: string): boolean {
   return key[0] === "u" && key[2] === kind;
@@ -58,20 +58,29 @@ function applyNftUpdated(queryClient: QueryClient, event: NftUpdatedEvent): void
   }
 
   const carts = queryClient.getQueriesData<Cart>({ predicate: (query) => isPrivateKind(query.queryKey, "cart") });
-  const affected = carts.flatMap(([, cart]) => cart?.items ?? []).find((item) => item.nftId === data.nftId);
-  void queryClient.invalidateQueries({
-    predicate: (query) => isPrivateKind(query.queryKey, "cart") || isPrivateKind(query.queryKey, "quote"),
-  });
-  if (affected) {
-    announce(`O preço ou a disponibilidade de ${affected.nftName} mudou. O resumo do carrinho foi atualizado.`);
+  const affectedOwners = new Set<unknown>();
+  let affectedName: string | undefined;
+  for (const [key, cart] of carts) {
+    const item = cart?.items.find((candidate) => candidate.nftId === data.nftId);
+    if (!item) continue;
+    affectedOwners.add(key[1]);
+    affectedName = item.nftName;
   }
+  if (!affectedName) return;
+
+  void queryClient.invalidateQueries({
+    predicate: (query) =>
+      affectedOwners.has(query.queryKey[1]) &&
+      (isPrivateKind(query.queryKey, "cart") || isPrivateKind(query.queryKey, "quote")),
+  });
+  announce(`O preço ou a disponibilidade de ${affectedName} mudou. O resumo do carrinho foi atualizado.`);
 }
 
 function applyOrderUpdated(queryClient: QueryClient, event: OrderUpdatedEvent): void {
   void queryClient.invalidateQueries({
     predicate: (query) => isPrivateKind(query.queryKey, "order") && query.queryKey[3] === event.data.orderId,
   });
-  if (!TERMINAL_STATUSES.has(event.data.status)) return;
+  if (!isTerminalOrderStatus(event.data.status)) return;
   void queryClient.invalidateQueries({ predicate: (query) => isPrivateKind(query.queryKey, "cart") });
   void queryClient.invalidateQueries({ queryKey: keys.catalog.all });
 }

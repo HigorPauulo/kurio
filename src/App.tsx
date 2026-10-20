@@ -17,8 +17,7 @@ configureRealtime({ onSessionExpired: () => sessionStore.expire() });
 
 function syncRealtime(): void {
   const state = sessionStore.getState();
-  if (state.status === "expired") realtime.disconnect();
-  else realtime.connect(state.status === "authenticated" ? state.session.token : null);
+  realtime.connect(state.status === "authenticated" ? state.session.token : null);
 }
 
 const initialSession = sessionStore.getState();

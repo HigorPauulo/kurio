@@ -24,6 +24,7 @@ export function createSocketManager({ url, onEvent, onConnect, onSessionExpired 
   let socket: Socket | null = null;
   let currentToken: string | null | undefined;
   let isRefused = false;
+  let hasEverConnected = false;
 
   function disconnect(): void {
     socket?.removeAllListeners();
@@ -46,12 +47,10 @@ export function createSocketManager({ url, onEvent, onConnect, onSessionExpired 
         forceNew: true,
         auth: token ? { token } : {},
       });
-      let hasConnected = false;
-
       next.on("connect", () => {
         if (isRefused) return;
-        onConnect(hasConnected);
-        hasConnected = true;
+        onConnect(hasEverConnected);
+        hasEverConnected = true;
       });
       next.on("connect_error", (error: ConnectError) => {
         if (error.data?.code !== "SESSION_EXPIRED") return;
