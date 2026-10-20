@@ -231,6 +231,11 @@ stateDiagram-v2
   Pending --> Refused: order.updated | GET
 ```
 
+Implementação em `features/checkout`: a revisão usa uma cotação própria (`checkoutQuote`, `purpose:
+'checkout'`), guarda a que o comprador aceitou e compara o `basisHash` com a atual; diferente, mostra o
+diff e bloqueia "Confirmar compra" até "Aceitar novos valores". Cotação renovada só pela validade, com o
+mesmo `basisHash`, é aceita sozinha.
+
 `Confirmed` e `Refused` são terminais: ignoram eventos e param o polling. O recibo renderiza
 **somente** com `status === 'confirmed'` lido do servidor. `Retry` não volta à edição: o pedido pode
 já existir. Em `Review`, um timer pelo `expiresAt` pede nova cotação antes de confirmar uma vencida.
@@ -363,6 +368,9 @@ mantido durante a implementação.
 | Tela | Desvio | Motivo |
 |---|---|---|
 | Pagamento (mobile) | Formulário do colecionador empilhado acima dos cards de carteira | O protótipo mobile não desenha o formulário, e os campos são exigidos |
+| Pagamento | Duas etapas na mesma rota (`step`): dados e revisão; subtotal, taxa e total ficam na revisão, cotados na rede escolhida | PAG-2 pede revisão antes do envio e novo aceite quando o valor muda; o protótipo mostra uma tela só |
+| Pagamento | "Carteira e rede" mostra os três provedores, só o da carteira escolhida com "Conectar"; os outros dizem qual é o escolhido | Conexão simulada por carteira cadastrada (API) |
+| Confirmação | Recibo é a página `/orders/$orderId`, não um modal; "Ver no Etherscan" vira "Ver no {explorador} (simulado)" | A URL do pedido sobrevive a refresh e reconexão (PED-1); o hash é simulado |
 | Início | Contagem por categoria e por rede na coluna de filtros ausente | `GET /nfts` não devolve facetas; contar no cliente exigiria baixar o catálogo inteiro |
 | Início | Abas "Todos os NFTs", "Novos lançamentos" e "Em alta" viram o "Ordenar por" (Mais recentes, Mais curtidos) | As abas e a ordenação do protótipo disputam o mesmo parâmetro `sort` |
 | Início | Faixa de preço por dois campos (mínimo e máximo) em vez de slider | Slider não digita valor exato em ETH; os campos aceitam vírgula e 18 casas |

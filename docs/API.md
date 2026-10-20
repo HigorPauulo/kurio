@@ -198,13 +198,13 @@ de aplicado, o cupom permanece no carrinho e a cotação traz a issue `COUPON_MI
 
 | Endpoint | Corpo | Sucesso | Erros |
 |---|---|---|---|
-| `POST /quotes` | `{ network }` | 201 `Quote` do carrinho atual | 422 (inclui carrinho vazio) |
+| `POST /quotes` | `{ network, purpose? }` | 201 `Quote` do carrinho atual | 422 (inclui carrinho vazio) |
 
 Cálculo em wei: `lineTotal = unitPrice × quantity`; `subtotal = Σ lineTotal`; desconto percentual
 `floor(subtotal × bps / 10000)`, fixo `min(valor, subtotal)`; `networkFee = base(rede) + porItem(rede)
 × Σ quantity`; `total = subtotal − discount + networkFee`. Validade de 5 min. `basisHash` resume as
 versões dos NFTs, o cupom e a rede. No carrinho, o cliente pede `network: 'ethereum'`; no checkout, a
-rede escolhida. Cotação vencida e sem pedido é coletada pelo mock ([MOCKS](MOCKS.md#3-mockdb)).
+rede escolhida, com `purpose: 'checkout'` (padrão `'cart'`; só os cenários do mock leem o campo). Cotação vencida e sem pedido é coletada pelo mock ([MOCKS](MOCKS.md#3-mockdb)).
 
 | Rede | `base` | `porItem` |
 |---|---|---|
@@ -230,8 +230,10 @@ Ordem de avaliação de `POST /orders`, obrigatória para o handler:
    hash diferente → 409 `IDEMPOTENCY_CONFLICT`. **Nenhuma outra validação roda antes deste passo**:
    cotação expirada, estoque ou carteira não impedem recuperar um pedido já criado.
 3. Cotação já usada por outra chave → 409 `QUOTE_ALREADY_USED` com o `orderId` existente.
-4. Só então: corpo e perfil (422, com `fieldErrors` para `ensName` nulo ou `network` fora de
-   `wallet.networks`), cotação (`QUOTE_EXPIRED`, `QUOTE_STALE`), carteira, disponibilidade.
+4. Só então: corpo e perfil (422, com `fieldErrors` para `ensName` nulo, `walletId` que não é do usuário
+   ou `network` fora de `wallet.networks`), cotação (`QUOTE_EXPIRED`, também para cotação inexistente
+   ou de outro dono; `QUOTE_STALE` com a cotação nova em `details.quote`), conexão da carteira na rede
+   do corpo (`WALLET_NOT_CONNECTED`), disponibilidade.
 
 A chave é escopada por usuário: a mesma chave de outro usuário é chave nova. `note`: string de até
 500 caracteres ou `null`. `buyer` não vem no corpo: o servidor monta o snapshot a partir do `User` e
