@@ -6,10 +6,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#140d0a" />
+    <link rel="preload" as="image" href="/images/nfts/emerald-ape.webp" type="image/webp" fetchpriority="high" />
     <title>Kurio · NFT Marketplace</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="flex min-h-dvh flex-col pb-20 md:pb-0">
+        <header class="mx-auto w-full max-w-300 border-b-[0.3px] border-primary px-4">
+          <nav aria-label="Principal" class="flex flex-wrap items-center gap-x-4 pt-4 lg:flex-nowrap lg:items-start lg:justify-between lg:pt-6">
+            <a href="/" class="flex h-10 w-40 items-center text-sm font-bold tracking-brand lg:h-auto lg:pt-2">KURIO</a>
+            <ul class="order-last -mx-4 flex w-[calc(100%+2rem)] gap-6 overflow-x-auto px-4 lg:order-none lg:mx-0 lg:w-auto lg:gap-8 lg:overflow-visible lg:px-0 xl:gap-10">
+              <li><a href="/" class="relative flex h-12 items-center text-base lg:h-auto lg:pb-6">Início</a></li>
+              <li><a href="/#mercado" class="relative flex h-12 items-center text-base lg:h-auto lg:pb-6">Mercado</a></li>
+              <li><a href="/unavailable?from=criadores" class="relative flex h-12 items-center text-base lg:h-auto lg:pb-6">Criadores</a></li>
+              <li><a href="/unavailable?from=aprenda" class="relative flex h-12 items-center text-base lg:h-auto lg:pb-6">Aprenda</a></li>
+            </ul>
+            <div class="ml-auto flex h-10 items-center lg:ml-0"></div>
+          </nav>
+        </header>
+        <main aria-busy="true" class="mx-auto w-full max-w-300 flex-1 px-4 pt-6 md:pt-8">
+          <p class="sr-only">Carregando o Kurio...</p>
+        </main>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
