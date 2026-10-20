@@ -297,7 +297,8 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
                 <img src={item.cover.url} alt="" width={70} height={70} className="aspect-square w-17.5 shrink-0 object-cover" />
                 <span className="flex min-w-0 flex-1 flex-col gap-1">
                   <span className="font-bold">{item.nftName}</span>
-                  <span className="text-sm text-secondary-base">Edição: {item.editionLabel}</span>
+                  <span className="text-sm text-secondary-base">ID do token: {item.tokenId}</span>
+                  <span className="text-xs text-secondary-base">Edição: {item.editionLabel}</span>
                 </span>
                 <span className="text-sm text-text-secondary">(x {item.quantity})</span>
               </li>

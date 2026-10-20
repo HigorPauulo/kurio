@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "@tanstack/react-router";
-import { Check, ChevronLeft, ChevronRight, CircleOff, Heart, Minus, Plus } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, CircleOff, Heart, Minus, Plus, Star } from "lucide-react";
 import {
   useEffect,
   useId,
@@ -485,6 +485,30 @@ function FavoriteAction({ nftId }: { nftId: string }): JSX.Element {
   );
 }
 
+const RATING_FORMAT = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+function Rating({ average, count }: Nft["rating"]): JSX.Element {
+  return (
+    <p className="flex items-center gap-2 text-sm">
+      <span aria-hidden="true" className="flex gap-0.5">
+        {Array.from({ length: 5 }, (_, star) => {
+          const fill = Math.min(Math.max(average - star, 0), 1) * 100;
+          return (
+            <span key={star} className="relative size-3.5">
+              <Star className="absolute inset-0 size-3.5 fill-secondary-base/50 text-secondary-base/50" />
+              <span className="absolute inset-y-0 left-0 overflow-hidden" style={{ width: `${fill}%` }}>
+                <Star className="size-3.5 fill-primary text-primary" />
+              </span>
+            </span>
+          );
+        })}
+      </span>
+      <span className="sr-only">Nota {RATING_FORMAT.format(average)} de 5, </span>
+      {count} {count === 1 ? "avaliação" : "avaliações"} de colecionadores
+    </p>
+  );
+}
+
 function ShareLinks({ name }: { name: string }): JSX.Element {
   const location = useLocation();
   const url = `${window.location.origin}${location.pathname}`;
@@ -572,10 +596,7 @@ export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchas
               <h1 className="text-2xl font-bold lg:text-3xl">{nft.name}</h1>
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="text-title font-bold text-text-accent">{formatEth(edition.price)} ETH</p>
-                <p className="flex items-center gap-1 text-sm">
-                  <Heart aria-hidden="true" className="size-4 fill-current text-text-accent" />
-                  {nft.likes} {nft.likes === 1 ? "curtida" : "curtidas"}
-                </p>
+                <Rating average={nft.rating.average} count={nft.rating.count} />
               </div>
             </div>
             <section aria-labelledby="about-title" className="flex flex-col gap-3">
@@ -593,6 +614,8 @@ export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchas
               favorite={<FavoriteAction nftId={nft.id} />}
             />
             <dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-3 text-sm leading-5 text-secondary-base">
+              <dt>ID do token:</dt>
+              <dd>{nft.tokenId}</dd>
               <dt>Coleção:</dt>
               <dd>{nft.collection.name}</dd>
               <dt>Criador:</dt>
@@ -611,6 +634,8 @@ export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchas
           <dd className="mb-3 text-text-secondary">{nft.description}</dd>
           <dt className="font-bold">Categoria:</dt>
           <dd className="mb-3 text-text-secondary">{CATEGORY_LABELS[nft.category]}</dd>
+          <dt className="font-bold">Curtidas:</dt>
+          <dd className="mb-3 text-text-secondary">{nft.likes}</dd>
           <dt className="font-bold">Rede:</dt>
           <dd className="text-text-secondary">Cunhado na {CHAIN_LABELS[nft.chain]}.</dd>
         </dl>

@@ -69,7 +69,8 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
           <Link to="/nft/$nftId" params={{ nftId: item.nftId }} className="font-bold hover:text-text-accent">
             {item.nftName}
           </Link>
-          <span className="text-sm text-secondary-base">Edição: {item.editionLabel}</span>
+          <span className="text-sm text-secondary-base">ID do token: {item.tokenId}</span>
+          <span className="text-xs text-secondary-base">Edição: {item.editionLabel}</span>
           <span className="text-lg font-bold text-text-accent md:hidden">
             {formatEth(line?.unitPrice ?? item.unitPrice)} ETH
           </span>

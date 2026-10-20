@@ -389,10 +389,10 @@ mantido durante a implementação.
 | Início | Rede lista Ethereum, Polygon e Base, não Solana | Redes do escopo ([DECISIONS](DECISIONS.md)) |
 | Início | Filtro escolhido marcado também com ícone de seleção | Estado nunca só por cor (QUALITY §5) |
 | Início | Faixa de preço sem digitação; alças movem em passos de 0,001 ETH | O protótipo desenha um controle deslizante; a precisão de 18 casas segue no fio e no cálculo |
-| Detalhe | Aba "Avaliações de colecionadores", estrelas e "Mais desta coleção" ausentes | Avaliações não existem no contrato; `GET /nfts` não filtra por coleção |
+| Detalhe | Aba "Avaliações de colecionadores" (a lista de avaliações) e "Mais desta coleção" ausentes; a nota e a contagem aparecem ao lado do preço | O contrato traz só a nota agregada (`rating`), não as avaliações; `GET /nfts` não filtra por coleção |
 | Detalhe | Para o visitante, "Favoritar" leva ao login e volta ao NFT (o nome acessível avisa que exige entrar) | Favorito é dado de pessoa (`['u', owner]`) e exige sessão |
 | Detalhe | "Comprar" adiciona ao carrinho a quantidade escolhida e mostra "Adicionado. Ver carrinho"; o nome acessível diz "(adiciona ao carrinho)" | A compra passa pelo carrinho e pela cotação; não há compra direta no contrato |
-| Carrinho | "ID do token" ausente nas linhas; a linha mostra a edição | O contrato não tem ID de token, e a compra é por edição |
+| Carrinho, pagamento e recibo | Linhas mostram a edição abaixo do ID do token | A compra é por edição |
 | Carrinho | "Colecionadores também viram" ausente | Exigiria assinar em tempo real mais NFTs na tela do carrinho, sem requisito que peça a seção |
 | Carrinho | "Resumo da carteira" vira "Resumo do pedido" | O bloco mostra a cotação do pedido, não a carteira |
 | Todas | Tema escuro único, sem alternância claro e escuro | O protótipo só desenha o tema escuro |
@@ -405,13 +405,12 @@ mantido durante a implementação.
 | Início | "NFT em destaque" mostra o primeiro destaque da API com nome e preço sobre a arte | O destaque é dado do servidor; nome e preço tornam o bloco um link útil |
 | Início | A lupa do cabeçalho abre um campo de busca; busca ativa vira uma etiqueta ao lado das abas | CAT-1 exige busca por texto, e quem buscou precisa ver e desfazer a busca |
 | Detalhe | Botões de quantidade com rótulo "Quantidade" visível e limite por pedido; disponibilidade da edição escolhida abaixo das pílulas | DET-2 pede o limite e o motivo do bloqueio na tela |
-| Detalhe | "ID do token", "Atributos" e compartilhamento ausentes; "Detalhes do NFT" mostra descrição, categoria e rede | O contrato não tem esses campos |
+| Detalhe | "Atributos" ausente; "Detalhes do NFT" mostra descrição, categoria e rede | O contrato não tem esses campos |
 | Detalhe | Galeria com setas, contador, arrastar e setas do teclado; miniaturas sempre visíveis (inclusive com uma imagem), na altura da imagem principal, arrastáveis e com degradê na borda quando há mais; a lupa abre o mesmo carrossel ampliado | O protótipo mostra miniaturas e lupa sem definir a navegação; com até 6 imagens a coluna precisa rolar sem barra nativa |
 | Detalhe (mobile) | Barra de compra fixa vira bloco no fluxo da página | A barra de abas ocupa a base da tela |
 | Login e cadastro | Ícone de mostrar senha ausente; rótulos dos campos só para leitor de tela, com o texto do protótipo no placeholder | O protótipo não desenha rótulo visível; o ícone não tem função no escopo |
 | Perfil | "Alterar senha" com botão próprio; "Sair" fica só no cabeçalho, fora do menu lateral | Perfil e senha são formulários e endpoints separados; uma ação de saída por tela |
 | Carteiras | "Igual à carteira principal" ausente | O contrato exige endereço próprio na secundária |
-| Recibo | Linhas mostram a edição no lugar do ID do token | O contrato não tem ID de token |
 
 ## 16. Limitações
 

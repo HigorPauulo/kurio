@@ -67,7 +67,8 @@ function Receipt({ order }: { order: Order }): JSX.Element {
               <img src={line.cover.url} alt={line.cover.alt} width={70} height={70} className="size-17.5 shrink-0 rounded-lg object-cover" />
               <span className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <span className="font-bold">{line.nftName}</span>
-                <span className="text-sm text-secondary-base">
+                <span className="text-sm text-secondary-base">ID do token: {line.tokenId}</span>
+                <span className="text-xs text-secondary-base">
                   Edição: {line.editionLabel}
                   <span className="sm:hidden"> · (x {line.quantity})</span>
                 </span>
