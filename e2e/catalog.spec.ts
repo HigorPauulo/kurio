@@ -78,6 +78,10 @@ test("preço digitado com vírgula vai à URL com ponto, e faixa invertida é re
 
   filters = await openFilters(page);
   await expect(filters.getByLabel("Preço mínimo")).toHaveValue("0,01");
+
+  await filters.getByRole("button", { name: "Limpar filtros" }).click();
+  await expect(page).not.toHaveURL(/price(Min|Max)=/);
+  await expect(results(page)).toHaveCount(12);
 });
 
 test("resposta antiga que chega por último é descartada", async ({ page }) => {
@@ -110,6 +114,14 @@ test("detalhe por acesso direto: galeria, edição na URL e quantidade limitada"
   await increase.click();
   await expect(page.getByRole("spinbutton", { name: "Quantidade" })).toHaveValue("3");
   await expect(increase).toBeDisabled();
+
+  const quantity = page.getByRole("spinbutton", { name: "Quantidade" });
+  await quantity.fill("");
+  await quantity.pressSequentially("2");
+  await expect(quantity).toHaveValue("2");
+  await quantity.fill("9");
+  await quantity.blur();
+  await expect(quantity).toHaveValue("3");
 
   await page.getByLabel(/^Ouro/).check();
   await expect(page).toHaveURL(/edition=ed_001_2/);
