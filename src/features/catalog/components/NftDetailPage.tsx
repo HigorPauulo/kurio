@@ -1,12 +1,26 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "@tanstack/react-router";
-import { Check, CircleOff, Heart, Minus, Plus } from "lucide-react";
-import { useId, useState, type JSX, type ReactNode } from "react";
+import { Check, ChevronLeft, ChevronRight, CircleOff, Heart, Minus, Plus } from "lucide-react";
+import {
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type JSX,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
+import { SearchIcon } from "@/components/icons/KurioIcons";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { purchaseLimit, type Edition, type Nft } from "@/contracts/nft";
 import { formatEth } from "@/lib/eth";
 import { useNftSubscription } from "@/lib/realtime/instance";
 import { useSession } from "@/lib/session/instance";
+import { useSwipe } from "@/lib/useSwipe";
+import { cn } from "@/lib/utils";
 import { CATEGORY_LABELS, CHAIN_LABELS } from "../labels";
 import { favoritesQuery, nftQuery, useToggleFavoriteMutation } from "../queries";
 
@@ -18,6 +32,9 @@ type NftDetailPageProps = {
   onEditionChange: (editionId: string) => void;
   renderPurchase: PurchaseAction;
 };
+
+const GALLERY_ARROW =
+  "absolute top-1/2 z-10 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-ink/80 text-foreground hover:bg-primary hover:text-primary-foreground";
 
 const BLOCK_REASONS: Record<Exclude<Edition["status"], "available">, string> = {
   sold_out: "Esgotada: não há unidades disponíveis.",
@@ -37,40 +54,257 @@ function pickEdition(nft: Nft, editionId: string | undefined): Edition {
   );
 }
 
+function keepInView(list: HTMLElement, item: HTMLElement): void {
+  const listBox = list.getBoundingClientRect();
+  const itemBox = item.getBoundingClientRect();
+  if (itemBox.top < listBox.top) list.scrollTop -= listBox.top - itemBox.top;
+  if (itemBox.bottom > listBox.bottom) list.scrollTop += itemBox.bottom - listBox.bottom;
+  if (itemBox.left < listBox.left) list.scrollLeft -= listBox.left - itemBox.left;
+  if (itemBox.right > listBox.right) list.scrollLeft += itemBox.right - listBox.right;
+}
+
 function Gallery({ nft }: { nft: Nft }): JSX.Element {
   const [index, setIndex] = useState(0);
+  const count = nft.images.length;
   const image = nft.images[index] ?? nft.images[0];
+  const hasMany = count > 1;
+  const swipe = useSwipe((direction) => go(direction));
+
+  function go(step: number): void {
+    setIndex((current) => (current + step + count) % count);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
+    if (!hasMany) return;
+    if (event.key === "ArrowRight") go(1);
+    if (event.key === "ArrowLeft") go(-1);
+  }
 
   return (
-    <div className="flex flex-col gap-4 md:flex-row-reverse md:items-start lg:gap-6">
-      <div className="min-w-0 flex-1 bg-surface-card p-4 lg:p-5">
-        <img
-          src={image.url}
-          alt={image.alt}
-          width={image.width}
-          height={image.height}
-          fetchPriority="high"
-          className="aspect-square w-full rounded-3xl bg-surface-raised object-cover"
-        />
+    <div className="grid gap-4 self-start md:grid-cols-[5.5rem_minmax(0,1fr)] lg:gap-6">
+      <div
+        role="group"
+        aria-roledescription="galeria"
+        aria-label={`Imagens de ${nft.name}`}
+        className="relative min-w-0 bg-surface-card p-4 md:order-2 lg:p-5"
+        onKeyDown={handleKeyDown}
+      >
+        <div
+          className={cn("h-full overflow-hidden rounded-3xl", hasMany && "touch-pan-y select-none", swipe.offset !== null && "cursor-grabbing")}
+          {...(hasMany ? swipe.handlers : {})}
+        >
+          <img
+            key={image.url + index}
+            src={image.url}
+            alt={image.alt}
+            width={image.width}
+            height={image.height}
+            fetchPriority={index === 0 ? "high" : "auto"}
+            draggable={false}
+            style={swipe.offset ? { transform: `translateX(${swipe.offset}px)` } : undefined}
+            className={cn(
+              "aspect-square size-full bg-surface-raised object-cover",
+              hasMany && "cursor-grab",
+              swipe.offset === null && "transition-transform duration-300",
+            )}
+          />
+        </div>
+        <ZoomButton nft={nft} index={index} onIndexChange={setIndex} />
+        {hasMany && (
+          <>
+            <button type="button" aria-label="Imagem anterior" onClick={() => go(-1)} className={cn(GALLERY_ARROW, "left-6 lg:left-7")}>
+              <ChevronLeft aria-hidden="true" className="size-5" />
+            </button>
+            <button type="button" aria-label="Próxima imagem" onClick={() => go(1)} className={cn(GALLERY_ARROW, "right-6 lg:right-7")}>
+              <ChevronRight aria-hidden="true" className="size-5" />
+            </button>
+            <p aria-live="polite" className="absolute bottom-7 left-1/2 z-10 -translate-x-1/2 rounded-full bg-ink/80 px-3 py-1 text-xs">
+              {index + 1} / {count}
+            </p>
+          </>
+        )}
       </div>
-      {nft.images.length > 1 && (
-        <ul aria-label="Galeria" className="flex gap-3 md:w-22 md:flex-col lg:gap-4">
-          {nft.images.map((thumbnail, thumbnailIndex) => (
-            <li key={thumbnailIndex} className="w-20 md:w-full">
-              <button
-                type="button"
-                aria-label={`Ver imagem ${thumbnailIndex + 1} de ${nft.images.length}`}
-                aria-pressed={thumbnailIndex === index}
-                onClick={() => setIndex(thumbnailIndex)}
-                className="block w-full overflow-hidden rounded-md border-2 border-transparent outline-none focus-visible:ring-3 focus-visible:ring-ring/60 aria-pressed:border-primary"
-              >
-                <img src={thumbnail.url} alt="" width={88} height={88} className="aspect-square w-full object-cover" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <ThumbnailStrip images={nft.images} index={index} onSelect={setIndex} />
     </div>
+  );
+}
+
+type StripEdges = { start: boolean; end: boolean };
+
+function isVertical(list: HTMLElement): boolean {
+  return getComputedStyle(list).flexDirection === "column";
+}
+
+function measureEdges(list: HTMLElement): StripEdges {
+  const [position, size, client] = isVertical(list)
+    ? [list.scrollTop, list.scrollHeight, list.clientHeight]
+    : [list.scrollLeft, list.scrollWidth, list.clientWidth];
+  return { start: position > 1, end: position + client < size - 1 };
+}
+
+type ThumbnailStripProps = { images: Nft["images"]; index: number; onSelect: (index: number) => void };
+
+function ThumbnailStrip({ images, index, onSelect }: ThumbnailStripProps): JSX.Element {
+  const listRef = useRef<HTMLUListElement>(null);
+  const dragRef = useRef<{ start: number; scroll: number; moved: boolean } | null>(null);
+  const suppressNextClick = useRef(false);
+  const [edges, setEdges] = useState<StripEdges>({ start: false, end: false });
+
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const thumb = list.querySelector<HTMLElement>(`[data-index="${index}"]`);
+    if (thumb) keepInView(list, thumb);
+    setEdges(measureEdges(list));
+  }, [index]);
+
+  function handlePointerDown(event: PointerEvent<HTMLUListElement>): void {
+    if (event.pointerType !== "mouse" || event.button !== 0) return;
+    const list = event.currentTarget;
+    const vertical = isVertical(list);
+    dragRef.current = {
+      start: vertical ? event.clientY : event.clientX,
+      scroll: vertical ? list.scrollTop : list.scrollLeft,
+      moved: false,
+    };
+  }
+
+  function handlePointerMove(event: PointerEvent<HTMLUListElement>): void {
+    const drag = dragRef.current;
+    if (!drag) return;
+    const list = event.currentTarget;
+    const vertical = isVertical(list);
+    const delta = (vertical ? event.clientY : event.clientX) - drag.start;
+    if (Math.abs(delta) > 5 && !drag.moved) {
+      drag.moved = true;
+      list.setPointerCapture(event.pointerId);
+    }
+    if (!drag.moved) return;
+    if (vertical) list.scrollTop = drag.scroll - delta;
+    else list.scrollLeft = drag.scroll - delta;
+  }
+
+  function handlePointerUp(): void {
+    const drag = dragRef.current;
+    dragRef.current = null;
+    if (drag?.moved) suppressNextClick.current = true;
+  }
+
+  function handleClickCapture(event: MouseEvent<HTMLUListElement>): void {
+    if (!suppressNextClick.current) return;
+    suppressNextClick.current = false;
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  return (
+    <div className="relative min-w-0 md:order-1">
+      <ul
+        ref={listRef}
+        aria-label="Galeria"
+        onScroll={(event) => setEdges(measureEdges(event.currentTarget))}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onClickCapture={handleClickCapture}
+        className="flex cursor-grab gap-3 overflow-x-auto select-none [scrollbar-width:none] md:absolute md:inset-0 md:flex-col md:overflow-x-hidden md:overflow-y-auto lg:gap-4 [&::-webkit-scrollbar]:hidden"
+      >
+        {images.map((thumbnail, thumbnailIndex) => (
+          <li key={thumbnailIndex} className="w-20 shrink-0 md:w-full">
+            <button
+              type="button"
+              data-index={thumbnailIndex}
+              aria-label={`Ver imagem ${thumbnailIndex + 1} de ${images.length}`}
+              aria-pressed={thumbnailIndex === index}
+              onClick={() => onSelect(thumbnailIndex)}
+              className="block w-full overflow-hidden rounded-md border-2 border-transparent opacity-70 outline-none hover:opacity-100 focus-visible:ring-3 focus-visible:ring-ring/60 aria-pressed:border-primary aria-pressed:opacity-100"
+            >
+              <img src={thumbnail.url} alt="" width={88} height={88} draggable={false} className="aspect-square w-full object-cover" />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <span
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-y-0 left-0 w-10 bg-linear-to-r from-background to-transparent transition-opacity md:inset-x-0 md:top-0 md:bottom-auto md:h-14 md:w-auto md:bg-linear-to-b",
+          edges.start ? "opacity-100" : "opacity-0",
+        )}
+      />
+      <span
+        aria-hidden="true"
+        className={cn(
+          "pointer-events-none absolute inset-y-0 right-0 w-10 bg-linear-to-l from-background to-transparent transition-opacity md:inset-x-0 md:top-auto md:bottom-0 md:h-14 md:w-auto md:bg-linear-to-t",
+          edges.end ? "opacity-100" : "opacity-0",
+        )}
+      />
+    </div>
+  );
+}
+
+type ZoomButtonProps = { nft: Nft; index: number; onIndexChange: (index: number) => void };
+
+function ZoomButton({ nft, index, onIndexChange }: ZoomButtonProps): JSX.Element {
+  const count = nft.images.length;
+  const image = nft.images[index] ?? nft.images[0];
+  const hasMany = count > 1;
+  const swipe = useSwipe((direction) => go(direction));
+
+  function go(step: number): void {
+    onIndexChange((index + step + count) % count);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
+    if (!hasMany) return;
+    if (event.key === "ArrowRight") go(1);
+    if (event.key === "ArrowLeft") go(-1);
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger
+        render={
+          <button
+            type="button"
+            aria-label="Ampliar a imagem"
+            className="absolute top-6 right-6 z-10 flex size-9 items-center justify-center rounded-full bg-ink text-foreground hover:text-text-accent lg:top-7 lg:right-7"
+          />
+        }
+      >
+        <SearchIcon className="size-4.5" />
+      </DialogTrigger>
+      <DialogContent className="p-3 sm:max-w-3xl" onKeyDown={handleKeyDown}>
+        <DialogTitle className="sr-only">{image.alt}</DialogTitle>
+        <div
+          className={cn("relative overflow-hidden rounded-2xl", hasMany && "touch-pan-y select-none")}
+          {...(hasMany ? swipe.handlers : {})}
+        >
+          <img
+            src={image.url}
+            alt={image.alt}
+            width={image.width}
+            height={image.height}
+            draggable={false}
+            style={swipe.offset ? { transform: `translateX(${swipe.offset}px)` } : undefined}
+            className={cn("aspect-square w-full object-cover", hasMany && "cursor-grab", swipe.offset === null && "transition-transform duration-300")}
+          />
+        </div>
+        {hasMany && (
+          <>
+            <button type="button" aria-label="Imagem anterior" onClick={() => go(-1)} className={cn(GALLERY_ARROW, "left-6")}>
+              <ChevronLeft aria-hidden="true" className="size-5" />
+            </button>
+            <button type="button" aria-label="Próxima imagem" onClick={() => go(1)} className={cn(GALLERY_ARROW, "right-6")}>
+              <ChevronRight aria-hidden="true" className="size-5" />
+            </button>
+            <p aria-live="polite" className="absolute bottom-6 left-1/2 z-10 -translate-x-1/2 rounded-full bg-ink/80 px-3 py-1 text-xs">
+              {index + 1} / {count}
+            </p>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
