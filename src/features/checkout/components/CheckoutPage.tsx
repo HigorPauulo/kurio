@@ -263,17 +263,22 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
           <TextField label="E-mail" value={user.email} readOnly required />
           <TextField label="Nome ENS" value={user.ensName ?? ""} readOnly required error={errors.ensName} />
         </div>
-        <label className="flex items-center gap-2 self-start text-body">
-          <input
-            type="checkbox"
-            className="size-4 accent-primary"
-            checked={draft.isSecondaryWallet && Boolean(secondary)}
-            disabled={!secondary}
-            aria-describedby={secondary ? undefined : "secondary-reason"}
-            onChange={(event) => onDraftChange({ isSecondaryWallet: event.target.checked, network: undefined })}
-          />
-          Usar outra carteira?
-        </label>
+        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+          <label className="flex items-center gap-2 text-body">
+            <input
+              type="checkbox"
+              className="size-4 accent-primary"
+              checked={draft.isSecondaryWallet && Boolean(secondary)}
+              disabled={!secondary}
+              aria-describedby={secondary ? undefined : "secondary-reason"}
+              onChange={(event) => onDraftChange({ isSecondaryWallet: event.target.checked, network: undefined })}
+            />
+            Usar outra carteira?
+          </label>
+          <Link to="/account/profile" className="text-sm text-text-accent underline underline-offset-4 hover:text-foreground">
+            Editar o perfil
+          </Link>
+        </div>
         {!secondary && (
           <p id="secondary-reason" className="-mt-3 text-xs text-secondary-base">
             Você não tem carteira secundária.{" "}

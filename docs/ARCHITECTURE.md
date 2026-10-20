@@ -373,7 +373,7 @@ Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lan�
 - Campos do layout: todos renderizados; campo de outro dono aparece `readOnly` (focável e lido pelo
   leitor de tela, ao contrário de `disabled`), com a mesma aparência dos editáveis, como no protótipo
   ([mapa](API.md#campos-do-layout)). Em perfil e carteiras, o campo do outro dono tem link "Editar em
-  ..."; no pagamento não, e o perfil e as carteiras ficam no menu. No pagamento, só Rede, "Usar outra
+  ..."; no pagamento, um único link "Editar o perfil" abaixo do Nome ENS, na linha de "Usar outra carteira?". No pagamento, só Rede, "Usar outra
   carteira?", conexão e Observação são editáveis; a coluna "Seus NFTs" já mostra subtotal por linha e o
   resumo pela cotação do carrinho na rede escolhida, e a revisão confirma com cotação própria.
 
