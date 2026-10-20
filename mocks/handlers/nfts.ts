@@ -14,6 +14,7 @@ import { stripAccents } from "../text";
 import { API, apiError, withConditions, type HandlerDeps } from "./shared";
 
 const FEATURED_LIMIT = 6;
+const NEW_LISTING_WINDOW_MS = 7 * 86_400_000;
 
 export function normalizeSearchText(value: string): string {
   return stripAccents(value).toLowerCase();
@@ -24,7 +25,16 @@ export function toNftSummary(nft: Nft): NftSummary {
   return nftSummarySchema.parse({ ...nft, cover: nft.images[0], status: isAvailable ? "available" : "sold_out" });
 }
 
-function matchesQuery(summary: NftSummary, query: NftListQuery): boolean {
+type ListContext = { featured: Set<string>; createdAt: Map<string, string>; newSince: number };
+
+function matchesView(summary: NftSummary, view: NftListQuery["view"], context: ListContext): boolean {
+  if (view === "trending") return context.featured.has(summary.id);
+  if (view === "new") return Date.parse(context.createdAt.get(summary.id) ?? "") >= context.newSince;
+  return true;
+}
+
+function matchesQuery(summary: NftSummary, query: NftListQuery, context: ListContext): boolean {
+  if (!matchesView(summary, query.view, context)) return false;
   if (query.q) {
     const needle = normalizeSearchText(query.q);
     const haystack = [summary.name, summary.collection.name, summary.creator.name].map(normalizeSearchText);
@@ -44,10 +54,12 @@ function countBy<Key extends string>(keys: readonly Key[], values: Key[]): Recor
   return counts;
 }
 
-function buildFacets(summaries: NftSummary[], query: NftListQuery): CatalogFacets {
-  const byCategory = summaries.filter((summary) => matchesQuery(summary, { ...query, category: undefined }));
-  const byChain = summaries.filter((summary) => matchesQuery(summary, { ...query, chain: undefined }));
-  const byPrice = summaries.filter((summary) => matchesQuery(summary, { ...query, priceMin: undefined, priceMax: undefined }));
+function buildFacets(summaries: NftSummary[], query: NftListQuery, context: ListContext): CatalogFacets {
+  const byCategory = summaries.filter((summary) => matchesQuery(summary, { ...query, category: undefined }, context));
+  const byChain = summaries.filter((summary) => matchesQuery(summary, { ...query, chain: undefined }, context));
+  const byPrice = summaries.filter((summary) =>
+    matchesQuery(summary, { ...query, priceMin: undefined, priceMax: undefined }, context),
+  );
   const prices = byPrice.map((summary) => summary.priceFrom);
 
   return {
@@ -90,9 +102,15 @@ export function nftHandlers(deps: HandlerDeps): HttpHandler[] {
 
         const nfts = allNfts();
         const createdAt = new Map(nfts.map((nft) => [nft.id, nft.createdAt]));
+        const newest = Math.max(...nfts.map((nft) => Date.parse(nft.createdAt)));
+        const context: ListContext = {
+          featured: new Set(nfts.filter((nft) => nft.featured).map((nft) => nft.id)),
+          createdAt,
+          newSince: newest - NEW_LISTING_WINDOW_MS,
+        };
         const summaries = nfts.map(toNftSummary);
         const matching = summaries
-          .filter((summary) => matchesQuery(summary, query))
+          .filter((summary) => matchesQuery(summary, query, context))
           .sort(compareBySort(query.sort, createdAt));
         const start = (query.page - 1) * query.pageSize;
 
@@ -103,7 +121,7 @@ export function nftHandlers(deps: HandlerDeps): HttpHandler[] {
           total: matching.length,
           totalPages: Math.ceil(matching.length / query.pageSize),
           appliedQuery: query,
-          facets: buildFacets(summaries, query),
+          facets: buildFacets(summaries, query, context),
         });
       }),
     ),

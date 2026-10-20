@@ -14,6 +14,7 @@ import { compareEth } from "@/lib/eth";
 export const editionStatusSchema = z.enum(["available", "sold_out", "unavailable"]);
 export const catalogStatusSchema = z.enum(["available", "sold_out"]);
 export const catalogSortSchema = z.enum(["recent", "price_asc", "price_desc", "popular"]);
+export const catalogViewSchema = z.enum(["new", "trending"]);
 
 export const editionSchema = z.object({
   id: editionIdSchema,
@@ -72,6 +73,7 @@ export const nftListQuerySchema = z
     category: commaList(categorySchema),
     chain: commaList(chainSchema),
     status: catalogStatusSchema.optional(),
+    view: catalogViewSchema.optional(),
     priceMin: ethAmountSchema.optional(),
     priceMax: ethAmountSchema.optional(),
     sort: catalogSortSchema.default("recent"),

@@ -1,25 +1,27 @@
 import { z } from "zod";
 import { categorySchema, chainSchema, ethAmountSchema, type EthAmount } from "@/contracts/common";
-import { catalogSortSchema, catalogStatusSchema } from "@/contracts/nft";
+import { catalogSortSchema, catalogStatusSchema, catalogViewSchema } from "@/contracts/nft";
 import { compareEth } from "@/lib/eth";
 
 export const CATALOG_PAGE_SIZE = 12;
 
 export type CatalogSort = z.infer<typeof catalogSortSchema>;
 export type CatalogStatus = z.infer<typeof catalogStatusSchema>;
+export type CatalogView = z.infer<typeof catalogViewSchema>;
 
 export type CatalogSearch = {
   q?: string;
   category?: string;
   chain?: string;
   status?: CatalogStatus;
+  view?: CatalogView;
   priceMin?: EthAmount;
   priceMax?: EthAmount;
   sort?: Exclude<CatalogSort, "recent">;
   page?: number;
 };
 
-export type CatalogFilters = Omit<CatalogSearch, "q" | "sort" | "page">;
+export type CatalogFilters = Omit<CatalogSearch, "q" | "sort" | "page" | "view">;
 
 export const CLEARED_FILTERS: { [Key in keyof Required<CatalogFilters>]: undefined } = {
   category: undefined,
@@ -47,6 +49,7 @@ const catalogSearchSchema = z.object({
   category: commaParam(categorySchema),
   chain: commaParam(chainSchema),
   status: catalogStatusSchema.optional().catch(undefined),
+  view: catalogViewSchema.optional().catch(undefined),
   priceMin: ethAmountSchema.optional().catch(undefined),
   priceMax: ethAmountSchema.optional().catch(undefined),
   sort: catalogSortSchema.exclude(["recent"]).optional().catch(undefined),

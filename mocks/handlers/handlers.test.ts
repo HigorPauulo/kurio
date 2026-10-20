@@ -321,6 +321,19 @@ describe("catálogo", () => {
     expect(prices).not.toContain("0.009");
   });
 
+  it("filtra a vista em alta pelos destaques e a de novos pelos 7 dias antes do lançamento mais recente", async () => {
+    const trending = await list("?view=trending&pageSize=48");
+    expect(trending.body.items.map((item) => item.id).sort()).toEqual(
+      ["nft_001", "nft_002", "nft_003", "nft_006", "nft_015", "nft_019"].sort(),
+    );
+
+    const fresh = await list("?view=new&pageSize=48");
+    expect(fresh.body.total).toBe(8);
+    expect(fresh.body.items[0].id).toBe("nft_024");
+    expect(fresh.body.items.at(-1)?.id).toBe("nft_017");
+    expect((await list("?view=viral")).status).toBe(400);
+  });
+
   it("conta cada faceta sem o próprio filtro e dá a faixa de preço sem o filtro de preço", async () => {
     const { body } = await list("?category=music&priceMax=1");
     expect(body.total).toBe(1);
