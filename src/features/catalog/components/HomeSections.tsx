@@ -66,7 +66,7 @@ function Promos(): JSX.Element {
             height={640}
             loading="lazy"
             decoding="async"
-            className="w-9/25 shrink-0 rounded-[1.125rem] object-cover sm:w-9/20"
+            className="w-8/25 shrink-0 rounded-[1.125rem] object-cover sm:w-2/5"
           />
           <img
             src="/images/icons/promo-arcs.svg"
