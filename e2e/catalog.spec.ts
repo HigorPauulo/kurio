@@ -223,6 +223,23 @@ test("abas filtram em alta e novos lançamentos, e filtrar não volta ao topo da
   await expect(results(page)).toHaveCount(12);
 });
 
+test("marcar um filtro pelo teclado na barra lateral mantém o foco no item", async ({ page, isMobile }) => {
+  test.skip(isMobile, "no celular os filtros abrem em diálogo e aplicam no botão");
+  await startFresh(page);
+  await expect(results(page)).toHaveCount(12);
+
+  const music = page.getByRole("checkbox", { name: /Música/ });
+  await music.focus();
+  await page.keyboard.press("Space");
+  await expect(page).toHaveURL(/category=music/);
+  await expect(music).toBeChecked();
+  await expect(music).toBeFocused();
+
+  await page.keyboard.press("Space");
+  await expect(page).not.toHaveURL(/category=/);
+  await expect(music).toBeFocused();
+});
+
 test("galeria navega por setas, miniatura e teclado, e a lupa abre o mesmo carrossel", async ({ page }) => {
   await startFresh(page, "fast", "/nft/nft_018");
   const gallery = page.getByRole("group", { name: "Imagens de Emerald Pass #303" });

@@ -47,6 +47,13 @@ function initialSteps(amount: EthAmount | undefined, fallback: number, bounds: P
   return clampSteps(toEthSteps(amount, PRICE_STEP, rounding), bounds);
 }
 
+function stepsFor(filters: CatalogFilters, bounds: PriceBounds | null): [number, number] {
+  return [
+    initialSteps(filters.priceMin, bounds?.lower ?? 0, bounds, "floor"),
+    initialSteps(filters.priceMax, bounds?.upper ?? 0, bounds, "ceil"),
+  ];
+}
+
 type FacetListProps<Value extends string> = {
   legend: string;
   options: readonly Value[];
@@ -156,10 +163,19 @@ function FilterForm({ filters, facets, mode, onApply }: FilterFormProps): JSX.El
   const bounds = getBounds(facets);
   const [categories, setCategories] = useState(splitParam<Category>(filters.category));
   const [chains, setChains] = useState(splitParam<Chain>(filters.chain));
-  const [priceSteps, setPriceSteps] = useState<[number, number]>(() => [
-    initialSteps(filters.priceMin, bounds?.lower ?? 0, bounds, "floor"),
-    initialSteps(filters.priceMax, bounds?.upper ?? 0, bounds, "ceil"),
-  ]);
+  const [priceSteps, setPriceSteps] = useState(() => stepsFor(filters, bounds));
+  const facetKey = `${filters.category ?? ""}|${filters.chain ?? ""}`;
+  const priceKey = `${filters.priceMin ?? ""}|${filters.priceMax ?? ""}|${bounds?.lower ?? ""}|${bounds?.upper ?? ""}`;
+  const [syncedKeys, setSyncedKeys] = useState({ facetKey, priceKey });
+
+  if (syncedKeys.facetKey !== facetKey || syncedKeys.priceKey !== priceKey) {
+    setSyncedKeys({ facetKey, priceKey });
+    if (syncedKeys.facetKey !== facetKey) {
+      setCategories(splitParam<Category>(filters.category));
+      setChains(splitParam<Chain>(filters.chain));
+    }
+    if (syncedKeys.priceKey !== priceKey) setPriceSteps(stepsFor(filters, bounds));
+  }
 
   function priceFilters(): Pick<CatalogFilters, "priceMin" | "priceMax"> {
     if (!bounds) return { priceMin: filters.priceMin, priceMax: filters.priceMax };
@@ -234,12 +250,10 @@ type CatalogFiltersPanelProps = {
 
 export function CatalogFiltersPanel({ filters, facets, onApply, isCompact }: CatalogFiltersPanelProps): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
-  const formKey = `${JSON.stringify(filters)}|${facets?.price?.min ?? ""}|${facets?.price?.max ?? ""}`;
-
   if (!isCompact) {
     return (
       <div className="bg-surface-card p-5">
-        <FilterForm key={formKey} filters={filters} facets={facets} mode="instant" onApply={onApply} />
+        <FilterForm filters={filters} facets={facets} mode="instant" onApply={onApply} />
       </div>
     );
   }
@@ -258,7 +272,7 @@ export function CatalogFiltersPanel({ filters, facets, onApply, isCompact }: Cat
         <DialogHeader>
           <DialogTitle>Filtros</DialogTitle>
         </DialogHeader>
-        <FilterForm key={formKey} filters={filters} facets={facets} mode="deferred" onApply={handleApply} />
+        <FilterForm filters={filters} facets={facets} mode="deferred" onApply={handleApply} />
       </DialogContent>
     </Dialog>
   );
