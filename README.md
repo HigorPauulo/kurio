@@ -67,3 +67,4 @@ Cupons: `KURIO10` (10%), `FIXO005` (0.005 ETH, mínimo 0.05), `EXPIRADO`.
 | `pnpm typecheck` / `pnpm lint` / `pnpm test:unit` | Tipos / lint sem warning / Vitest |
 | `pnpm verify` | Gate local e do CI: lint, typecheck, unidade e build |
 | `pnpm test:e2e` | Playwright sobre o build de produção, desktop e mobile |
+| `pnpm audit:lighthouse` | Lighthouse em início e detalhe, mobile e desktop, 3 medições cada ([relatório](docs/LIGHTHOUSE.md)) |
