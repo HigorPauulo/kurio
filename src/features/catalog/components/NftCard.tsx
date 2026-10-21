@@ -4,7 +4,7 @@ import type { JSX } from "react";
 import type { NftSummary } from "@/contracts/nft";
 import { formatEth } from "@/lib/eth";
 
-export function NftCard({ nft }: { nft: NftSummary }): JSX.Element {
+export function NftCard({ nft, isPriority = false }: { nft: NftSummary; isPriority?: boolean }): JSX.Element {
   const isSoldOut = nft.status === "sold_out";
 
   return (
@@ -15,7 +15,8 @@ export function NftCard({ nft }: { nft: NftSummary }): JSX.Element {
           alt={nft.cover.alt}
           width={nft.cover.width}
           height={nft.cover.height}
-          loading="lazy"
+          loading={isPriority ? "eager" : "lazy"}
+          fetchPriority={isPriority ? "high" : "auto"}
           decoding="async"
           draggable={false}
           className="aspect-square w-full bg-surface-raised object-cover transition-transform duration-300 group-hover:scale-105"
