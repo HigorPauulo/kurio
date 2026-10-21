@@ -83,7 +83,8 @@ não existe mais depois de um deploy (aba aberta antes da publicação) dispara 
 página recarrega com a versão nova, no máximo uma vez a cada 10 s, para uma falha repetida não virar
 loop de recarga. `index.html` traz, dentro de `#root`, o casco estático do cabeçalho com as mesmas
 classes e a mesma altura do cabeçalho real (oculto abaixo de 768, 105 px até 1024, 73 px acima), e faz preload da arte
-do hero, para que CLS e LCP não dependam do bootstrap. Um `<style>` inline mínimo pinta o fundo e
+do hero e, no build, da Roboto Mono latina (plugin `kurio:preload-font` no `vite.config.ts`, que
+lê o nome com hash do bundle), para que CLS e LCP não dependam do bootstrap. Um `<style>` inline mínimo pinta o fundo e
 esconde o casco (`visibility`, que mantém a altura) até o `index.css` carregar e revelá-lo; sem isso, no
 dev, onde o CSS chega por JavaScript, o casco aparecia sem estilo por um instante.
 

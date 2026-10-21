@@ -41,9 +41,7 @@ Nenhuma. O gate **G1** (GitHub e Vercel) foi resolvido.
 
 ## Dívida aberta
 
-| Dívida | Sai em |
-|---|---|
-| Fontes sem preload (QUALITY §6) | Fatia 9, com a medição do Lighthouse |
+Nenhuma.
 
 ## Os números de hoje
 
