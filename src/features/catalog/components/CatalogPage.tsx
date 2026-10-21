@@ -30,6 +30,7 @@ type CatalogPageProps = {
 const SEARCH_DEBOUNCE_MS = 300;
 const SKELETON_DELAY_MS = 150;
 const COMPACT_QUERY = "(width < 48rem)";
+const PRIORITY_CARDS = 2;
 const GRID = "grid grid-cols-2 gap-x-4 gap-y-8 max-md:pb-8 max-md:[&>:nth-child(even)]:translate-y-8 lg:grid-cols-3 lg:gap-x-8 lg:gap-y-18";
 const PAGE_ITEM =
   "flex size-9 items-center justify-center rounded-sm border border-border-strong text-lg leading-4 hover:border-primary hover:text-text-accent";
@@ -314,9 +315,9 @@ function CatalogResults({ search, onSearchChange }: CatalogPageProps): JSX.Eleme
         </div>
       ) : (
         <ul aria-label="Resultados" aria-busy={isRefreshing} className={cn(GRID, isRefreshing && "opacity-70")}>
-          {items.map((nft) => (
+          {items.map((nft, index) => (
             <li key={nft.id}>
-              <NftCard nft={nft} />
+              <NftCard nft={nft} isPriority={index < PRIORITY_CARDS} />
             </li>
           ))}
         </ul>
