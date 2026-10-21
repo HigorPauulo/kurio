@@ -183,9 +183,9 @@ function CouponForm({ owner, cart, quote }: { owner: string; cart: Cart; quote: 
   }
 
   return (
-    <form noValidate className="flex flex-col gap-2" onSubmit={(event) => void handleSubmit(event)}>
+    <form noValidate className="flex flex-col gap-2 max-md:mb-3" onSubmit={(event) => void handleSubmit(event)}>
       <div className="flex items-end max-md:relative">
-        <div className="min-w-0 flex-1 [&_input]:rounded-r-none [&_input]:border-primary [&_label]:text-sm [&_label]:font-bold max-md:[&_input]:h-12.5 max-md:[&_input]:rounded-full max-md:[&_input]:border-border-strong max-md:[&_input]:pr-28 max-md:[&_input]:pl-4 max-md:[&_input]:shadow-lg max-md:[&_label]:sr-only">
+        <div className="min-w-0 flex-1 [&_input]:rounded-r-none [&_input]:border-primary [&_label]:text-sm [&_label]:font-bold max-md:[&_input]:h-12.5 max-md:[&_input]:rounded-full max-md:[&_input]:border-border-strong max-md:[&_input]:pr-28 max-md:[&_input]:bg-surface-card max-md:[&_input]:pl-4 max-md:[&_input]:shadow-[0_6px_10px_var(--color-ink)] max-md:[&_label]:sr-only">
           <TextField
             label="Tem um código promocional?"
             autoComplete="off"
@@ -200,7 +200,7 @@ function CouponForm({ owner, cart, quote }: { owner: string; cart: Cart; quote: 
           disabled={apply.isPending}
           aria-busy={apply.isPending}
           className={cn(
-            "rounded-l-none max-md:absolute max-md:top-0 max-md:right-0 max-md:h-12.5 max-md:w-24 max-md:rounded-full max-md:bg-linear-to-r max-md:from-primary/55 max-md:to-primary max-md:text-body max-md:font-bold max-md:text-foreground",
+            "rounded-l-none max-md:absolute max-md:top-0 max-md:right-0 max-md:h-12.5 max-md:w-24 max-md:rounded-full max-md:bg-transparent max-md:bg-linear-to-r max-md:from-primary/55 max-md:to-primary max-md:text-body max-md:font-bold max-md:text-foreground max-md:shadow-[0_6px_10px_var(--color-ink)]",
             error && "mb-7 max-md:mb-0",
           )}
         >
@@ -257,7 +257,7 @@ function Summary({ owner, cart }: { owner: string; cart: Cart }): JSX.Element {
         to="/checkout"
         className={cn(
           buttonVariants({ size: "lg" }),
-          "w-full rounded-full max-md:h-15 max-md:bg-linear-to-r max-md:from-primary max-md:to-primary/80 max-md:text-base md:h-10 md:rounded-md",
+          "w-full rounded-full max-md:mt-6 max-md:h-15 max-md:bg-transparent max-md:bg-linear-to-r max-md:from-primary max-md:to-primary/80 max-md:text-base md:h-10 md:rounded-md",
         )}
       >
         Conectar e finalizar

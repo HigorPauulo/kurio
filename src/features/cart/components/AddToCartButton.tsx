@@ -27,7 +27,7 @@ export function AddToCartButton({ nftId, editionId, quantity }: AddToCartButtonP
 
   return (
     <div className="contents">
-      <Button type="button" disabled={add.isPending} aria-busy={add.isPending} onClick={handleAdd} className="h-10 text-sm max-md:h-15 max-md:flex-1 max-md:rounded-full max-md:bg-linear-to-r max-md:from-primary max-md:to-primary/80 max-md:text-base max-md:font-bold">
+      <Button type="button" disabled={add.isPending} aria-busy={add.isPending} onClick={handleAdd} className="h-10 text-sm max-md:h-15 max-md:flex-1 max-md:rounded-full max-md:bg-transparent max-md:bg-linear-to-r max-md:from-primary max-md:to-primary/80 max-md:text-base max-md:font-bold">
         <ShoppingCart aria-hidden="true" />
         Comprar
         <span className="sr-only"> (adiciona ao carrinho)</span>
