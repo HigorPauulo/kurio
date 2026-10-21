@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, CheckCircle2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, CheckCircle2, ChevronDown } from "lucide-react";
 import { useEffect, useId, useRef, useState, type JSX } from "react";
 import { FormError, TextField } from "@/components/form/TextField";
 import { Button } from "@/components/ui/button";
@@ -47,13 +47,22 @@ function pickNetwork(wallet: Wallet | undefined, preferred: Chain | undefined): 
   return wallet.networks[0];
 }
 
-type WalletChoice = { secondary: Wallet | undefined; wallet: Wallet | undefined; network: Chain | undefined };
+type WalletChoice = {
+  primary: Wallet | undefined;
+  secondary: Wallet | undefined;
+  wallet: Wallet | undefined;
+  network: Chain | undefined;
+};
 
 function selectWallet(wallets: Wallet[], draft: CheckoutDraft): WalletChoice {
   const primary = wallets.find((candidate) => candidate.role === "primary");
   const secondary = wallets.find((candidate) => candidate.role === "secondary");
   const wallet = draft.isSecondaryWallet && secondary ? secondary : primary;
-  return { secondary, wallet, network: pickNetwork(wallet, draft.network) };
+  return { primary, secondary, wallet, network: pickNetwork(wallet, draft.network) };
+}
+
+function shortAddress(address: string): string {
+  return address.length > 12 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address;
 }
 
 function moneySignature(quote: Quote): string {
@@ -100,22 +109,28 @@ function WalletConnection({ userId, wallet, network, error }: ConnectionProps): 
 
   return (
     <fieldset className="flex flex-col gap-3" aria-describedby={error ? "connection-error" : undefined}>
-      <legend className="mb-3 w-full text-center text-lg font-bold">Carteira e rede</legend>
+      <legend className="mb-3 w-full text-center text-lg font-bold max-md:mb-1 max-md:text-left max-md:text-base">Carteira e rede</legend>
       {walletProviderSchema.options.map((provider) => {
         const isChosen = wallet?.provider === provider;
         return (
           <div
             key={provider}
             className={cn(
-              "flex min-h-11 flex-wrap items-center justify-between gap-2 border px-4 py-2 text-sm",
+              "flex min-h-11 flex-wrap items-center justify-between gap-2 border px-4 py-2 text-sm max-md:min-h-16 max-md:rounded-[0.9375rem] max-md:border-transparent max-md:bg-surface-card max-md:px-3.5 max-md:shadow-[0_0_20px_var(--color-ink)]",
               isChosen ? "border-foreground bg-surface-card" : "border-border-strong",
             )}
           >
-            <span className="flex items-center gap-3">
+            <span className="flex items-center gap-3 max-md:flex-1">
+              <span
+                aria-hidden="true"
+                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-raised font-bold text-text-accent md:hidden"
+              >
+                {PROVIDER_LABELS[provider].charAt(0)}
+              </span>
               <span
                 aria-hidden="true"
                 className={cn(
-                  "size-4 rounded-full border border-primary",
+                  "size-4 rounded-full border border-primary max-md:order-last max-md:ml-auto",
                   isChosen && "border-4 border-surface-card bg-primary ring-1 ring-primary",
                 )}
               />
@@ -180,11 +195,67 @@ type DetailsProps = {
   onReview: () => void;
 };
 
+type WalletCardsProps = { choice: WalletChoice; isSecondary: boolean; onSelect: (isSecondary: boolean) => void };
+
+function WalletCards({ choice, isSecondary, onSelect }: WalletCardsProps): JSX.Element {
+  const options = [
+    { wallet: choice.primary, isSecondary: false },
+    { wallet: choice.secondary, isSecondary: true },
+  ].flatMap((option) => (option.wallet ? [{ ...option, wallet: option.wallet }] : []));
+
+  return (
+    <fieldset aria-labelledby="wallet-cards-title" className="flex flex-col gap-4 md:hidden">
+      <div className="flex items-center justify-between">
+        <span id="wallet-cards-title" className="text-base font-bold">
+          Carteira conectada
+        </span>
+        <Link to="/account/wallets" className="text-sm font-bold text-text-accent hover:underline">
+          Trocar carteira
+        </Link>
+      </div>
+      {options.map((option) => {
+        const isChosen = option.isSecondary === isSecondary;
+        const network = isChosen ? choice.network : pickNetwork(option.wallet, undefined);
+        return (
+          <label
+            key={option.wallet.id}
+            className={cn(
+              "relative flex min-h-23 cursor-pointer items-start gap-4 rounded-[0.875rem] bg-surface-card px-5 py-4 has-focus-visible:ring-2 has-focus-visible:ring-ring",
+              isChosen && "shadow-[0_20px_20px_var(--color-ink)]",
+            )}
+          >
+            <input
+              type="radio"
+              name="checkout-wallet"
+              checked={isChosen}
+              aria-label={option.wallet.label}
+              aria-describedby={`${option.wallet.id}-details`}
+              onChange={() => onSelect(option.isSecondary)}
+              className="mt-6 size-4 shrink-0 cursor-pointer appearance-none rounded-full border border-primary checked:border-4 checked:border-surface-card checked:bg-primary checked:ring-1 checked:ring-primary focus-visible:outline-none"
+            />
+            <span className="flex min-w-0 flex-col gap-1">
+              <span aria-hidden="true" className="text-base font-bold">
+                {option.wallet.label}
+              </span>
+              <span id={`${option.wallet.id}-details`} className="text-sm leading-[1.375rem] text-text-secondary">
+                {shortAddress(option.wallet.address)}
+                {network && <span className="block">Rede {CHAIN_LABELS[network]}</span>}
+              </span>
+            </span>
+          </label>
+        );
+      })}
+    </fieldset>
+  );
+}
+
 function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors, onErrorsChange, onReview }: DetailsProps): JSX.Element {
   const { secondary, wallet, network } = choice;
   const quote = useQuery(quoteQuery(userId, cart.version, network ?? CART_NETWORK));
   const setErrors = onErrorsChange;
   const noteId = useId();
+  const [isOrderOpen, setIsOrderOpen] = useState(false);
+  const isOrderExpanded = isOrderOpen || Boolean(errors.ensName || errors.wallet || errors.network || errors.note);
 
   function handleReview(): void {
     const next: FieldErrors = {
@@ -204,13 +275,30 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
     <form
       noValidate
       aria-labelledby="buyer-title"
-      className="grid gap-10 lg:grid-cols-[1fr_29rem] lg:gap-8"
+      className="flex flex-col gap-6 md:grid md:gap-10 lg:grid-cols-[1fr_29rem] lg:gap-8"
       onSubmit={(event) => {
         event.preventDefault();
         handleReview();
       }}
     >
-      <div className="flex min-w-0 flex-col gap-5">
+      <div className="max-md:order-1 md:hidden">
+        <WalletCards
+          choice={choice}
+          isSecondary={draft.isSecondaryWallet && Boolean(secondary)}
+          onSelect={(isSecondary) => onDraftChange({ isSecondaryWallet: isSecondary, network: undefined })}
+        />
+      </div>
+      <button
+        type="button"
+        aria-expanded={isOrderExpanded}
+        aria-controls="order-data"
+        onClick={() => setIsOrderOpen((current) => !current)}
+        className="flex items-center justify-between rounded-[0.875rem] bg-surface-card px-5 py-4 text-base font-bold max-md:order-3 md:hidden"
+      >
+        Dados do pedido
+        <ChevronDown aria-hidden="true" className={cn("size-5 transition-transform", isOrderExpanded && "rotate-180")} />
+      </button>
+      <div id="order-data" className={cn("flex min-w-0 flex-col gap-5 max-md:order-4", !isOrderExpanded && "max-md:hidden")}>
         <h2 id="buyer-title" className="text-lg font-bold">
           Perfil do colecionador
         </h2>
@@ -308,8 +396,8 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
           )}
         </div>
       </div>
-      <div className="flex min-w-0 flex-col gap-6">
-        <section aria-labelledby="items-title" className="flex flex-col gap-3">
+      <div className="flex min-w-0 flex-col gap-6 max-md:contents">
+        <section aria-labelledby="items-title" className={cn("flex flex-col gap-3 max-md:order-5", !isOrderExpanded && "max-md:hidden")}>
           <h2 id="items-title" className="text-lg font-bold">
             Seus NFTs
           </h2>
@@ -364,16 +452,35 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
             </dl>
           )}
         </section>
-        <WalletConnection
-          userId={userId}
-          wallet={wallet}
-          network={network}
-          error={isConnectedOn(wallet, network) ? undefined : errors.connection}
-        />
-        {errors.form ? <FormError message={errors.form} /> : hasErrors(errors) && <FormError message="Corrija os campos indicados para continuar." />}
-        <Button type="submit" size="lg" className="w-full rounded-full md:rounded-md">
-          Revisar pedido
-        </Button>
+        <div className="max-md:order-2">
+          <WalletConnection
+            userId={userId}
+            wallet={wallet}
+            network={network}
+            error={isConnectedOn(wallet, network) ? undefined : errors.connection}
+          />
+        </div>
+        <p className="flex items-center justify-end gap-7 text-base font-bold max-md:order-2 md:hidden">
+          Total:
+          <span className="text-lg text-text-accent">{quote.data ? `${formatEth(quote.data.total)} ETH` : "..."}</span>
+        </p>
+        {(errors.form || hasErrors(errors)) && (
+          <div className="max-md:order-6">
+            <FormError message={errors.form ?? "Corrija os campos indicados para continuar."} />
+          </div>
+        )}
+        <div
+          data-fixed-bar
+          className="max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-40 max-md:bg-linear-to-t max-md:from-ink max-md:via-ink max-md:to-transparent max-md:px-7 max-md:pt-6 max-md:pb-[max(2rem,env(safe-area-inset-bottom))]"
+        >
+          <Button
+            type="submit"
+            size="lg"
+            className="w-full rounded-full max-md:h-15 max-md:bg-transparent max-md:bg-linear-to-r max-md:from-primary max-md:to-primary/80 max-md:text-body max-md:font-bold md:rounded-md"
+          >
+            Revisar pedido
+          </Button>
+        </div>
       </div>
     </form>
   );
@@ -651,7 +758,7 @@ export function CheckoutPage({ userId, step, onStepChange, onOrderPlaced }: Chec
 
   return (
     <main className="mx-auto flex w-full max-w-300 flex-col gap-6 px-4 pt-6 lg:pt-8">
-      <nav aria-label="Trilha" className="text-sm font-bold">
+      <nav aria-label="Trilha" className="hidden text-sm font-bold md:block">
         <ol className="flex flex-wrap gap-1">
           <li>
             <Link to="/" className="hover:text-text-accent">
@@ -670,7 +777,16 @@ export function CheckoutPage({ userId, step, onStepChange, onOrderPlaced }: Chec
           </li>
         </ol>
       </nav>
-      <h1 className="text-2xl font-bold md:sr-only">Pagamento</h1>
+      <div className="flex min-h-11 items-center gap-6 md:block md:min-h-0">
+        <Link
+          to="/cart"
+          aria-label="Voltar ao carrinho"
+          className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border-strong bg-surface-raised hover:text-text-accent md:hidden"
+        >
+          <ArrowLeft aria-hidden="true" className="size-4" />
+        </Link>
+        <h1 className="text-xl font-bold md:sr-only">Pagamento com carteira</h1>
+      </div>
       {content}
     </main>
   );

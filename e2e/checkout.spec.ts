@@ -1,13 +1,5 @@
 import { expect, test } from "@playwright/test";
-import {
-  expectNoA11yViolations,
-  goToReview,
-  login,
-  logout,
-  serverCart,
-  serverOrders,
-  startFresh,
-} from "./support/kurio.js";
+import { expectNoA11yViolations, goToReview, isCompactViewport, login, logout, serverCart, serverOrders, startFresh } from "./support/kurio.js";
 
 type PriceWindow = { __kurio: { catalog: { setPrice: (nftId: string, editionId: string, price: string) => void } } };
 
@@ -32,6 +24,7 @@ test("do carrinho ao recibo: campos do layout, revisão, pedido confirmado e rec
   await page.getByRole("button", { name: "Revisar pedido" }).click();
   await expect(page.getByText("Conecte a carteira na rede escolhida para continuar.")).toBeVisible();
 
+  if (isCompactViewport(page)) await page.getByRole("button", { name: "Dados do pedido" }).click();
   await page.getByLabel("Observação do colecionador (opcional)").fill("Presente de aniversário");
   await page.getByRole("button", { name: "Conectar MetaMask na Ethereum" }).click();
   await expect(page.getByText("Conectada na Ethereum")).toBeVisible();
