@@ -387,7 +387,7 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
             value={draft.note}
             aria-invalid={errors.note ? true : undefined}
             aria-describedby={errors.note ? `${noteId}-error` : undefined}
-            className="rounded-md border border-input bg-transparent p-3 text-sm outline-none focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/40 aria-invalid:border-destructive"
+            className="rounded-md border border-input bg-transparent p-3 text-base outline-none md:text-sm focus-visible:border-primary focus-visible:ring-3 focus-visible:ring-ring/40 aria-invalid:border-destructive"
             onChange={(event) => onDraftChange({ note: event.target.value })}
           />
           {errors.note && (

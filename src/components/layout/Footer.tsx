@@ -77,7 +77,7 @@ function Newsletter(): JSX.Element {
           type="email"
           autoComplete="off"
           placeholder="digite seu e-mail..."
-          className="min-w-0 flex-1 bg-transparent px-3 text-sm placeholder:text-secondary-base focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary"
+          className="min-w-0 flex-1 bg-transparent px-3 text-base placeholder:text-secondary-base focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary md:text-sm"
         />
         <button type="submit" className="bg-primary px-4 text-lg font-bold text-primary-foreground hover:bg-text-accent">
           Enviar
