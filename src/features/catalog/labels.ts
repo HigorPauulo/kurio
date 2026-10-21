@@ -1,5 +1,5 @@
 import type { Category, Chain } from "@/contracts/common";
-import type { CatalogSort, CatalogView } from "./search";
+import type { CatalogSort, CatalogStatus, CatalogView } from "./search";
 
 export const CATEGORY_LABELS: Record<Category, string> = {
   "digital-art": "Arte digital",
@@ -24,6 +24,11 @@ export const SORT_LABELS: Record<CatalogSort, string> = {
   price_asc: "Menor preço",
   price_desc: "Maior preço",
   popular: "Mais curtidos",
+};
+
+export const STATUS_LABELS: Record<CatalogStatus, string> = {
+  available: "Disponíveis",
+  sold_out: "Esgotados",
 };
 
 export const VIEW_TABS: { view: CatalogView | undefined; label: string }[] = [

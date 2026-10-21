@@ -12,7 +12,7 @@ import { formatEth } from "@/lib/eth";
 import { useDelayedFlag } from "@/lib/useDelayedFlag";
 import { useMediaQuery } from "@/lib/useMediaQuery";
 import { cn } from "@/lib/utils";
-import { SORT_LABELS, VIEW_TABS } from "../labels";
+import { SORT_LABELS, STATUS_LABELS, VIEW_TABS } from "../labels";
 import { catalogListQuery, featuredNftsQuery } from "../queries";
 import { CATALOG_PAGE_SIZE, CLEARED_FILTERS, hasActiveFilters, type CatalogFilters, type CatalogSearch, type CatalogSort } from "../search";
 import { CatalogFiltersPanel } from "./CatalogFilters";
@@ -342,6 +342,17 @@ export function CatalogPage({ search, onSearchChange }: CatalogPageProps): JSX.E
                   className="flex h-7 items-center gap-1.5 rounded-full border border-input px-3 text-caption text-text-secondary hover:border-primary hover:text-text-accent"
                 >
                   Busca: <strong className="font-bold text-foreground">{search.q}</strong>
+                  <X aria-hidden="true" className="size-3.5" />
+                </button>
+              )}
+              {search.status && (
+                <button
+                  type="button"
+                  aria-label={`Limpar o filtro ${STATUS_LABELS[search.status]}`}
+                  onClick={() => onSearchChange({ status: undefined })}
+                  className="flex h-7 items-center gap-1.5 rounded-full border border-input px-3 text-caption text-text-secondary hover:border-primary hover:text-text-accent"
+                >
+                  Disponibilidade: <strong className="font-bold text-foreground">{STATUS_LABELS[search.status]}</strong>
                   <X aria-hidden="true" className="size-3.5" />
                 </button>
               )}
