@@ -1,0 +1,14 @@
+# Kurio
+
+> Marketplace de NFTs de demonstração: catálogo com filtros, detalhe com edições, carrinho com cotação, pagamento com carteira simulada e pedido em tempo real. Todo o backend roda simulado no navegador (MSW), sem blockchain nem pagamento reais.
+
+## Páginas
+
+- [Início e mercado](https://kurio-beta.vercel.app/): destaque, abas Todos, Novos lançamentos e Em alta, filtros por coleção, rede e faixa de preço.
+- [Mercado em alta](https://kurio-beta.vercel.app/?view=trending): NFTs mais procurados.
+- [Detalhe de um NFT](https://kurio-beta.vercel.app/nft/nft_001): galeria, edições, quantidade, avaliações e mais desta coleção.
+- [Carrinho](https://kurio-beta.vercel.app/cart): itens, cupom e resumo calculado pela cotação.
+
+## Código
+
+- [Repositório](https://github.com/HigorPauulo/kurio): código, documentação e testes.
