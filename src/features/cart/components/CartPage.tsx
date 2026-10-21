@@ -1,13 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Minus, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Minus, Plus } from "lucide-react";
 import { useState, type FormEvent, type JSX } from "react";
 import { TextField } from "@/components/form/TextField";
+import { DeleteIcon } from "@/components/icons/KurioIcons";
 import { Button, buttonVariants } from "@/components/ui/button";
 import type { Cart, CartItem, Quote } from "@/contracts/cart";
 import { purchaseLimit } from "@/contracts/nft";
 import { formatEth } from "@/lib/eth";
 import { getApiFieldError } from "@/lib/forms";
+import { NftRail } from "../../catalog/components/NftRail";
+import { catalogListQuery } from "../../catalog/queries";
+import { cn } from "@/lib/utils";
 import { useNftSubscription } from "@/lib/realtime/instance";
 import {
   cartQuery,
@@ -17,6 +21,11 @@ import {
   useRemoveCouponMutation,
   useUpdateQuantityMutation,
 } from "../queries";
+import { EmptyCart } from "./EmptyCart";
+
+const QUANTITY_BUTTON =
+  "h-7.5 w-5 rounded-full border border-ink p-0 shadow-md max-md:size-6 max-md:border-border-strong max-md:bg-surface-raised max-md:text-foreground max-md:shadow-none [&_svg:not([class*='size-'])]:size-3.5";
+const ROW = "grid grid-cols-[auto_1fr] md:grid-cols-[minmax(0,1fr)_7.5rem_8rem_7.5rem_2.5rem]";
 
 function itemLimit(item: CartItem): number {
   return purchaseLimit({ ...item, status: item.status === "sold_out" ? "sold_out" : "available" });
@@ -36,7 +45,7 @@ function ItemNotice({ item, quote }: { item: CartItem; quote: Quote | undefined 
 
   if (!message) return null;
   return (
-    <p className="flex items-center gap-1 text-sm font-medium text-destructive">
+    <p className="flex items-center gap-1 text-sm text-destructive">
       <AlertTriangle aria-hidden="true" className="size-4 shrink-0" />
       {message}
     </p>
@@ -51,44 +60,64 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
   const isBlocked = item.status === "sold_out";
 
   return (
-    <li className="flex flex-col gap-3 rounded-xl border p-3 sm:flex-row sm:items-center">
-      <img src={item.cover.url} alt={item.cover.alt} width={64} height={64} className="size-16 rounded-lg object-cover" />
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <Link to="/nft/$nftId" params={{ nftId: item.nftId }} className="font-medium underline-offset-4 hover:underline">
-          {item.nftName}
-        </Link>
-        <span className="text-sm text-muted-foreground">
-          Edição {item.editionLabel} · {formatEth(line?.unitPrice ?? item.unitPrice)} ETH cada
-        </span>
-        <ItemNotice item={item} quote={quote} />
-        {item.status === "insufficient" && limit > 0 && (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="self-start"
-            onClick={() => update.mutate({ itemId: item.id, quantity: limit, nftName: item.nftName })}
-          >
-            Ajustar para {limit}
-          </Button>
-        )}
+    <li
+      className={cn(
+        ROW,
+        "relative items-center gap-x-4 gap-y-2 bg-surface-card p-0 pr-3 max-md:flex max-md:min-h-25 max-md:items-stretch max-md:overflow-hidden max-md:rounded-[0.875rem] max-md:shadow-lg",
+      )}
+    >
+      <div className="col-span-2 flex min-w-0 items-start gap-4 max-md:flex-1 max-md:gap-2.5 md:col-span-1">
+        <img
+          src={item.cover.url}
+          alt={item.cover.alt}
+          width={96}
+          height={96}
+          className="aspect-square w-24 shrink-0 rounded-md object-cover max-md:h-full max-md:min-h-25 max-md:w-25 max-md:rounded-none md:w-17.5"
+        />
+        <div className="flex min-w-0 flex-1 flex-col gap-1 py-2 pr-10 max-md:py-3 max-md:pr-8 md:pr-0">
+          <Link to="/nft/$nftId" params={{ nftId: item.nftId }} className="truncate font-bold hover:text-text-accent max-md:text-body">
+            {item.nftName}
+          </Link>
+          <span className="truncate text-sm text-secondary-base max-md:text-text-secondary">ID do token: {item.tokenId}</span>
+          <span className="text-lg font-bold text-text-accent max-md:mt-auto md:hidden">
+            {formatEth(line?.unitPrice ?? item.unitPrice)} ETH
+          </span>
+          <ItemNotice item={item} quote={quote} />
+          {item.status === "insufficient" && limit > 0 && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onClick={() => update.mutate({ itemId: item.id, quantity: limit, nftName: item.nftName })}
+            >
+              Ajustar para {limit}
+            </Button>
+          )}
+        </div>
       </div>
-      <div className="flex items-center gap-2" role="group" aria-label={`Quantidade de ${item.nftName}`}>
+      <p className="hidden text-base font-bold text-text-secondary md:block">
+        <span className="sr-only">Preço unitário: </span>
+        {formatEth(line?.unitPrice ?? item.unitPrice)} ETH
+      </p>
+      <div
+        className="flex items-center gap-2 pb-3 pl-3 max-md:absolute max-md:right-3 max-md:bottom-3 max-md:p-0 md:p-0"
+        role="group"
+        aria-label={`Quantidade de ${item.nftName}`}
+      >
         <Button
           type="button"
-          variant="outline"
-          size="icon"
+          className={QUANTITY_BUTTON}
           aria-label={`Diminuir quantidade de ${item.nftName}`}
           disabled={isBlocked || item.quantity <= 1}
           onClick={() => update.mutate({ itemId: item.id, quantity: item.quantity - 1, nftName: item.nftName })}
         >
           <Minus aria-hidden="true" />
         </Button>
-        <span className="w-8 text-center">{item.quantity}</span>
+        <span className="w-5 text-center text-md">{item.quantity}</span>
         <Button
           type="button"
-          variant="outline"
-          size="icon"
+          className={QUANTITY_BUTTON}
           aria-label={`Aumentar quantidade de ${item.nftName}`}
           disabled={isBlocked || item.quantity >= limit}
           onClick={() => update.mutate({ itemId: item.id, quantity: item.quantity + 1, nftName: item.nftName })}
@@ -96,19 +125,20 @@ function CartLine({ owner, item, quote }: { owner: string; item: CartItem; quote
           <Plus aria-hidden="true" />
         </Button>
       </div>
-      <p className="w-32 text-sm font-medium sm:text-right">
+      <p className="pb-3 text-right text-base font-bold text-text-accent max-md:sr-only md:p-0 md:text-left">
         <span className="sr-only">Total da linha: </span>
         {line ? `${formatEth(line.lineTotal)} ETH` : "..."}
       </p>
       <Button
         type="button"
         variant="ghost"
-        size="icon"
+        size="icon-sm"
         aria-label={`Remover ${item.nftName}`}
         disabled={remove.isPending}
         onClick={() => remove.mutate(item.id)}
+        className="absolute top-2 right-2 text-secondary-base hover:text-text-accent md:static"
       >
-        <Trash2 aria-hidden="true" />
+        <DeleteIcon className="size-6" />
       </Button>
     </li>
   );
@@ -137,7 +167,7 @@ function CouponForm({ owner, cart, quote }: { owner: string; cart: Cart; quote: 
     return (
       <div className="flex flex-col gap-2">
         <p className="text-sm">
-          Cupom <strong>{cart.coupon.code}</strong> aplicado{quote?.coupon ? `: ${quote.coupon.description}` : "."}
+          Cupom <strong className="text-text-accent">{cart.coupon.code}</strong> aplicado{quote?.coupon ? `: ${quote.coupon.description}` : "."}
         </p>
         {issue?.kind === "COUPON_EXPIRED" && <p className="text-sm text-destructive">Este cupom expirou e não dá mais desconto.</p>}
         {issue?.kind === "COUPON_MINIMUM_NOT_MET" && (
@@ -153,19 +183,27 @@ function CouponForm({ owner, cart, quote }: { owner: string; cart: Cart; quote: 
   }
 
   return (
-    <form noValidate className="flex flex-col gap-2" onSubmit={(event) => void handleSubmit(event)}>
-      <div className="flex items-end gap-2">
-        <div className="flex-1">
+    <form noValidate className="flex flex-col gap-2 max-md:mb-3" onSubmit={(event) => void handleSubmit(event)}>
+      <div className="flex items-end max-md:relative">
+        <div className="min-w-0 flex-1 [&_input]:rounded-r-none [&_input]:border-primary [&_label]:text-sm [&_label]:font-bold max-md:[&_input]:h-12.5 max-md:[&_input]:rounded-full max-md:[&_input]:border-border-strong max-md:[&_input]:pr-28 max-md:[&_input]:bg-surface-card max-md:[&_input]:pl-4 max-md:[&_input]:shadow-[0_6px_10px_var(--color-ink)] max-md:[&_label]:sr-only">
           <TextField
             label="Tem um código promocional?"
             autoComplete="off"
-            placeholder="Digite o código promocional"
+            placeholder="Digite o código promocional..."
             value={code}
             error={error}
             onChange={(event) => setCode(event.target.value)}
           />
         </div>
-        <Button type="submit" disabled={apply.isPending} aria-busy={apply.isPending} className={error ? "mb-7" : undefined}>
+        <Button
+          type="submit"
+          disabled={apply.isPending}
+          aria-busy={apply.isPending}
+          className={cn(
+            "rounded-l-none max-md:absolute max-md:top-0 max-md:right-0 max-md:h-12.5 max-md:w-24 max-md:rounded-full max-md:bg-transparent max-md:bg-linear-to-r max-md:from-primary/55 max-md:to-primary max-md:text-body max-md:font-bold max-md:text-foreground max-md:shadow-[0_6px_10px_var(--color-ink)]",
+            error && "mb-7 max-md:mb-0",
+          )}
+        >
           Aplicar
         </Button>
       </div>
@@ -178,8 +216,13 @@ function Summary({ owner, cart }: { owner: string; cart: Cart }): JSX.Element {
   const isRefreshing = quote.isPlaceholderData || quote.isFetching;
 
   return (
-    <section aria-labelledby="summary-title" aria-busy={isRefreshing} className="flex flex-col gap-4 rounded-xl border p-4">
-      <h2 id="summary-title" className="text-lg font-semibold">
+    <section
+      aria-labelledby="summary-title"
+      aria-busy={isRefreshing}
+      data-fixed-sheet
+      className="flex flex-col gap-3 bg-surface-card p-4 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-40 max-md:rounded-t-[2.5rem] max-md:px-6 max-md:pt-6 max-md:pb-[max(2.25rem,env(safe-area-inset-bottom))] max-md:shadow-[0_0_10px_var(--color-ink)] md:gap-5 md:bg-transparent md:p-0"
+    >
+      <h2 id="summary-title" className="border-b border-border-strong pb-3 text-lg font-bold max-md:sr-only">
         Resumo do pedido
       </h2>
       <CouponForm owner={owner} cart={cart} quote={quote.data} />
@@ -191,49 +234,48 @@ function Summary({ owner, cart }: { owner: string; cart: Cart }): JSX.Element {
           </Button>
         </div>
       ) : (
-        <dl className="grid grid-cols-[1fr_auto] gap-y-2 text-sm">
+        <dl className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-3 text-base max-md:text-body">
           <dt>Subtotal</dt>
-          <dd className="text-right">{quote.data ? `${formatEth(quote.data.subtotal)} ETH` : "..."}</dd>
+          <dd className="text-right text-lg max-md:text-body">{quote.data ? `${formatEth(quote.data.subtotal)} ETH` : "..."}</dd>
           <dt>Desconto</dt>
           <dd className="text-right">{quote.data ? `- ${formatEth(quote.data.discount)} ETH` : "..."}</dd>
-          <dt>
-            Taxa de rede <span className="text-muted-foreground">(Ethereum, estimada)</span>
-          </dt>
-          <dd className="text-right">{quote.data ? `${formatEth(quote.data.networkFee)} ETH` : "..."}</dd>
-          <dt className="text-base font-semibold">Total</dt>
-          <dd className="text-right text-base font-semibold">{quote.data ? `${formatEth(quote.data.total)} ETH` : "..."}</dd>
+          <dt>Taxa de rede</dt>
+          <dd className="text-right text-lg max-md:text-body">
+            {quote.data ? `${formatEth(quote.data.networkFee)} ETH` : "..."}
+            <span className="block text-xs text-text-accent">Taxa estimada</span>
+          </dd>
+          <dt className="font-bold md:mt-3">Total</dt>
+          <dd className="text-right text-lg font-bold text-text-accent max-md:text-base md:mt-3">
+            {quote.data ? `${formatEth(quote.data.total)} ETH` : "..."}
+          </dd>
         </dl>
       )}
-      <p role="status" className="text-xs text-muted-foreground">
-        {isRefreshing ? "Atualizando o resumo..." : "Valores calculados pelo servidor."}
+      <p role="status" className="sr-only">
+        {isRefreshing ? "Atualizando o resumo..." : ""}
       </p>
-      <Link to="/checkout" className={buttonVariants()}>
+      <Link
+        to="/checkout"
+        className={cn(
+          buttonVariants({ size: "lg" }),
+          "w-full rounded-full max-md:mt-6 max-md:h-15 max-md:bg-transparent max-md:bg-linear-to-r max-md:from-primary max-md:to-primary/80 max-md:text-base md:h-10 md:rounded-md",
+        )}
+      >
         Conectar e finalizar
       </Link>
-      <Link to="/" className="text-sm underline underline-offset-4">
+      <Link to="/" className="self-center text-base text-text-accent hover:underline max-md:hidden">
         Continuar explorando
       </Link>
     </section>
   );
 }
 
-function EmptyCart(): JSX.Element {
-  return (
-    <div className="flex flex-col items-start gap-2">
-      <p>Seu carrinho está vazio.</p>
-      <Link to="/" className="underline underline-offset-4">
-        Explorar o catálogo
-      </Link>
-    </div>
-  );
-}
 
 function CartContent({ owner }: { owner: string }): JSX.Element {
   const cart = useQuery(cartQuery(owner));
   const quote = useQuery({ ...quoteQuery(owner, cart.data?.version ?? 0), enabled: false });
   useNftSubscription(cart.data?.items.map((item) => item.nftId) ?? []);
 
-  if (cart.isPending) return <p>Carregando o carrinho...</p>;
+  if (cart.isPending) return <CartSkeleton />;
   if (cart.isError) {
     return (
       <div role="alert" className="flex flex-col items-start gap-2">
@@ -247,31 +289,91 @@ function CartContent({ owner }: { owner: string }): JSX.Element {
   if (cart.data.items.length === 0) return <EmptyCart />;
 
   return (
-    <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-      <ul aria-label="Itens do carrinho" className="flex min-w-0 flex-1 flex-col gap-3">
-        {cart.data.items.map((item) => (
-          <CartLine key={item.id} owner={owner} item={item} quote={quote.data} />
-        ))}
-      </ul>
-      <div className="lg:w-96">
+    <div className="flex flex-col gap-8 xl:flex-row xl:items-start xl:gap-21">
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <div aria-hidden="true" className={cn(ROW, "hidden border-b border-border-strong pb-3 font-bold md:grid")}>
+          <span>NFTs</span>
+          <span>Preço</span>
+          <span>Edições</span>
+          <span>Total</span>
+        </div>
+        <ul aria-label="Itens do carrinho" className="flex flex-col gap-3">
+          {cart.data.items.map((item) => (
+            <CartLine key={item.id} owner={owner} item={item} quote={quote.data} />
+          ))}
+        </ul>
+      </div>
+      <div className="md:ml-auto md:w-full md:max-w-md xl:w-83">
         <Summary owner={owner} cart={cart.data} />
       </div>
     </div>
   );
 }
 
+function AlsoViewedRail({ owner }: { owner: string | null }): JSX.Element | null {
+  const popular = useQuery(catalogListQuery({ sort: "popular" }));
+  const cart = useQuery({ ...cartQuery(owner ?? ""), enabled: owner !== null });
+  const inCart = new Set(cart.data?.items.map((item) => item.nftId));
+  if (popular.isError) return null;
+
+  return (
+    <NftRail
+      title="Colecionadores também viram"
+      listLabel="NFTs que colecionadores também viram"
+      items={popular.data?.items.filter((nft) => !inCart.has(nft.id)) ?? []}
+      isPending={popular.isPending}
+    />
+  );
+}
+
+function CartSkeleton(): JSX.Element {
+  return (
+    <div aria-busy="true" className="flex flex-col gap-3">
+      <p className="sr-only">Carregando o carrinho...</p>
+      {Array.from({ length: 3 }, (_, index) => (
+        <div key={index} className="skeleton h-24 w-full md:h-17.5" />
+      ))}
+    </div>
+  );
+}
+
 export function CartPage({ owner }: { owner: string | null }): JSX.Element {
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 p-4 md:p-6">
-      <nav aria-label="Trilha" className="text-sm">
-        <Link to="/" className="underline underline-offset-4">
-          Início
-        </Link>
-        <span aria-hidden="true"> / </span>
-        <span aria-current="page">Carrinho</span>
+    <main className="mx-auto flex w-full max-w-300 flex-col gap-6 px-page pt-6 lg:pt-8">
+      <nav aria-label="Trilha" className="hidden text-sm font-bold md:block">
+        <ol className="flex flex-wrap gap-1">
+          <li>
+            <Link to="/" className="hover:text-text-accent">
+              Início
+            </Link>
+            <span aria-hidden="true"> / </span>
+          </li>
+          <li>
+            <Link to="/" hash="mercado" className="hover:text-text-accent">
+              Mercado
+            </Link>
+            <span aria-hidden="true"> / </span>
+          </li>
+          <li aria-current="page" className="text-text-accent">
+            Carrinho
+          </li>
+        </ol>
       </nav>
-      <h1 className="text-2xl font-semibold md:text-3xl">Carrinho</h1>
+      <div className="relative flex min-h-11 items-center justify-center md:block md:min-h-0">
+        <Link
+          to="/"
+          hash="mercado"
+          aria-label="Voltar ao mercado"
+          className="absolute left-0 flex size-9 items-center justify-center rounded-full border border-border-strong bg-surface-raised hover:text-text-accent md:hidden"
+        >
+          <ArrowLeft aria-hidden="true" className="size-4" />
+        </Link>
+        <h1 className="text-xl font-bold md:sr-only">Carrinho de NFTs</h1>
+      </div>
       {owner ? <CartContent owner={owner} /> : <EmptyCart />}
+      <div className="mt-6 lg:mt-10">
+        <AlsoViewedRail owner={owner} />
+      </div>
     </main>
   );
 }

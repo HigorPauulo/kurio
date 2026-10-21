@@ -48,14 +48,14 @@ type Session = { token: string; expiresAt: string; user: User }
 type Edition = { id; label; price: EthAmount; available: number; supply: number; maxPerOrder: number
                  status: 'available' | 'sold_out' | 'unavailable' }
 type Image = { url; alt; width: number; height: number }
-type Nft = { id; name; description; collection: { id; name }; creator: { id; name; avatarUrl }
+type Nft = { id; name; tokenId; rating: { average; count }; description; collection: { id; name }; creator: { id; name; avatarUrl }
              category: Category; chain: Chain; images: Image[]; editions: Edition[]
              priceFrom: EthAmount; featured: boolean; likes: number; createdAt; version: number }
 type NftSummary = Pick<Nft, 'id' | 'name' | 'collection' | 'creator' | 'category' | 'chain'
                   | 'priceFrom' | 'likes' | 'version'> & { cover: Image; status: 'available' | 'sold_out' }
 type Page<T> = { items: T[]; page: number; pageSize: number; total: number; totalPages: number }
 
-type CartItem = { id; nftId; editionId; quantity: number; nftName; editionLabel; cover: Image
+type CartItem = { id; nftId; editionId; quantity: number; nftName; tokenId; editionLabel; cover: Image
                   unitPrice: EthAmount; available: number; maxPerOrder: number
                   status: 'ok' | 'price_changed' | 'insufficient' | 'sold_out' }
 type Cart = { id; items: CartItem[]; coupon: { code } | null; version: number; updatedAt }
@@ -73,7 +73,7 @@ type QuoteIssue = { kind: 'PRICE_CHANGED'; itemId; from: EthAmount; to: EthAmoun
 // Snapshot montado pelo servidor a partir do User e da Wallet no momento do pedido
 type Buyer = { name; username; email; ensName; profileName; referralCode; note: string | null }
 type Order = { id; status: 'pending' | 'confirmed' | 'refused'; version: number; quoteId
-               receipt: { lines: (Quote['lines'][number] & { nftName; editionLabel; cover: Image })[]
+               receipt: { lines: (Quote['lines'][number] & { nftName; tokenId; editionLabel; cover: Image })[]
                           subtotal; discount; networkFee; total; coupon: { code } | null; network: Chain
                           wallet: { id; label; address; provider: WalletProvider }; buyer: Buyer }
                transaction: { hash; explorerUrl } | null      // só em confirmed
@@ -98,8 +98,8 @@ listas são fechadas: valor fora delas é 400 na API e default na URL ([DECISION
 ## Campos do layout
 
 Todo campo do protótipo é renderizado e validado, e cada um tem um dono só
-([DECISIONS](DECISIONS.md)). Fora do dono, o campo aparece preenchido, somente leitura, com link
-"Editar em ..." para a tela do dono. Campo obrigatório vazio no dono vira erro no campo da tela que o
+([DECISIONS](DECISIONS.md)). Fora do dono, o campo aparece preenchido e somente leitura; em perfil e
+carteiras, com link "Editar em ..." para a tela do dono, e no pagamento sem link. Campo obrigatório vazio no dono vira erro no campo da tela que o
 exibe (ex.: pagamento com `ensName` nulo mostra "Complete o Nome ENS no perfil").
 
 | Campo (rótulo do protótipo) | Dono e propriedade | Telas que o exibem | Regra |
@@ -144,16 +144,21 @@ refresh token.
 
 | Endpoint | Sucesso | Erros |
 |---|---|---|
-| `GET /nfts` | 200 `Page<NftSummary> & { appliedQuery }` | 400 |
+| `GET /nfts` | 200 `Page<NftSummary> & { appliedQuery, facets }` | 400 |
 | `GET /nfts/featured` | 200 `NftSummary[]` (até 6) | |
 | `GET /nfts/:id` | 200 `Nft` | 404 |
+| `GET /nfts/:id/reviews` | 200 `Page<Review> & { summary }` (`pageSize` 1 a 20, padrão 5) | 400, 404 |
 
 Parâmetros de `GET /nfts`: `q` (1 a 80 caracteres, sem acento e sem caixa, em nome, coleção e
 criador); `category` e `chain` (listas separadas por vírgula, OR dentro do filtro); `status`
-(`available`, `sold_out`); `priceMin` e `priceMax` (`EthAmount`, sobre `priceFrom`, min ≤ max ou 400);
+(`available`, `sold_out`); `collection` (ID da coleção); `view` (`trending`: só os destaques, `featured`; `new`: listados nos 7 dias
+anteriores ao `createdAt` mais recente do catálogo); `priceMin` e `priceMax` (`EthAmount`, sobre `priceFrom`, min ≤ max ou 400);
 `sort` (`recent` por `createdAt` decrescente, padrão; `price_asc`; `price_desc`; `popular` por `likes`
 decrescente; desempate sempre por `id`); `page` (≥ 1); `pageSize` (1 a 48, padrão 12). Filtros
-diferentes combinam por AND. `appliedQuery` ecoa os parâmetros normalizados. Página além do fim
+diferentes combinam por AND. `appliedQuery` ecoa os parâmetros normalizados. `facets` traz
+`category` e `chain` (contagem de cada valor, todos presentes, calculada com os demais filtros mas sem o
+próprio, para não zerar as opções vizinhas) e `price` (`{ min, max }` do `priceFrom` sem o filtro de
+preço, ou `null` sem resultados). Página além do fim
 devolve `items: []` com o `total` real.
 
 ### Favoritos (privado)
@@ -163,6 +168,10 @@ devolve `items: []` com o `total` real.
 | `GET /me/favorites` | 200 `{ nftIds: string[] }` | |
 | `PUT /me/favorites/:nftId` | 204, idempotente | 404 |
 | `DELETE /me/favorites/:nftId` | 204, idempotente | |
+
+`Review` é `{ id; author: { name }; rating: 1..5; comment; createdAt }`, da mais recente para a mais
+antiga. `summary` traz `average` (uma casa), `count` e `distribution` (contagem por nota de 1 a 5), e é
+sempre igual a `Nft.rating`, que vem do mesmo conjunto de avaliações.
 
 Favoritar soma 1 em `Nft.likes` e desfavoritar subtrai 1, só quando o estado muda. `likes` não é dado
 de tempo real: muda sem `nft.updated` e chega ao catálogo pelo `staleTime`.

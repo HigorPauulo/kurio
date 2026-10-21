@@ -15,15 +15,70 @@ export async function login(page: Page, email: string, redirect?: string): Promi
   await dialog.getByLabel("E-mail").fill(email);
   await dialog.getByLabel("Senha").fill(PASSWORD);
   await dialog.getByRole("button", { name: "Entrar" }).click();
-  await expect(page.getByRole("button", { name: "Sair" })).toBeVisible();
+  await expectLoggedIn(page);
+}
+
+export function isCompactViewport(page: Page): boolean {
+  return (page.viewportSize()?.width ?? 0) < 768;
+}
+
+export async function expectLoggedIn(page: Page): Promise<void> {
+  await expect(page.getByRole("dialog", { name: "Entrar" })).toHaveCount(0);
+  if (isCompactViewport(page)) {
+    await expect.poll(() => page.evaluate(() => localStorage.getItem("kurio:session"))).not.toBeNull();
+  } else {
+    await expect(page.getByRole("button", { name: "Sair" })).toBeVisible();
+  }
+}
+
+export async function expectCartCount(page: Page, count: number): Promise<void> {
+  if (isCompactViewport(page) && new URL(page.url()).pathname === "/cart") {
+    const groups = page.getByRole("list", { name: "Itens do carrinho" }).getByRole("group");
+    await expect
+      .poll(() => groups.evaluateAll((items) => items.reduce((total, item) => total + Number.parseInt(item.querySelector("span")?.textContent ?? "0", 10), 0)))
+      .toBe(count);
+    return;
+  }
+  await expect(page.getByRole("link", { name: `Carrinho, ${count} ${count === 1 ? "item" : "itens"}` })).toBeVisible();
+}
+
+export async function openAccount(page: Page): Promise<void> {
+  if (isCompactViewport(page)) {
+    await page.getByRole("navigation", { name: "Atalhos" }).getByRole("link", { name: "Minha conta" }).click();
+  } else {
+    await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Perfil" }).click();
+  }
+}
+
+export async function openLogin(page: Page): Promise<void> {
+  if (isCompactViewport(page)) {
+    await page.getByRole("navigation", { name: "Atalhos" }).getByRole("link", { name: "Minha conta" }).click();
+  } else {
+    await page.getByRole("navigation", { name: "Principal" }).getByRole("link", { name: "Entrar" }).click();
+  }
+  await expect(page.getByRole("dialog", { name: "Entrar" })).toBeVisible();
 }
 
 export async function logout(page: Page): Promise<void> {
-  await page.getByRole("button", { name: "Sair" }).click();
-  await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible();
+  if (isCompactViewport(page)) {
+    await openAccount(page);
+    await page.getByRole("navigation", { name: "Conta" }).getByRole("button", { name: "Sair" }).click();
+    await expect.poll(() => page.evaluate(() => localStorage.getItem("kurio:session"))).toBeNull();
+  } else {
+    await page.getByRole("button", { name: "Sair" }).click();
+    await expect(page.getByRole("link", { name: "Entrar" })).toBeVisible();
+  }
 }
 
 export async function expectNoA11yViolations(page: Page): Promise<void> {
+  await page.evaluate(() =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
+        .map((animation) => animation.finished.catch(() => undefined)),
+    ),
+  );
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa", "wcag22aa"]).analyze();
   const blocking = results.violations
     .filter((violation) => violation.impact === "serious" || violation.impact === "critical")

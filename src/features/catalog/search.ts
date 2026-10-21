@@ -1,25 +1,39 @@
 import { z } from "zod";
 import { categorySchema, chainSchema, ethAmountSchema, type EthAmount } from "@/contracts/common";
-import { catalogSortSchema, catalogStatusSchema } from "@/contracts/nft";
+import { catalogSortSchema, catalogStatusSchema, catalogViewSchema } from "@/contracts/nft";
 import { compareEth } from "@/lib/eth";
 
 export const CATALOG_PAGE_SIZE = 12;
+export const COLLECTION_PAGE_SIZE = 16;
+export const REVIEWS_PAGE_SIZE = 5;
 
 export type CatalogSort = z.infer<typeof catalogSortSchema>;
 export type CatalogStatus = z.infer<typeof catalogStatusSchema>;
+export type CatalogView = z.infer<typeof catalogViewSchema>;
 
 export type CatalogSearch = {
   q?: string;
   category?: string;
   chain?: string;
   status?: CatalogStatus;
+  view?: CatalogView;
   priceMin?: EthAmount;
   priceMax?: EthAmount;
   sort?: Exclude<CatalogSort, "recent">;
   page?: number;
 };
 
-export type CatalogFilters = Omit<CatalogSearch, "q" | "sort" | "page">;
+const CATALOG_SEARCH_KEYS = ["q", "category", "chain", "status", "view", "priceMin", "priceMax", "sort", "page"] as const satisfies readonly (keyof CatalogSearch)[];
+
+export function pickCatalogSearch(search: CatalogSearch): CatalogSearch {
+  const picked: CatalogSearch = {};
+  for (const key of CATALOG_SEARCH_KEYS) {
+    if (search[key] !== undefined) Object.assign(picked, { [key]: search[key] });
+  }
+  return picked;
+}
+
+export type CatalogFilters = Omit<CatalogSearch, "q" | "sort" | "page" | "view">;
 
 export const CLEARED_FILTERS: { [Key in keyof Required<CatalogFilters>]: undefined } = {
   category: undefined,
@@ -47,6 +61,7 @@ const catalogSearchSchema = z.object({
   category: commaParam(categorySchema),
   chain: commaParam(chainSchema),
   status: catalogStatusSchema.optional().catch(undefined),
+  view: catalogViewSchema.optional().catch(undefined),
   priceMin: ethAmountSchema.optional().catch(undefined),
   priceMax: ethAmountSchema.optional().catch(undefined),
   sort: catalogSortSchema.exclude(["recent"]).optional().catch(undefined),
@@ -70,5 +85,5 @@ export function joinParam(values: readonly string[]): string | undefined {
 }
 
 export function hasActiveFilters(search: CatalogSearch): boolean {
-  return Boolean(search.q ?? search.category ?? search.chain ?? search.status ?? search.priceMin ?? search.priceMax);
+  return Boolean(search.q ?? search.view ?? search.category ?? search.chain ?? search.status ?? search.priceMin ?? search.priceMax);
 }

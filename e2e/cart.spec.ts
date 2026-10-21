@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { expectNoA11yViolations, login, startFresh } from "./support/kurio.js";
+import { expectCartCount, expectNoA11yViolations, login, startFresh } from "./support/kurio.js";
 
 type ServerCart = { items: { editionId: string; quantity: number }[]; coupon: { code: string } | null } | null;
 
@@ -22,7 +22,7 @@ async function addToCart(page: Page, nftId: string, quantity = 1): Promise<void>
   await page.goto(`/nft/${nftId}`);
   const increase = page.getByRole("button", { name: "Aumentar quantidade" });
   for (let step = 1; step < quantity; step += 1) await increase.click();
-  await page.getByRole("button", { name: "Adicionar ao carrinho" }).click();
+  await page.getByRole("button", { name: "Comprar" }).click();
   await expect(page.getByText("Adicionado.")).toBeVisible();
 }
 
@@ -36,7 +36,7 @@ test.beforeEach(async ({ page }) => {
 
 test("visitante respeita o limite da edição, altera, e o carrinho persiste no refresh", async ({ page }) => {
   await addToCart(page, "nft_001", 3);
-  await page.getByRole("button", { name: "Adicionar ao carrinho" }).click();
+  await page.getByRole("button", { name: "Comprar" }).click();
   await expect(page.getByRole("alert")).toHaveText("Esta edição permite até 3 unidades no carrinho.");
   await expect(page.getByRole("link", { name: "Carrinho, 3 itens" })).toBeVisible();
 
@@ -103,8 +103,8 @@ test("login une o carrinho do visitante, limita ao disponível e anuncia o ajust
 
   await login(page, "ana@kurio.test", "/cart");
   await expect(page.getByText(/Unimos o carrinho de visitante ao seu\. 1 item foi ajustado/)).toBeAttached();
-  await expect(page.getByRole("link", { name: "Carrinho, 7 itens" })).toBeVisible();
-  await expect(page.getByRole("group", { name: "Quantidade de Lo-fi Noturno" })).toContainText("6");
+  await expectCartCount(page, 7);
+  await expect(page.getByRole("group", { name: "Quantidade de Golden Pulse #402" })).toContainText("6");
 
   expect(await serverCart(page, "usr_ana")).toMatchObject({
     items: [
@@ -117,14 +117,14 @@ test("login une o carrinho do visitante, limita ao disponível e anuncia o ajust
 
 test("item acima do estoque avisa e se ajusta ao limite", async ({ page }) => {
   await login(page, "ana@kurio.test", "/cart");
-  await expect(page.getByRole("group", { name: "Quantidade de Lo-fi Noturno" })).toContainText("2");
+  await expect(page.getByRole("group", { name: "Quantidade de Golden Pulse #402" })).toContainText("2");
   await page.evaluate(() => (window as unknown as KurioWindow).__kurio.catalog.setAvailable("nft_012", "ed_012_1", 1));
   await page.reload();
 
   await expect(page.getByText("Só resta 1 unidade para este pedido. Ajuste a quantidade.")).toBeVisible();
-  await expect(summary(page).getByText("Valores calculados pelo servidor.")).toBeVisible();
+  await expect(summary(page)).toHaveAttribute("aria-busy", "false");
   await page.getByRole("button", { name: "Ajustar para 1" }).click();
-  await expect(page.getByRole("group", { name: "Quantidade de Lo-fi Noturno" })).toContainText("1");
+  await expect(page.getByRole("group", { name: "Quantidade de Golden Pulse #402" })).toContainText("1");
   await expect(page.getByText("Só resta 1 unidade para este pedido. Ajuste a quantidade.")).toHaveCount(0);
   expect(await serverCart(page, "usr_ana")).toMatchObject({ items: [{ quantity: 1 }, { editionId: "ed_012_1", quantity: 1 }] });
 });

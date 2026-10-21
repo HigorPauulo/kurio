@@ -6,6 +6,7 @@ import {
   imageSchema,
   orderIdSchema,
   quoteIdSchema,
+  tokenIdSchema,
   walletIdSchema,
 } from "./common";
 import { quoteLineSchema } from "./cart";
@@ -27,6 +28,7 @@ export const receiptSchema = z.object({
   lines: z.array(
     quoteLineSchema.extend({
       nftName: z.string(),
+      tokenId: tokenIdSchema,
       editionLabel: z.string(),
       cover: imageSchema,
     }),

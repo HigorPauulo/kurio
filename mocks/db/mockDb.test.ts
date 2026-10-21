@@ -45,7 +45,9 @@ function makeNft(id: string): Nft {
     ],
     priceFrom: eth("0.5"),
     featured: false,
+    tokenId: "#0001",
     likes: 0,
+    rating: { average: 4, count: 1 },
     createdAt: "2026-10-01T00:00:00.000Z",
     version: 0,
   };
@@ -240,6 +242,15 @@ describe("persistência", () => {
     expect(Object.keys(createDb().read((tables) => tables.nfts))).toEqual(["nft_a", "nft_b"]);
   });
 
+  it("apaga no boot o snapshot guardado na chave versionada antiga", () => {
+    const oldKey = `kurio:mockdb:v${SCHEMA_VERSION - 1}`;
+    storage.setItem(oldKey, JSON.stringify({ schemaVersion: SCHEMA_VERSION - 1, tables: emptyTables() }));
+
+    createDb();
+
+    expect(storage.getItem(oldKey)).toBeNull();
+  });
+
   it("recusa o commit que estoura o orçamento e mantém o estado anterior", () => {
     const db = createDb(100);
 
@@ -354,10 +365,9 @@ describe("seed", () => {
     }
   });
 
-  it("gera IDs de coleção sem acento", () => {
+  it("agrupa as fixtures em quatro coleções com ID em slug", () => {
     const collectionIds = new Set(nfts.map((nft) => nft.collection.id));
-    expect(collectionIds).toContain("col_nomades");
-    expect(collectionIds).toContain("col_baroes");
+    expect(collectionIds).toEqual(new Set(["col_kurio-apes", "col_kurio-nomads", "col_kurio-barons", "col_kurio-golden"]));
     expect([...collectionIds].every((id) => /^col_[a-z0-9]+(-[a-z0-9]+)*$/.test(id))).toBe(true);
   });
 

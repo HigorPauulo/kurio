@@ -21,10 +21,10 @@ function OrderRoute() {
 
 function OrderNotFound() {
   return (
-    <main className="mx-auto flex max-w-2xl flex-col gap-4 p-6">
-      <h1 className="text-2xl font-semibold">Pedido não encontrado</h1>
+    <main className="mx-auto flex w-full max-w-300 flex-col items-start gap-4 px-page pt-16">
+      <h1 className="text-2xl font-bold">Pedido não encontrado</h1>
       <p>Este pedido não existe ou não está disponível para a sua conta.</p>
-      <Link to="/" className="underline underline-offset-4">
+      <Link to="/" className="text-text-accent underline underline-offset-4">
         Voltar ao início
       </Link>
     </main>

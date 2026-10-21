@@ -81,8 +81,11 @@ porque o próprio MSW usa o `localStorage`), a página mostra um aviso no lugar 
 MSW de pé mas o armazenamento indisponível ou cheio, o `MockDb` roda só em memória. Chunk antigo que
 não existe mais depois de um deploy (aba aberta antes da publicação) dispara `vite:preloadError`, e a
 página recarrega com a versão nova, no máximo uma vez a cada 10 s, para uma falha repetida não virar
-loop de recarga. `index.html` traz o
-casco estático (header e hero com dimensões finais), para que LCP e CLS não dependam do bootstrap.
+loop de recarga. `index.html` traz, dentro de `#root`, o casco estático do cabeçalho com as mesmas
+classes e a mesma altura do cabeçalho real (oculto abaixo de 768, 105 px até 1024, 73 px acima), e faz preload da arte
+do hero, para que CLS e LCP não dependam do bootstrap. Um `<style>` inline mínimo pinta o fundo e
+esconde o casco (`visibility`, que mantém a altura) até o `index.css` carregar e revelá-lo; sem isso, no
+dev, onde o CSS chega por JavaScript, o casco aparecia sem estilo por um instante.
 
 ## 5. Transporte HTTP
 
@@ -167,13 +170,15 @@ refetch: mantém o conteúdo com indicador, nunca volta ao skeleton. Vazio é su
 | `/` | | prefetch de `featured` e da lista |
 | `/nft/$nftId` | | `ensureQueryData(nft)`, repetido uma vez se cancelado (`ensureDespiteCancel`); `NOT_FOUND` vira `notFound()` |
 | `/cart` | | prefetch de `cart` |
-| `/checkout`, `/orders/$orderId`, `/account/*` | `requireUserId`: sem sessão ativa, login com `redirect`; com sessão, `userId` no contexto | `ensureQueryData` da rota |
-| `/login`, `/register` | `redirectIfAuthenticated`: com sessão, vai a `safeRedirect(redirect)` | |
+| `/checkout`, `/orders/$orderId`, `/account/*` | `requireUserId`: sem sessão ativa, vai a `/?auth=login` com `redirect` (sem passar por `/login`); com sessão, `userId` no contexto | `ensureQueryData` da rota |
+| `/login`, `/register` | `openAuthDialog`: com sessão, vai a `safeRedirect(redirect)`; sem sessão, redireciona ao destino com `?auth=` (ou a `/` com `redirect`, se o destino for privado) | |
 
 A busca da URL é texto puro, sem JSON (`?priceMin=0.10`, não `?priceMin=%220.10%22`): o parser padrão do
 router converte `0.10` em número e perde casas do `EthAmount`. Search params validados por Zod com `.catch` (inválido degrada ao default, nunca lança) e defaults
-removidos da URL. `q` usa `replace` após debounce de 300 ms; filtro, ordenação e página usam `push`;
-mudar qualquer coisa que não seja `page` volta a `page=1`. Preço vai à URL com ponto (§14).
+removidos da URL. `q` usa `replace` após debounce de 300 ms no campo do mobile e `push` no Enter da
+busca do cabeçalho; filtro, vista, ordenação e página usam `push`; mudar qualquer coisa que não seja
+`page` volta a `page=1`. Mudança de busca dentro do catálogo não volta ao topo (`resetScroll: false`); a
+paginação e os links de coleção do rodapé levam à âncora `#mercado`. Preço vai à URL com ponto (§14).
 
 ## 8. Sessão
 
@@ -317,7 +322,7 @@ Falha de mutation é anunciada em live region `assertive`; sucesso em `polite`.
 | `kurio:checkout:attempt:<userId>` | local | tentativa de pedido |
 | `kurio:checkout:draft:<userId>` | session | rascunho do formulário |
 | `kurio:scenario` | local | cenário do mock |
-| `kurio:mockdb:v<schema>` | local | snapshot do `MockDb` (só os mocks leem) |
+| `kurio:mockdb` | local | snapshot do `MockDb` com `schemaVersion` dentro (só os mocks leem) |
 
 Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lança.
 
@@ -346,13 +351,24 @@ Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lan�
 
 ## 14. Comportamento de interface
 
-- Filtros: um formulário com "Aplicar filtros" e "Limpar filtros", uma requisição por aplicação; a partir
-  de 768 fica na coluna lateral, abaixo dele num diálogo aberto por "Filtros". Busca e ordenação
-  aplicam sozinhas (busca com debounce).
+- Filtros: a partir de 768 ficam na coluna lateral, em que coleção e rede aplicam ao clicar e a faixa de
+  preço aplica no "Aplicar"; abaixo de 768 ficam num diálogo aberto por "Filtros", em que o "Aplicar"
+  aplica tudo de uma vez e fecha. Coleção e rede em ordem alfabética, com a contagem das `facets` da
+  API. A faixa de preço é um controle deslizante de duas alças em passos de 0,001 ETH, calculados em
+  wei (`toEthSteps`, `fromEthSteps`), entre o menor e o maior preço que a API devolve; alça no limite
+  não vai à URL. Abas "Todos os NFTs", "Novos lançamentos" e "Em alta" mudam a vista (`view`);
+  "Ordenar por" muda só a ordem. Busca pela lupa do cabeçalho no desktop e pelo campo do topo no
+  mobile; busca ativa aparece numa etiqueta que a limpa.
 - `prefers-reduced-motion` remove shimmer e transições.
-- Login e cadastro são rotas próprias renderizadas como diálogo sobre o layout. Entrar vai ao `redirect`;
-  fechar sem entrar volta a ele só se for público, senão vai a `/` (`getDismissTarget`), para o guard não
-  reabrir o diálogo.
+- Login e cadastro são uma sobreposição sobre a página aberta, controlada pela busca da raiz
+  (`?auth=login|register`, com `redirect` opcional); "Entrar", "Favoritar" do visitante e a troca de aba
+  só acrescentam o parâmetro, sem voltar ao topo. Fechar remove o parâmetro e mantém a página; entrar vai
+  ao `redirect` se houver (substituindo a entrada do histórico), senão fica na página. Com sessão ativa,
+  o `beforeLoad` da raiz descarta `auth`, então Voltar ou link salvo não reabre o diálogo. O formulário
+  vive dentro do conteúdo do diálogo e desmonta ao fechar, sem guardar dado entre visitas. `/login` e
+  `/register` seguem para link direto e para o diálogo de expiração: abrem a sobreposição sobre o
+  destino, ou sobre `/` com `redirect` se o destino for privado (`openAuthDialog`). O catálogo só leva
+  à API os campos dele (`pickCatalogSearch`), então abrir o login sobre a home não refaz a busca.
 - Mudança de cotação mostra o diff por linha e exige aceite.
 - Ação fora do escopo vai a `/unavailable` ou fica desabilitada com o motivo.
 - ETH na tela: valor exato, sem arredondar nem zeros à direita, vírgula decimal e ponto de milhar
@@ -361,8 +377,11 @@ Toda leitura é validada por Zod; inválida é tratada como ausente e nunca lan�
   `formatEthInput` (`1234,5`, sem milhar), que volta igual pelo `parseEthInput`; o `formatEth` é só para
   exibição.
 - Campos do layout: todos renderizados; campo de outro dono aparece `readOnly` (focável e lido pelo
-  leitor de tela, ao contrário de `disabled`) com link "Editar em ..." ([mapa](API.md#campos-do-layout)).
-  No pagamento, só Rede, "Usar outra carteira?", conexão e Observação são editáveis.
+  leitor de tela, ao contrário de `disabled`), com a mesma aparência dos editáveis, como no protótipo
+  ([mapa](API.md#campos-do-layout)). Em perfil e carteiras, o campo do outro dono tem link "Editar em
+  ..."; no pagamento, um único link "Editar o perfil" abaixo do Nome ENS, na linha de "Usar outra carteira?". No pagamento, só Rede, "Usar outra
+  carteira?", conexão e Observação são editáveis; a coluna "Seus NFTs" já mostra subtotal por linha e o
+  resumo pela cotação do carrinho na rede escolhida, e a revisão confirma com cotação própria.
 
 ## 15. Desvios do layout
 
@@ -374,15 +393,36 @@ mantido durante a implementação.
 | Pagamento (mobile) | Formulário do colecionador empilhado acima dos cards de carteira | O protótipo mobile não desenha o formulário, e os campos são exigidos |
 | Pagamento | Duas etapas na mesma rota (`step`): dados e revisão; subtotal, taxa e total ficam na revisão, cotados na rede escolhida | PAG-2 pede revisão antes do envio e novo aceite quando o valor muda; o protótipo mostra uma tela só |
 | Pagamento | "Carteira e rede" mostra os três provedores, só o da carteira escolhida com "Conectar"; os outros dizem qual é o escolhido | Conexão simulada por carteira cadastrada (API) |
-| Confirmação | Recibo é a página `/orders/$orderId`, não um modal; "Ver no Etherscan" vira "Ver no {explorador} (simulado)" | A URL do pedido sobrevive a refresh e reconexão (PED-1); o hash é simulado |
-| Início | Contagem por categoria e por rede na coluna de filtros ausente | `GET /nfts` não devolve facetas; contar no cliente exigiria baixar o catálogo inteiro |
-| Início | Abas "Todos os NFTs", "Novos lançamentos" e "Em alta" viram o "Ordenar por" (Mais recentes, Mais curtidos) | As abas e a ordenação do protótipo disputam o mesmo parâmetro `sort` |
-| Início | Faixa de preço por dois campos (mínimo e máximo) em vez de slider | Slider não digita valor exato em ETH; os campos aceitam vírgula e 18 casas |
-| Detalhe | Aba "Avaliações de colecionadores", estrelas e "Mais desta coleção" ausentes | Avaliações não existem no contrato; `GET /nfts` não filtra por coleção |
-| Detalhe | Visitante vê "Entrar para favoritar", que leva ao login e volta ao NFT | Favorito é dado de pessoa (`['u', owner]`) e exige sessão |
-| Detalhe | "Comprar" vira "Adicionar ao carrinho", com a quantidade escolhida | A compra passa pelo carrinho e pela cotação; não há compra direta no contrato |
-| Carrinho | "ID do token" ausente nas linhas; a linha mostra a edição | O contrato não tem ID de token, e a compra é por edição |
-| Carrinho | "Conectar e finalizar" ausente até a fatia 7 | O pagamento nasce com o checkout; até lá, só "Continuar explorando" |
+| Confirmação | Recibo é a página `/orders/$orderId` em tela cheia (sem cabeçalho, rodapé e barra de abas), com o cartão do protótipo e um X que volta ao início, em vez de um modal sobre o pagamento; "Ver no Etherscan" vira "Ver no {explorador} (simulado)" | A URL do pedido sobrevive a refresh e reconexão (PED-1); o hash é simulado |
+| Início | Filtro de disponibilidade sem controle na coluna; continua aceito pela URL (`status`) | O protótipo não desenha o controle |
+| Início | Rede lista Ethereum, Polygon e Base, não Solana | Redes do escopo ([DECISIONS](DECISIONS.md)) |
+| Início | Filtro escolhido marcado também com ícone de seleção | Estado nunca só por cor (QUALITY §5) |
+| Início | Faixa de preço sem digitação; alças movem em passos de 0,001 ETH | O protótipo desenha um controle deslizante; a precisão de 18 casas segue no fio e no cálculo |
+| Detalhe | Conteúdo da aba "Avaliações de colecionadores" composto com os tokens: resumo com nota, estrelas e distribuição de 5 a 1, e lista paginada (5 por vez, "Ver mais avaliações"); só leitura, sem envio de avaliação | O protótipo desenha só o rótulo da aba; enviar avaliação exigiria compra prévia, fora do escopo |
+| Carrinho e pagamento | Carrinho vazio como galeria à espera da primeira obra: moldura vazia sob um spot, plaqueta de museu e atalhos para o mercado e para "Em alta"; o mesmo componente serve o pagamento sem itens | O protótipo não desenha o estado vazio |
+| Detalhe | "Mais desta coleção" sem assinatura de tempo real; o preço dos cards segue o `staleTime` da lista (60 s) | Assinar até 15 NFTs a mais por tela para cards secundários não paga o custo; o detalhe aberto segue ao vivo |
+| Detalhe | Para o visitante, "Favoritar" leva ao login e volta ao NFT (o nome acessível avisa que exige entrar) | Favorito é dado de pessoa (`['u', owner]`) e exige sessão |
+| Detalhe | "Comprar" adiciona ao carrinho a quantidade escolhida e mostra "Adicionado. Ver carrinho"; o nome acessível diz "(adiciona ao carrinho)" | A compra passa pelo carrinho e pela cotação; não há compra direta no contrato |
+| Carrinho | "Colecionadores também viram" mostra os NFTs mais curtidos (`sort=popular`) que não estão no carrinho, sem assinatura de tempo real | O protótipo não define a origem da lista; "mais curtidos" é o dado de interesse que a API tem |
+| Carrinho | "Resumo da carteira" vira "Resumo do pedido" | O bloco mostra a cotação do pedido, não a carteira |
+| Todas | Tema escuro único, sem alternância claro e escuro | O protótipo só desenha o tema escuro |
+| Todas | Borda dos campos em `secondary-base` (#B39463) em vez de `border-soft` (#55321F); busca e newsletter ganham borda; foco com contorno sólido de 2 px | #55321F dá 1,7:1 com o fundo; limite de campo e foco pedem 3:1 (WCAG 1.4.11) |
+| Carrinho | Resumo abaixo dos itens até 1280 px, lado a lado a partir dele | Entre 1024 e 1280 as colunas fixas da tabela espremeriam o nome do NFT |
+| Todas (mobile) | Sem cabeçalho abaixo de 768, como no protótipo; a barra de abas leva a início, lista de interesse (fora de escopo), carrinho e conta (que abre o login sem sessão), sem o botão central; "Sair" fica no menu da conta | Entrar, Perfil, Carteiras e Sair continuam alcançáveis em 390; Criadores e Aprenda são seções fora de escopo; o botão central do protótipo não tem função no escopo |
+| Todas | Rodapé com links para `/unavailable`, coleções levando ao filtro da categoria e "Enviar" da newsletter levando a `/unavailable` | Páginas editoriais e newsletter estão fora de escopo; nada aparenta sucesso funcional |
+| Início | Seções "Lançamentos" e "Diário da Cunhagem" com links para `/unavailable` | Conteúdo editorial fora de escopo |
+| Início | Hero é um carrossel de 3 slides que gira a cada 6 s e troca ao arrastar (mouse ou toque, 50 px), com botão de pausar ao lado dos pontos centralizados; para ao passar o mouse, ao focar e com movimento reduzido; o título visível de cada slide é `h2`, e o `h1` da rota fica só para leitor de tela | WCAG 2.2.2 exige pausar movimento automático acima de 5 s; um `h1` estável por rota (QUALITY §5) |
+| Início | "NFT em destaque" mostra o primeiro destaque da API com nome e preço sobre a arte | O destaque é dado do servidor; nome e preço tornam o bloco um link útil |
+| Início | A lupa do cabeçalho abre um campo de busca; busca ativa vira uma etiqueta ao lado das abas | CAT-1 exige busca por texto, e quem buscou precisa ver e desfazer a busca |
+| Detalhe | Botões de quantidade com rótulo "Quantidade" visível e limite por pedido; disponibilidade da edição escolhida abaixo das pílulas | DET-2 pede o limite e o motivo do bloqueio na tela |
+| Detalhe | "Atributos" ausente; "Detalhes do NFT" mostra descrição, categoria e rede | O contrato não tem esses campos |
+| Detalhe | Galeria com setas, contador, arrastar e setas do teclado; miniaturas sempre visíveis (inclusive com uma imagem), na altura da imagem principal, arrastáveis e com degradê na borda quando há mais; a lupa abre o mesmo carrossel ampliado | O protótipo mostra miniaturas e lupa sem definir a navegação; com até 6 imagens a coluna precisa rolar sem barra nativa |
+| Detalhe (mobile) | Composição do protótipo (hero com voltar e favoritar, folha de detalhes sobre a arte, nota em pílula, barra de compra com quantidade e preço); a barra de compra flutua fixa na base e a barra de abas some nesta tela; "Comprar" adiciona ao carrinho no lugar de "Comprar NFT", e o botão redondo leva ao carrinho; miniaturas no lugar dos pontos; trilha oculta | Não há compra direta; sem a barra de abas, o botão redondo é o acesso ao carrinho; as miniaturas também navegam |
+| Carrinho (mobile) | Composição do protótipo (voltar e título no topo, cartões de 14 px com a arte encostada, quantidade em botões redondos, resumo em folha que flutua na base, cupom em pílula com "Aplicar" dentro); sem barra de abas nesta tela; a linha mostra o preço unitário e o total da linha fica só para leitor de tela; "ID do token" no lugar de "Edição"; "Continuar explorando" sai, porque o voltar faz o papel | O resumo traz o subtotal; o ID do token é o identificador que o layout usa em todas as telas |
+| Pagamento (mobile) | Composição do protótipo (voltar e "Pagamento com carteira", cartões Principal e Reserva no lugar de "Usar outra carteira?", provedores em cartões com inicial, total e "Revisar pedido" flutuante, sem barra de abas); perfil do colecionador, rede, observação e "Seus NFTs" ficam em "Dados do pedido", recolhido e aberto sozinho quando há erro nesses campos; a revisão continua em passo próprio antes de "Confirmar compra" | Todo campo do protótipo desktop continua na tela, com um dono só; a revisão é onde o pedido aceita a cotação |
+| Login e cadastro | Rótulos dos campos só para leitor de tela, com o texto do protótipo no placeholder; o botão de olho da senha se chama "Mostrar o texto digitado" | O protótipo não desenha rótulo visível; o nome do botão não repete "senha" para não competir com o rótulo do campo |
+| Perfil | "Alterar senha" com botão próprio; "Sair" fica no cabeçalho a partir de 768 e no menu da conta abaixo disso | Perfil e senha são formulários e endpoints separados; uma ação de saída por tela |
+| Carteiras | "Igual à carteira principal" ausente | O contrato exige endereço próprio na secundária |
 
 ## 16. Limitações
 

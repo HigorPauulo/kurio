@@ -148,6 +148,7 @@ export function cartHandlers(deps: HandlerDeps): HttpHandler[] {
               editionId,
               quantity,
               nftName: found.nft.name,
+              tokenId: found.nft.tokenId,
               editionLabel: found.edition.label,
               cover: found.nft.images[0],
               unitPrice: found.edition.price,
