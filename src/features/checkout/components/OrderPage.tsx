@@ -76,6 +76,7 @@ function Receipt({ order }: { order: Order }): JSX.Element {
         </h2>
         <div aria-hidden="true" className="flex justify-between border-b border-border-strong pb-3 font-bold">
           <span>NFTs</span>
+          <span className="font-medium sm:hidden">Subtotal</span>
           <span className="hidden gap-12 sm:flex">
             <span>Edições</span>
             <span className="font-medium">Subtotal</span>
@@ -83,12 +84,12 @@ function Receipt({ order }: { order: Order }): JSX.Element {
         </div>
         <ul aria-label="NFTs comprados" className="flex flex-col gap-3">
           {receipt.lines.map((line) => (
-            <li key={line.itemId} className="flex items-center gap-3">
+            <li key={line.itemId} className="flex items-center gap-3 max-sm:rounded-[0.875rem] max-sm:bg-surface-raised max-sm:p-2.5">
               <img src={line.cover.url} alt={line.cover.alt} width={70} height={70} className="size-14 shrink-0 rounded-lg object-cover sm:size-17.5" />
               <span className="flex min-w-0 flex-1 flex-col gap-1.5">
                 <span className="truncate font-bold">{line.nftName}</span>
-                <span className="truncate text-sm text-secondary-base">ID do token: {line.tokenId}</span>
-                <span className="flex items-baseline gap-3 whitespace-nowrap sm:hidden">
+                <span className="truncate text-sm text-secondary-base max-sm:text-xs">ID do token: {line.tokenId}</span>
+                <span className="flex items-baseline justify-end gap-2 whitespace-nowrap sm:hidden">
                   <span className="text-xs text-text-secondary">(x {line.quantity})</span>
                   <span className="text-base font-bold text-text-accent">{formatEth(line.lineTotal)} ETH</span>
                 </span>
@@ -100,17 +101,19 @@ function Receipt({ order }: { order: Order }): JSX.Element {
             </li>
           ))}
         </ul>
-        <dl className="ml-auto grid w-full max-w-80 grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-3 border-b border-border-strong pb-3">
+        <dl className="ml-auto grid w-full grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-3 border-b border-border-strong pb-3 max-sm:mt-1 max-sm:pt-1 sm:max-w-80">
           {receipt.coupon && (
             <>
               <dt className="text-body">Desconto ({receipt.coupon.code})</dt>
-              <dd className="text-right text-lg">- {formatEth(receipt.discount)} ETH</dd>
+              <dd className="text-right text-lg max-sm:text-body">- {formatEth(receipt.discount)} ETH</dd>
             </>
           )}
           <dt className="text-body">Taxa de rede</dt>
-          <dd className="text-right text-lg">{formatEth(receipt.networkFee)} ETH</dd>
-          <dt className="font-bold">Total</dt>
-          <dd className="text-right text-lg font-bold text-text-accent">{formatEth(receipt.total)} ETH</dd>
+          <dd className="text-right text-lg max-sm:text-body">{formatEth(receipt.networkFee)} ETH</dd>
+          <div className="col-span-2 grid grid-cols-subgrid items-baseline max-sm:border-t max-sm:border-border-strong max-sm:pt-3">
+            <dt className="font-bold">Total</dt>
+            <dd className="text-right text-lg font-bold text-text-accent">{formatEth(receipt.total)} ETH</dd>
+          </div>
         </dl>
         <p className="mt-2 text-center text-sm leading-[1.375rem] text-text-secondary">
           Transação confirmada na {CHAIN_LABELS[receipt.network]}. A propriedade foi registrada na carteira {receipt.wallet.label}.
@@ -120,7 +123,7 @@ function Receipt({ order }: { order: Order }): JSX.Element {
             href={transaction.explorerUrl}
             target="_blank"
             rel="noreferrer"
-            className={cn(buttonVariants({ size: "lg" }), "mt-4 self-center")}
+            className={cn(buttonVariants({ size: "lg" }), "mt-4 self-center max-sm:h-13 max-sm:w-full max-sm:rounded-full")}
           >
             Ver no {EXPLORER_LABELS[receipt.network]} (simulado)
           </a>
