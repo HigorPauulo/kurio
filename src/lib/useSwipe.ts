@@ -8,6 +8,7 @@ type SwipeHandlers = {
   onPointerMove: (event: PointerEvent<HTMLElement>) => void;
   onPointerUp: () => void;
   onPointerCancel: () => void;
+  onPointerLeave: () => void;
   onClickCapture: (event: MouseEvent<HTMLElement>) => void;
   onDragStart: (event: DragEvent<HTMLElement>) => void;
 };
@@ -19,11 +20,15 @@ export function useSwipe(onSwipe: (direction: 1 | -1) => void): Swipe {
   const startRef = useRef<number | null>(null);
   const hasDraggedRef = useRef(false);
 
+  function reset(): void {
+    startRef.current = null;
+    setOffset(null);
+  }
+
   function end(): void {
     if (startRef.current === null) return;
     if (offset !== null && Math.abs(offset) >= SWIPE_THRESHOLD_PX) onSwipe(offset < 0 ? 1 : -1);
-    startRef.current = null;
-    setOffset(null);
+    reset();
   }
 
   return {
@@ -45,7 +50,10 @@ export function useSwipe(onSwipe: (direction: 1 | -1) => void): Swipe {
         setOffset(next);
       },
       onPointerUp: end,
-      onPointerCancel: end,
+      onPointerCancel: reset,
+      onPointerLeave: () => {
+        if (!hasDraggedRef.current) reset();
+      },
       onClickCapture: (event) => {
         if (!hasDraggedRef.current) return;
         event.preventDefault();

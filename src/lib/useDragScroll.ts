@@ -24,8 +24,13 @@ export function useDragScroll<Element extends HTMLElement>(): DragScrollHandlers
     dragRef.current = null;
   }
 
+  function cancel(): void {
+    dragRef.current = null;
+  }
+
   return {
     onPointerDown: (event) => {
+      suppressClickRef.current = false;
       if (event.pointerType !== "mouse" || event.button !== 0) return;
       const element = event.currentTarget;
       const vertical = isVerticalScroller(element);
@@ -50,7 +55,7 @@ export function useDragScroll<Element extends HTMLElement>(): DragScrollHandlers
       else element.scrollLeft = drag.scroll - delta;
     },
     onPointerUp: end,
-    onPointerCancel: end,
+    onPointerCancel: cancel,
     onClickCapture: (event) => {
       if (!suppressClickRef.current) return;
       suppressClickRef.current = false;
