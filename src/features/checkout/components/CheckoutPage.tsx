@@ -252,6 +252,7 @@ function WalletCards({ choice, isSecondary, onSelect }: WalletCardsProps): JSX.E
 function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors, onErrorsChange, onReview }: DetailsProps): JSX.Element {
   const { secondary, wallet, network } = choice;
   const quote = useQuery(quoteQuery(userId, cart.version, network ?? CART_NETWORK));
+  const current = quote.isPlaceholderData ? undefined : quote.data;
   const setErrors = onErrorsChange;
   const noteId = useId();
   const [isOrderOpen, setIsOrderOpen] = useState(false);
@@ -353,7 +354,7 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
           <TextField label="Nome ENS" value={user.ensName ?? ""} readOnly required error={errors.ensName} />
         </div>
         <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
-          <label className="flex items-center gap-2 text-body">
+          <label className="flex items-center gap-2 text-body max-md:hidden">
             <input
               type="checkbox"
               className="size-4 accent-primary"
@@ -407,7 +408,7 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
           </div>
           <ul className="flex flex-col gap-3">
             {cart.items.map((item) => {
-              const line = quote.data?.lines.find((candidate) => candidate.itemId === item.id);
+              const line = current?.lines.find((candidate) => candidate.itemId === item.id);
               return (
                 <li key={item.id} className="flex items-center gap-2.5 bg-surface-card pr-3 sm:gap-3 sm:pr-4">
                   <img src={item.cover.url} alt="" width={70} height={70} className="aspect-square w-14 shrink-0 rounded-md object-cover sm:w-17.5" />
@@ -437,17 +438,17 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
           ) : (
             <dl aria-label="Resumo do pedido" className="grid grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-3 border-b border-border-strong pb-4 text-base">
               <dt>Subtotal</dt>
-              <dd className="text-right text-lg">{quote.data ? `${formatEth(quote.data.subtotal)} ETH` : "..."}</dd>
-              <dt>Desconto{quote.data?.coupon ? ` (${quote.data.coupon.code})` : ""}</dt>
-              <dd className="text-right">{quote.data ? `- ${formatEth(quote.data.discount)} ETH` : "..."}</dd>
+              <dd className="text-right text-lg">{current ? `${formatEth(current.subtotal)} ETH` : "..."}</dd>
+              <dt>Desconto{current?.coupon ? ` (${current.coupon.code})` : ""}</dt>
+              <dd className="text-right">{current ? `- ${formatEth(current.discount)} ETH` : "..."}</dd>
               <dt>Taxa de rede</dt>
               <dd className="text-right text-lg">
-                {quote.data ? `${formatEth(quote.data.networkFee)} ETH` : "..."}
+                {current ? `${formatEth(current.networkFee)} ETH` : "..."}
                 <span className="block text-xs text-text-accent">Taxa estimada</span>
               </dd>
               <dt className="mt-2 font-bold">Total</dt>
               <dd className="mt-2 text-right text-lg font-bold text-text-accent">
-                {quote.data ? `${formatEth(quote.data.total)} ETH` : "..."}
+                {current ? `${formatEth(current.total)} ETH` : "..."}
               </dd>
             </dl>
           )}
@@ -462,7 +463,7 @@ function DetailsStep({ userId, user, cart, choice, draft, onDraftChange, errors,
         </div>
         <p className="flex items-center justify-end gap-7 text-base font-bold max-md:order-2 md:hidden">
           Total:
-          <span className="text-lg text-text-accent">{quote.data ? `${formatEth(quote.data.total)} ETH` : "..."}</span>
+          <span className="text-lg text-text-accent">{current ? `${formatEth(current.total)} ETH` : "..."}</span>
         </p>
         {(errors.form || hasErrors(errors)) && (
           <div className="max-md:order-6">
