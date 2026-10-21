@@ -1,8 +1,8 @@
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import type { JSX } from "react";
 import { LoginIcon } from "@/components/icons/KurioIcons";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { useLogoutMutation } from "@/features/auth/queries";
+import { useLogout } from "@/features/auth/useLogout";
 import { CartLink } from "@/features/cart/components/CartLink";
 import { useSession } from "@/lib/session/instance";
 import { cn } from "@/lib/utils";
@@ -28,15 +28,9 @@ const NAV_ITEM =
 export function Header(): JSX.Element {
   const session = useSession();
   const location = useLocation();
-  const navigate = useNavigate();
-  const logout = useLogoutMutation();
+  const { logout, isPending: isLoggingOut } = useLogout();
   const section = getSection(location.pathname, location.hash);
   const isAuthenticated = session.status === "authenticated";
-
-  async function handleLogout(): Promise<void> {
-    await logout.mutateAsync();
-    await navigate({ to: "/" });
-  }
 
   function current(target: Section | "profile" | "wallets"): "page" | undefined {
     if (target === "profile") return location.pathname === "/account/profile" ? "page" : undefined;
@@ -90,7 +84,7 @@ export function Header(): JSX.Element {
           <HeaderSearch />
           <CartLink className="hidden md:inline-flex" />
           {isAuthenticated ? (
-            <Button variant="outline" size="sm" onClick={() => void handleLogout()}>
+            <Button variant="outline" size="sm" disabled={isLoggingOut} aria-busy={isLoggingOut} onClick={() => void logout()}>
               Sair
             </Button>
           ) : (

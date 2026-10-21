@@ -1,8 +1,8 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { Download, Heart, LifeBuoy, LogOut, MapPin, ShoppingCart, Sparkles, UserRound } from "lucide-react";
 import type { JSX, ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { useLogoutMutation } from "../../auth/queries";
+import { useLogout } from "../../auth/useLogout";
 
 const ITEM =
   "flex h-11 items-center gap-3 border-l-4 border-transparent px-4 text-base text-text-accent hover:bg-surface-raised aria-[current=page]:border-primary";
@@ -16,16 +16,10 @@ const UNAVAILABLE_ITEMS = [
 ];
 
 function LogoutItem(): JSX.Element {
-  const logout = useLogoutMutation();
-  const navigate = useNavigate();
-
-  async function handleLogout(): Promise<void> {
-    await logout.mutateAsync();
-    await navigate({ to: "/" });
-  }
+  const { logout, isPending } = useLogout();
 
   return (
-    <button type="button" className={cn(ITEM, "w-full")} onClick={() => void handleLogout()}>
+    <button type="button" className={cn(ITEM, "w-full")} disabled={isPending} aria-busy={isPending} onClick={() => void logout()}>
       <LogOut aria-hidden="true" className="size-4.5" />
       Sair
     </button>

@@ -10,21 +10,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSession } from "@/lib/session/instance";
-import { useLogoutMutation } from "../queries";
+import { useLogout } from "../useLogout";
 
 export function ExpiredSessionDialog(): JSX.Element | null {
   const session = useSession();
   const location = useLocation();
   const navigate = useNavigate();
-  const logout = useLogoutMutation();
+  const { logout, isPending: isLoggingOut } = useLogout();
   const { auth } = useSearch({ from: "__root__" });
 
   if (session.status !== "expired" || auth) return null;
-
-  async function handleLeave(): Promise<void> {
-    await logout.mutateAsync();
-    await navigate({ to: "/" });
-  }
 
   return (
     <Dialog open>
@@ -34,7 +29,7 @@ export function ExpiredSessionDialog(): JSX.Element | null {
           <DialogDescription>Entre de novo para continuar de onde parou.</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => void handleLeave()}>
+          <Button variant="outline" disabled={isLoggingOut} aria-busy={isLoggingOut} onClick={() => void logout()}>
             Sair
           </Button>
           <Button onClick={() => void navigate({ to: "/login", search: { redirect: location.href } })}>
