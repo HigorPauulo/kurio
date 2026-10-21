@@ -577,11 +577,17 @@ function ReviewStep({ userId, cart, wallet, network, note, phase, message, onBac
               {item && <img src={item.cover.url} alt="" width={56} height={56} className="size-14 shrink-0 rounded-md object-cover" />}
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-bold">{item?.nftName ?? line.nftId}</span>
-                <span className="text-secondary-base">
-                  <span className="whitespace-nowrap">ID do token: {item?.tokenId}</span> · (x {line.quantity})
+                <span className="text-secondary-base max-md:text-xs">
+                  <span className="whitespace-nowrap">ID do token: {item?.tokenId}</span>
+                  <span className="whitespace-nowrap max-md:sr-only"> · (x {line.quantity})</span>
                 </span>
               </span>
-              <span className="font-bold whitespace-nowrap text-text-accent">{formatEth(line.lineTotal)} ETH</span>
+              <span className="flex flex-col items-end">
+                <span aria-hidden="true" className="text-xs text-secondary-base md:hidden">
+                  (x {line.quantity})
+                </span>
+                <span className="font-bold whitespace-nowrap text-text-accent">{formatEth(line.lineTotal)} ETH</span>
+              </span>
             </li>
           );
         })}
