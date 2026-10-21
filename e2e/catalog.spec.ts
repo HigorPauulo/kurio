@@ -241,6 +241,15 @@ test("marcar um filtro pelo teclado na barra lateral mantém o foco no item", as
   await expect(music).toBeFocused();
 });
 
+test("filtro de disponibilidade vindo da URL aparece como etiqueta e sai com um clique", async ({ page }) => {
+  await startFresh(page, "fast", "/?status=sold_out");
+  const chip = page.getByRole("button", { name: "Limpar o filtro Esgotados" });
+  await expect(chip).toBeVisible();
+  await chip.click();
+  await expect(page).not.toHaveURL(/status=/);
+  await expect(chip).toHaveCount(0);
+});
+
 test("galeria navega por setas, miniatura e teclado, e a lupa abre o mesmo carrossel", async ({ page }) => {
   await startFresh(page, "fast", "/nft/nft_018");
   const gallery = page.getByRole("group", { name: "Imagens de Emerald Pass #303" });
@@ -262,6 +271,10 @@ test("galeria navega por setas, miniatura e teclado, e a lupa abre o mesmo carro
   await expect(zoom.getByText("5 / 6")).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(counter).toHaveText("5 / 6");
+
+  await page.getByRole("list", { name: "NFTs da mesma coleção" }).getByRole("link", { name: /Emerald Ape #042/ }).click();
+  await expect(page.locator("main h1")).toHaveText("Emerald Ape #042");
+  await expect(page.getByRole("group", { name: "Imagens de Emerald Ape #042" }).getByText("1 / 2")).toBeVisible();
 
   await page.goto("/nft/nft_004");
   await expect(page.getByRole("list", { name: "Galeria" }).getByRole("button")).toHaveCount(1);
