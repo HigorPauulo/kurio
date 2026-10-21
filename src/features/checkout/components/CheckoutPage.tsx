@@ -116,11 +116,11 @@ function WalletConnection({ userId, wallet, network, error }: ConnectionProps): 
           <div
             key={provider}
             className={cn(
-              "flex min-h-11 flex-wrap items-center justify-between gap-2 border px-4 py-2 text-sm max-md:min-h-16 max-md:rounded-[0.9375rem] max-md:border-transparent max-md:bg-surface-card max-md:px-3.5 max-md:shadow-[0_0_20px_var(--color-ink)]",
+              "flex min-h-11 flex-wrap items-center justify-between gap-2 border px-4 py-2 text-sm max-md:relative max-md:min-h-16 max-md:rounded-[0.9375rem] max-md:border-transparent max-md:bg-surface-card max-md:pr-11 max-md:pl-3.5 max-md:shadow-[0_0_20px_var(--color-ink)]",
               isChosen ? "border-foreground bg-surface-card" : "border-border-strong",
             )}
           >
-            <span className="flex items-center gap-3 max-md:flex-1">
+            <span className="flex items-center gap-3">
               <span
                 aria-hidden="true"
                 className="flex size-10 shrink-0 items-center justify-center rounded-full bg-surface-raised font-bold text-text-accent md:hidden"
@@ -130,7 +130,7 @@ function WalletConnection({ userId, wallet, network, error }: ConnectionProps): 
               <span
                 aria-hidden="true"
                 className={cn(
-                  "size-4 rounded-full border border-primary max-md:order-last max-md:ml-auto",
+                  "size-4 shrink-0 rounded-full border border-primary max-md:absolute max-md:top-6 max-md:right-4",
                   isChosen && "border-4 border-surface-card bg-primary ring-1 ring-primary",
                 )}
               />
@@ -142,7 +142,7 @@ function WalletConnection({ userId, wallet, network, error }: ConnectionProps): 
               </span>
             )}
             {isChosen && isConnected && network && (
-              <span className="flex items-center gap-1 text-success">
+              <span className="flex items-center gap-1 text-success max-md:ml-auto max-md:text-xs">
                 <CheckCircle2 aria-hidden="true" className="size-4" />
                 Conectada na {CHAIN_LABELS[network]}
               </span>
