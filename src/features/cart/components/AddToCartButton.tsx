@@ -26,18 +26,19 @@ export function AddToCartButton({ nftId, editionId, quantity }: AddToCartButtonP
   }
 
   return (
-    <div className="flex flex-col items-start gap-2">
-      <Button type="button" disabled={add.isPending} aria-busy={add.isPending} onClick={handleAdd}>
+    <div className="contents">
+      <Button type="button" disabled={add.isPending} aria-busy={add.isPending} onClick={handleAdd} className="h-10 text-sm max-md:h-15 max-md:flex-1 max-md:rounded-full max-md:bg-transparent max-md:bg-linear-to-r max-md:from-primary max-md:to-primary/80 max-md:text-base max-md:font-bold">
         <ShoppingCart aria-hidden="true" />
-        Adicionar ao carrinho
+        Comprar
+        <span className="sr-only"> (adiciona ao carrinho)</span>
       </Button>
       {add.isError && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="order-last w-0 min-w-full basis-full text-sm text-destructive">
           {add.error.message || "Não foi possível adicionar ao carrinho."}
         </p>
       )}
       {isAdded && (
-        <p className="text-sm">
+        <p className="order-last w-0 min-w-full basis-full text-sm">
           Adicionado.{" "}
           <Link to="/cart" className="underline underline-offset-4">
             Ver carrinho

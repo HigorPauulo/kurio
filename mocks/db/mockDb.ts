@@ -1,8 +1,9 @@
 import type { UserId } from "@/contracts/common";
 import { emptyTables, type Tables } from "./tables";
 
-export const SCHEMA_VERSION = 1;
-export const STORAGE_KEY = `kurio:mockdb:v${SCHEMA_VERSION}`;
+export const SCHEMA_VERSION = 8;
+export const STORAGE_KEY = "kurio:mockdb";
+const LEGACY_KEYS = Array.from({ length: SCHEMA_VERSION }, (_, index) => `kurio:mockdb:v${index + 1}`);
 
 const DEFAULT_SNAPSHOT_BUDGET = 1_000_000;
 const QUOTE_GRACE_MS = 60_000;
@@ -137,7 +138,12 @@ export function createMockDb(options: MockDbOptions): MockDb {
   } = options;
   const listeners = new Set<(events: MockDbEvent[]) => void>();
 
+  function dropLegacySnapshots(): void {
+    for (const key of LEGACY_KEYS) storage?.removeItem(key);
+  }
+
   function load(): Tables | null {
+    dropLegacySnapshots();
     const raw = storage?.getItem(STORAGE_KEY);
     if (!raw) return null;
     try {

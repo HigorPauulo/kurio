@@ -274,6 +274,11 @@ type ListBody = {
   total: number;
   totalPages: number;
   appliedQuery: Record<string, unknown>;
+  facets: {
+    category: Record<string, number>;
+    chain: Record<string, number>;
+    price: { min: string; max: string } | null;
+  };
 };
 
 async function list(search: string): Promise<{ status: number; body: ListBody }> {
@@ -296,9 +301,16 @@ describe("catálogo", () => {
 
   it("busca sem acento e sem caixa em nome, coleção e criador", async () => {
     const byCreator = await list("?q=IRIS");
-    expect(byCreator.body.items.map((item) => item.name)).toContain("Pulso Neon");
-    const byCollection = await list("?q=analogica");
-    expect(byCollection.body.items.map((item) => item.id).sort()).toEqual(["nft_011", "nft_020"]);
+    expect(byCreator.body.items.map((item) => item.name)).toContain("Neon Vessel #552");
+    const byCollection = await list("?q=barons");
+    expect(byCollection.body.items.map((item) => item.id).sort()).toEqual([
+      "nft_003",
+      "nft_004",
+      "nft_011",
+      "nft_015",
+      "nft_019",
+      "nft_024",
+    ]);
   });
 
   it("combina filtros por AND, com OR dentro da lista, e ecoa a consulta normalizada", async () => {
@@ -314,6 +326,69 @@ describe("catálogo", () => {
     expect(prices[0]).toBe("0.0125");
     expect(prices.at(-1)).toBe("0.075");
     expect(prices).not.toContain("0.009");
+  });
+
+  it("pagina as avaliações com resumo igual à nota agregada do NFT", async () => {
+    const first = await call("GET", "/nfts/nft_001/reviews");
+    const body = first.json as unknown as {
+      items: { rating: number }[];
+      total: number;
+      totalPages: number;
+      summary: { average: number; count: number; distribution: Record<string, number> };
+    };
+    expect(body.items).toHaveLength(5);
+    expect(body.total).toBe(19);
+    expect(body.totalPages).toBe(4);
+    expect(body.summary).toMatchObject({ average: 4.5, count: 19 });
+    expect(Object.values(body.summary.distribution).reduce((sum, count) => sum + count, 0)).toBe(19);
+
+    const nft = (await call("GET", "/nfts/nft_001")).json as unknown as { rating: { average: number; count: number } };
+    expect(nft.rating).toEqual({ average: 4.5, count: 19 });
+
+    const last = (await call("GET", "/nfts/nft_001/reviews?page=4")).json as unknown as { items: unknown[]; page: number };
+    expect(last.page).toBe(4);
+    expect(last.items).toHaveLength(4);
+    expect((await call("GET", "/nfts/nft_999/reviews")).status).toBe(404);
+    expect((await call("GET", "/nfts/nft_001/reviews?pageSize=99")).status).toBe(400);
+  });
+
+  it("filtra por coleção", async () => {
+    const { body } = await list("?collection=col_kurio-apes&pageSize=48");
+    expect(body.items.map((item) => item.name).sort()).toEqual([
+      "Emerald Ape #042",
+      "Emerald Cube #880",
+      "Emerald Drift #215",
+      "Emerald Pass #303",
+      "Emerald Relic #198",
+    ]);
+  });
+
+  it("filtra a vista em alta pelos destaques e a de novos pelos 7 dias antes do lançamento mais recente", async () => {
+    const trending = await list("?view=trending&pageSize=48");
+    expect(trending.body.items.map((item) => item.id).sort()).toEqual(
+      ["nft_001", "nft_002", "nft_003", "nft_006", "nft_015", "nft_019"].sort(),
+    );
+
+    const fresh = await list("?view=new&pageSize=48");
+    expect(fresh.body.total).toBe(8);
+    expect(fresh.body.items[0].id).toBe("nft_024");
+    expect(fresh.body.items.at(-1)?.id).toBe("nft_017");
+    expect((await list("?view=viral")).status).toBe(400);
+  });
+
+  it("conta cada faceta sem o próprio filtro e dá a faixa de preço sem o filtro de preço", async () => {
+    const { body } = await list("?category=music&priceMax=1");
+    expect(body.total).toBe(1);
+    expect(body.facets.category).toMatchObject({ music: 1, "digital-art": 1, gaming: 3 });
+    expect(Object.keys(body.facets.category)).toHaveLength(9);
+
+    const music = await list("?category=music");
+    expect(music.body.facets.chain).toEqual({ ethereum: 1, polygon: 1, base: 1 });
+    expect(music.body.facets.price).toEqual({ min: "0.06", max: "12.5" });
+    expect((await list("?category=music&priceMax=1")).body.facets.price).toEqual({ min: "0.06", max: "12.5" });
+
+    scenarioNames = ["fast", "empty-catalog"];
+    expect((await list("")).body.facets.price).toBeNull();
   });
 
   it("responde 400 para parâmetro fora das listas ou preço mínimo acima do máximo", async () => {

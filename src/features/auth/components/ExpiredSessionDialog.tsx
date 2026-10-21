@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate, useSearch } from "@tanstack/react-router";
 import type { JSX } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,22 +10,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useSession } from "@/lib/session/instance";
-import { useLogoutMutation } from "../queries";
-
-const AUTH_PATHS = new Set(["/login", "/register"]);
+import { useLogout } from "../useLogout";
 
 export function ExpiredSessionDialog(): JSX.Element | null {
   const session = useSession();
   const location = useLocation();
   const navigate = useNavigate();
-  const logout = useLogoutMutation();
+  const { logout, isPending: isLoggingOut } = useLogout();
+  const { auth } = useSearch({ from: "__root__" });
 
-  if (session.status !== "expired" || AUTH_PATHS.has(location.pathname)) return null;
-
-  async function handleLeave(): Promise<void> {
-    await logout.mutateAsync();
-    await navigate({ to: "/" });
-  }
+  if (session.status !== "expired" || auth) return null;
 
   return (
     <Dialog open>
@@ -35,7 +29,7 @@ export function ExpiredSessionDialog(): JSX.Element | null {
           <DialogDescription>Entre de novo para continuar de onde parou.</DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => void handleLeave()}>
+          <Button variant="outline" disabled={isLoggingOut} aria-busy={isLoggingOut} onClick={() => void logout()}>
             Sair
           </Button>
           <Button onClick={() => void navigate({ to: "/login", search: { redirect: location.href } })}>

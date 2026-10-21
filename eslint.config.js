@@ -31,6 +31,13 @@ const REACT = {
   name: "react",
   message: "api.ts é transporte puro, sem React.",
 };
+const ARBITRARY_COLOR = String.raw`-\[(#|rgba?\(|hsla?\(|oklch\(|color-mix\()`;
+const COLOR_MESSAGE =
+  "Cor só pelos tokens do tema (src/index.css), nunca valor arbitrário (VIS-3).";
+const TOKEN_COLORS = [
+  { selector: `Literal[value=/${ARBITRARY_COLOR}/]`, message: COLOR_MESSAGE },
+  { selector: `TemplateElement[value.raw=/${ARBITRARY_COLOR}/]`, message: COLOR_MESSAGE },
+];
 
 export default defineConfig([
   globalIgnores([
@@ -122,10 +129,17 @@ export default defineConfig([
     },
   },
   {
+    files: ["src/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": ["error", ...TOKEN_COLORS],
+    },
+  },
+  {
     files: ["src/features/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-syntax": [
         "error",
+        ...TOKEN_COLORS,
         {
           selector: "CallExpression[callee.name='parseFloat']",
           message: "Valor ETH só por lib/eth: parseFloat perde precisão.",

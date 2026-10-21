@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { goToReview, login, serverCart, serverOrders, startFresh } from "./support/kurio.js";
+import { expectCartCount, goToReview, login, serverCart, serverOrders, startFresh } from "./support/kurio.js";
 
 type ScenarioWindow = { __kurio: { scenario: { set: (presets: string) => void } } };
 
@@ -17,7 +17,7 @@ test("pagamento recusado preserva o carrinho e devolve o estoque", async ({ page
   expect((await serverOrders(page))[0].status).toBe("refused");
   expect(await serverCart(page, "usr_ana")).toMatchObject({ items: [{ quantity: 1 }, { quantity: 2 }] });
   await page.getByRole("link", { name: "Voltar ao carrinho" }).click();
-  await expect(page.getByRole("link", { name: "Carrinho, 3 itens" })).toBeVisible();
+  await expectCartCount(page, 3);
 });
 
 test("duplo clique em confirmar gera um pedido só", async ({ page }) => {

@@ -1,13 +1,5 @@
 import { expect, test } from "@playwright/test";
-import {
-  expectNoA11yViolations,
-  goToReview,
-  login,
-  logout,
-  serverCart,
-  serverOrders,
-  startFresh,
-} from "./support/kurio.js";
+import { expectNoA11yViolations, goToReview, isCompactViewport, login, logout, serverCart, serverOrders, startFresh } from "./support/kurio.js";
 
 type PriceWindow = { __kurio: { catalog: { setPrice: (nftId: string, editionId: string, price: string) => void } } };
 
@@ -24,7 +16,7 @@ test("do carrinho ao recibo: campos do layout, revisão, pedido confirmado e rec
   await expect(ens).toHaveAttribute("readonly");
   await expect(page.getByLabel("Endereço da carteira")).toHaveAttribute("readonly");
   await expect(page.getByLabel("Rede")).toHaveValue("ethereum");
-  await expect(page.getByRole("link", { name: "Editar em Carteiras" }).first()).toBeVisible();
+  await expect(page.getByRole("link", { name: "Editar em Carteiras" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: /Conectar Coinbase/ })).toHaveCount(0);
   await expect(page.getByText("A carteira escolhida é MetaMask.").first()).toBeVisible();
   await expectNoA11yViolations(page);
@@ -32,6 +24,7 @@ test("do carrinho ao recibo: campos do layout, revisão, pedido confirmado e rec
   await page.getByRole("button", { name: "Revisar pedido" }).click();
   await expect(page.getByText("Conecte a carteira na rede escolhida para continuar.")).toBeVisible();
 
+  if (isCompactViewport(page)) await page.getByRole("button", { name: "Dados do pedido" }).click();
   await page.getByLabel("Observação do colecionador (opcional)").fill("Presente de aniversário");
   await page.getByRole("button", { name: "Conectar MetaMask na Ethereum" }).click();
   await expect(page.getByText("Conectada na Ethereum")).toBeVisible();
@@ -51,16 +44,20 @@ test("do carrinho ao recibo: campos do layout, revisão, pedido confirmado e rec
   const [order] = await serverOrders(page);
   expect(order.status).toBe("confirmed");
   expect(await serverCart(page, "usr_ana")).toMatchObject({ items: [] });
-  await expect(page.getByRole("link", { name: "Carrinho vazio" })).toBeVisible();
+  await expect(page.getByRole("banner")).toHaveCount(0);
 
   await page.evaluate(() => (window as unknown as PriceWindow).__kurio.catalog.setPrice("nft_004", "ed_004_1", "3"));
   await page.reload();
   await expect(page.getByText("0,8724 ETH").first()).toBeVisible();
+
+  await page.getByRole("link", { name: "Fechar e voltar ao início" }).click();
+  await expect(page).toHaveURL(/\/$/);
+  await expect(page.getByRole("link", { name: "Carrinho vazio" })).toBeVisible();
 });
 
 test("Carla sem Nome ENS nem carteira fica bloqueada com o erro no campo", async ({ page }) => {
   await login(page, "carla@kurio.test", "/nft/nft_014");
-  await page.getByRole("button", { name: "Adicionar ao carrinho" }).click();
+  await page.getByRole("button", { name: "Comprar" }).click();
   await expect(page.getByText("Adicionado.")).toBeVisible();
 
   await page.goto("/checkout");
@@ -79,6 +76,7 @@ test("Bruno na URL de um pedido da Ana vê a mesma tela de pedido inexistente", 
   await expect(page).toHaveURL(/\/orders\/ord_/);
   const orderUrl = new URL(page.url()).pathname;
 
+  await page.getByRole("link", { name: "Fechar e voltar ao início" }).click();
   await logout(page);
   await login(page, "bruno@kurio.test");
   await page.goto(orderUrl);

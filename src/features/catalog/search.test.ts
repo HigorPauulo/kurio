@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseCatalogSearch } from "./search";
+import { parseCatalogSearch, pickCatalogSearch } from "./search";
 
 describe("parseCatalogSearch", () => {
   it("ordena e deduplica listas e remove os defaults da URL", () => {
@@ -25,5 +25,12 @@ describe("parseCatalogSearch", () => {
   it("apara a busca e ignora a vazia", () => {
     expect(parseCatalogSearch({ q: "  ape  " })).toEqual({ q: "ape" });
     expect(parseCatalogSearch({ q: "   " })).toEqual({});
+  });
+});
+
+describe("pickCatalogSearch", () => {
+  it("leva à API só os campos do catálogo, sem o estado do login", () => {
+    const search = { q: "ape", page: 2, auth: "login", redirect: "/account/profile" };
+    expect(pickCatalogSearch(search)).toEqual({ q: "ape", page: 2 });
   });
 });

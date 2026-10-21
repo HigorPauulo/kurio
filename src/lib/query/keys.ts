@@ -5,6 +5,7 @@ export const keys = {
     featured: ["catalog", "featured"] as const,
   },
   nft: (nftId: string) => ["nft", nftId] as const,
+  reviews: (nftId: string) => ["reviews", nftId] as const,
   privRoot: () => ["u"] as const,
   priv: (owner: string) => ({
     all: ["u", owner] as const,

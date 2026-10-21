@@ -8,12 +8,14 @@ import {
   imageSchema,
   nftIdSchema,
   pageSchema,
+  tokenIdSchema,
 } from "./common";
 import { compareEth } from "@/lib/eth";
 
 export const editionStatusSchema = z.enum(["available", "sold_out", "unavailable"]);
 export const catalogStatusSchema = z.enum(["available", "sold_out"]);
 export const catalogSortSchema = z.enum(["recent", "price_asc", "price_desc", "popular"]);
+export const catalogViewSchema = z.enum(["new", "trending"]);
 
 export const editionSchema = z.object({
   id: editionIdSchema,
@@ -28,6 +30,7 @@ export const editionSchema = z.object({
 export const nftSchema = z.object({
   id: nftIdSchema,
   name: z.string(),
+  tokenId: tokenIdSchema,
   description: z.string(),
   collection: z.object({ id: z.string(), name: z.string() }),
   creator: z.object({ id: z.string(), name: z.string(), avatarUrl: z.string() }),
@@ -38,6 +41,7 @@ export const nftSchema = z.object({
   priceFrom: ethAmountSchema,
   featured: z.boolean(),
   likes: z.number().int().min(0),
+  rating: z.object({ average: z.number().min(0).max(5), count: z.number().int().min(0) }),
   createdAt: dateTimeSchema,
   version: z.number().int().min(0),
 });
@@ -72,6 +76,8 @@ export const nftListQuerySchema = z
     category: commaList(categorySchema),
     chain: commaList(chainSchema),
     status: catalogStatusSchema.optional(),
+    view: catalogViewSchema.optional(),
+    collection: z.string().trim().min(1).max(80).optional(),
     priceMin: ethAmountSchema.optional(),
     priceMax: ethAmountSchema.optional(),
     sort: catalogSortSchema.default("recent"),
@@ -84,9 +90,45 @@ export const nftListQuerySchema = z
     { message: "O preço mínimo não pode passar do máximo.", path: ["priceMax"] },
   );
 
+const countSchema = z.number().int().min(0);
+
+export const catalogFacetsSchema = z.object({
+  category: z.record(categorySchema, countSchema),
+  chain: z.record(chainSchema, countSchema),
+  price: z.object({ min: ethAmountSchema, max: ethAmountSchema }).nullable(),
+});
+
 export const nftListResponseSchema = pageSchema(nftSummarySchema).extend({
   appliedQuery: z.record(z.string(), z.unknown()),
+  facets: catalogFacetsSchema,
 });
+
+export const reviewSchema = z.object({
+  id: z.string(),
+  author: z.object({ name: z.string() }),
+  rating: z.literal([1, 2, 3, 4, 5]),
+  comment: z.string(),
+  createdAt: dateTimeSchema,
+});
+
+export const reviewSummarySchema = z.object({
+  average: z.number().min(0).max(5),
+  count: z.number().int().min(0),
+  distribution: z.object({
+    1: z.number().int().min(0),
+    2: z.number().int().min(0),
+    3: z.number().int().min(0),
+    4: z.number().int().min(0),
+    5: z.number().int().min(0),
+  }),
+});
+
+export const reviewsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  pageSize: z.coerce.number().int().min(1).max(20).default(5),
+});
+
+export const reviewsResponseSchema = pageSchema(reviewSchema).extend({ summary: reviewSummarySchema });
 
 export const featuredNftsResponseSchema = z.array(nftSummarySchema).max(6);
 
@@ -100,6 +142,10 @@ export type NftSummary = z.infer<typeof nftSummarySchema>;
 export type NftListQuery = z.infer<typeof nftListQuerySchema>;
 export type NftListQueryInput = z.input<typeof nftListQuerySchema>;
 export type NftListResponse = z.infer<typeof nftListResponseSchema>;
+export type CatalogFacets = z.infer<typeof catalogFacetsSchema>;
+export type Review = z.infer<typeof reviewSchema>;
+export type ReviewSummary = z.infer<typeof reviewSummarySchema>;
+export type ReviewsResponse = z.infer<typeof reviewsResponseSchema>;
 
 export function purchaseLimit(edition: Pick<Edition, "available" | "maxPerOrder" | "status">): number {
   if (edition.status !== "available") return 0;

@@ -37,13 +37,13 @@ test("evento de preço atualiza detalhe e catálogo abertos", async ({ page }) =
 
   await setPrice(page, "nft_001", "ed_001_1", "2.5");
   await expect(page.getByLabel(/^Padrão · 2,5 ETH/)).toBeVisible();
-  await expect(page.getByText("2,5 ETH", { exact: true })).toBeVisible();
+  await expect(page.getByText("2,5 ETH", { exact: true }).filter({ visible: true })).toBeVisible();
 
   await page.goto("/");
-  await expect(page.getByRole("list", { name: "Resultados" }).getByRole("link").first()).toHaveText("Mapa Proibido");
+  await expect(page.getByRole("list", { name: "Resultados" }).getByRole("link").first()).toHaveText("Ivory Atlas #512");
   await waitForSubscriptions(page, 12);
   await setPrice(page, "nft_024", "ed_024_1", "0.3");
-  await expect(page.getByRole("list", { name: "Resultados" }).getByRole("listitem").first()).toContainText("A partir de 0,3 ETH");
+  await expect(page.getByRole("list", { name: "Resultados" }).getByRole("listitem").first()).toContainText("0,3 ETH");
 });
 
 test("mudança de preço no carrinho é anunciada e atualiza o resumo", async ({ page }) => {
@@ -55,7 +55,7 @@ test("mudança de preço no carrinho é anunciada e atualiza o resumo", async ({
   await setPrice(page, "nft_004", "ed_004_1", "0.8");
   await expect(page.getByText("Preço alterado: de 0,75 para 0,8 ETH.")).toBeVisible();
   await expect(summary(page).getByText("0,9224 ETH")).toBeVisible();
-  await expect(page.locator('[aria-live="polite"][aria-atomic="true"]')).toContainText("O preço ou a disponibilidade de Pulso Neon mudou.");
+  await expect(page.locator('[aria-live="polite"][aria-atomic="true"]')).toContainText("O preço ou a disponibilidade de Neon Vessel #552 mudou.");
   await expectNoA11yViolations(page);
 });
 
@@ -117,8 +117,8 @@ test("subscriptions são liberadas ao sair das telas com NFT", async ({ page }) 
   await startFresh(page, "fast", "/nft/nft_001");
   await waitForSubscriptions(page, 1);
 
-  await page.getByRole("link", { name: "Criadores" }).click();
-  await expect(page.getByRole("heading", { name: "Seção fora da demonstração" })).toBeVisible();
+  await page.getByRole("contentinfo").getByRole("link", { name: "Lista de interesse" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: /Lista de interesse em cunhagem/ })).toBeVisible();
   await expect.poll(async () => (await stats(page)).subscriptions).toBe(0);
   expect((await stats(page)).sockets).toBe(1);
 });
@@ -141,7 +141,7 @@ test("preço muda na revisão: diff, confirmar bloqueado até aceitar, e o pedid
   await goToReview(page);
 
   await expect(page.getByText("Os valores mudaram desde a sua revisão.")).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText("Pulso Neon: de 0,75 para 0,8625 ETH")).toBeVisible();
+  await expect(page.getByText("Neon Vessel #552: de 0,75 para 0,8625 ETH")).toBeVisible();
   await expect(page.getByRole("button", { name: "Confirmar compra" })).toBeDisabled();
 
   await page.getByRole("button", { name: "Aceitar novos valores" }).click();

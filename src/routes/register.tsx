@@ -1,15 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
-import { RegisterDialog } from "@/features/auth/components/RegisterDialog";
-import { redirectIfAuthenticated } from "@/lib/session/guards";
+import { openAuthDialog } from "@/lib/session/guards";
 
 export const Route = createFileRoute("/register")({
   validateSearch: z.object({ redirect: z.string().optional().catch(undefined) }),
-  beforeLoad: ({ search }) => redirectIfAuthenticated(search.redirect),
-  component: RegisterRoute,
+  beforeLoad: ({ search }) => openAuthDialog("register", search.redirect),
 });
-
-function RegisterRoute() {
-  const { redirect } = Route.useSearch();
-  return <RegisterDialog redirect={redirect} />;
-}

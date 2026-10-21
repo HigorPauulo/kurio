@@ -49,7 +49,7 @@ carrinho, cotação usada, desfecho do pedido), em `mocks/db/tables.ts`.
   de `UNAUTHENTICATED` (token desconhecido).
   `idempotency` e `orders` ficam, porque são o que recupera um pedido.
 
-**Persistência:** snapshot em `localStorage` (`kurio:mockdb:v<schemaVersion>`) após cada commit;
+**Persistência:** snapshot em `localStorage` (`kurio:mockdb`, com `schemaVersion` dentro do snapshot) após cada commit;
 `schemaVersion` diferente, JSON ilegível ou falta de alguma tabela descarta o snapshot e reaplica o
 seed. Armazenamento bloqueado ou cheio deixa o banco só em memória. A falha de um inscrito no
 `subscribe` não desfaz o commit nem impede os outros inscritos. Pedido `pending` guarda `settleAt`
@@ -68,7 +68,15 @@ com `VALIDATION_FAILED`; `QuotaExceededError` vai ao console como erro, nunca é
 | Taxas | por rede, na [API](API.md#cotação-privado-no-checkout-público-no-carrinho) |
 
 `nft_001` não muda: é a página de detalhe auditada pelo Lighthouse. O `priceFrom` é calculado a partir
-das edições, nunca escrito à mão. As imagens usam um placeholder até a fatia 8.
+das edições, nunca escrito à mão. As imagens são as quatro artes do protótipo em WebP de 640 px
+(`public/images/nfts/`), escolhidas pela primeira palavra do nome (Emerald, Sage, Ivory, Golden). Os NFTs se agrupam em quatro coleções pelo mesmo prefixo: Kurio Apes (Emerald), Kurio Nomads (Sage,
+Violet, Cosmic), Kurio Barons (Ivory, Neon) e Kurio Golden. Os
+nomes são os 9 do protótipo (Emerald Ape #042, Sage Nomad #009, Neon Vessel #552, Cosmic Bloom #118,
+Violet Nomad #314, Ivory Baron #088, Golden Beat #207, Golden Frequency #071, Golden Signal #160) e
+outros 15 no mesmo padrão. As avaliações (`fixtures/reviews.ts`) saem de um gerador determinístico por
+NFT (autores, notas e comentários em ciclo); a nota agregada `Nft.rating` é calculada delas, e o
+Emerald Ape #042 tem 19 avaliações com média 4,5, como no protótipo. A troca de nomes subiu o snapshot para `v8`, e o boot apaga do
+`localStorage` o snapshot de versões anteriores.
 
 ## 5. Condições de rede
 

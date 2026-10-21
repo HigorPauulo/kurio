@@ -1,5 +1,6 @@
 import type { EthAmount, NftId } from "@/contracts/common";
 import type { CartRecord, UserRecord, WalletRecord } from "../db/tables";
+import { getCoverFixture } from "./catalog";
 
 const CREATED_AT = "2026-09-15T12:00:00.000Z";
 
@@ -89,14 +90,10 @@ export const CART_FIXTURES: readonly CartRecord[] = [
         nftId: "nft_004",
         editionId: "ed_004_1",
         quantity: 1,
-        nftName: "Pulso Neon",
+        nftName: "Neon Vessel #552",
+        tokenId: "#0552",
+        cover: getCoverFixture("nft_004"),
         editionLabel: "Padrão",
-        cover: {
-          url: "/images/nfts/placeholder.svg",
-          alt: "Pulso Neon, imagem 1",
-          width: 600,
-          height: 600,
-        },
         unitPrice: "0.75" as EthAmount,
         available: 12,
         maxPerOrder: 5,
@@ -107,14 +104,10 @@ export const CART_FIXTURES: readonly CartRecord[] = [
         nftId: "nft_012",
         editionId: "ed_012_1",
         quantity: 2,
-        nftName: "Lo-fi Noturno",
+        nftName: "Golden Pulse #402",
+        tokenId: "#0402",
+        cover: getCoverFixture("nft_012"),
         editionLabel: "Padrão",
-        cover: {
-          url: "/images/nfts/placeholder.svg",
-          alt: "Lo-fi Noturno, imagem 1",
-          width: 600,
-          height: 600,
-        },
         unitPrice: "0.06" as EthAmount,
         available: 30,
         maxPerOrder: 6,

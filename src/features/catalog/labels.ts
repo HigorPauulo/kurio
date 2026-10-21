@@ -1,5 +1,5 @@
 import type { Category, Chain } from "@/contracts/common";
-import type { CatalogSort } from "./search";
+import type { CatalogSort, CatalogStatus, CatalogView } from "./search";
 
 export const CATEGORY_LABELS: Record<Category, string> = {
   "digital-art": "Arte digital",
@@ -20,8 +20,25 @@ export const CHAIN_LABELS: Record<Chain, string> = {
 };
 
 export const SORT_LABELS: Record<CatalogSort, string> = {
-  recent: "Mais recentes",
+  recent: "Listados recentemente",
   price_asc: "Menor preço",
   price_desc: "Maior preço",
   popular: "Mais curtidos",
 };
+
+export const STATUS_LABELS: Record<CatalogStatus, string> = {
+  available: "Disponíveis",
+  sold_out: "Esgotados",
+};
+
+export const VIEW_TABS: { view: CatalogView | undefined; label: string }[] = [
+  { view: undefined, label: "Todos os NFTs" },
+  { view: "new", label: "Novos lançamentos" },
+  { view: "trending", label: "Em alta" },
+];
+
+const RATING_FORMAT = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+export function formatRating(value: number): string {
+  return RATING_FORMAT.format(value);
+}

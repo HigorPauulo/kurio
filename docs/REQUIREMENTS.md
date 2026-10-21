@@ -13,8 +13,9 @@ dono e regra em [API](API.md#campos-do-layout); comportamento e larguras por est
 sem representação visual segue os padrões dos componentes existentes e é registrado (VIS-4).
 
 **Fora de escopo:** blockchain, carteira e gateway reais; páginas editoriais, suporte, atividade,
-ofertas e downloads. Link para elas leva a `/unavailable`, que diz que a seção não faz parte da
-demonstração: nada aparenta sucesso funcional.
+ofertas e downloads. Link para elas leva a `/unavailable`, que mostra a seção "em cunhagem" (em construção) e, quando a
+origem é uma ação (newsletter, login social, recuperar senha), diz que nada foi enviado: nada aparenta
+sucesso funcional.
 
 **Domínio:** NFT se compra por **edição** (preço, disponibilidade e limite por pedido próprios); valor
 em ETH tem 18 casas; a **cotação** do servidor fixa subtotal, desconto, taxa de rede e total com
@@ -39,7 +40,7 @@ validade, e só ela vira pedido; o **recibo** é snapshot imutável do pedido.
 | **Fidelidade visual** | | |
 | VIS-1 | Cores e tipografia do tema (`@theme`) idênticas às variáveis do protótipo, salvo exceção registrada (VIS-4) | roteiro (tokens lidos pelo Figma MCP) |
 | VIS-2 | Tipografia, espaçamento, hierarquia, proporção de imagem e composição de cada tela conferidos contra o protótipo em 390 e 1440 | roteiro |
-| VIS-3 | Componentes shadcn/ui adaptados à identidade: nenhuma cor, fonte ou raio fora dos tokens | lint (valor arbitrário de cor proibido) |
+| VIS-3 | Componentes shadcn/ui adaptados à identidade: nenhuma cor, fonte ou raio fora dos tokens | lint (valor arbitrário de cor proibido); paleta padrão do Tailwind removida do tema |
 | VIS-4 | Substituição de asset, ajuste de acessibilidade e estado sem representação visual registrados com motivo na ARCHITECTURE | checklist de entrega |
 | **Navegação** | | |
 | NAV-1 | Acesso direto e refresh em qualquer rota prevista; rota inexistente com tela de não encontrado | `catalog`, smoke de publicação |
@@ -63,7 +64,7 @@ validade, e só ela vira pedido; o **recibo** é snapshot imutável do pedido.
 | PAG-1 | Dados do colecionador validados; carteira cadastrada e rede; conexão e recusa simuladas | `checkout`, `checkout-failures` |
 | PAG-2 | Revisão antes do envio; revalidação no servidor; mudança exige nova confirmação | `realtime` |
 | PAG-3 | Sem pedido duplicado em clique repetido ou reenvio após timeout | `checkout-failures` |
-| PAG-4 | Todos os campos do layout do pagamento renderizados e validados; campo de outro dono somente leitura com link; obrigatório ausente no dono bloqueia a compra com erro no campo | `checkout` |
+| PAG-4 | Todos os campos do layout do pagamento renderizados e validados; campo de outro dono somente leitura; obrigatório ausente no dono bloqueia a compra com erro no campo | `checkout` |
 | PED-1 | Estados pendente, confirmado e recusado (terminais), recuperáveis após refresh ou reconexão | `realtime` |
 | PED-2 | Confirmação só para pedido confirmado pela simulação | `checkout` |
 | PED-3 | Falha preserva o carrinho; confirmação remove só o comprado | `checkout`, `checkout-failures` |
@@ -95,8 +96,8 @@ validade, e só ela vira pedido; o **recibo** é snapshot imutável do pedido.
 
 | ID | Requisito | Verificação |
 |---|---|---|
-| NF-1 | 390, 768 e 1440 sem overflow horizontal, com zoom de 200%; perfil, carteiras e confirmação também em mobile, mesmo sem frame | roteiro |
-| NF-2 | Skeleton com shimmer sem deslocar layout; respeita movimento reduzido | roteiro |
+| NF-1 | 390, 768 e 1440 sem overflow horizontal, com zoom de 200%; perfil, carteiras e confirmação também em mobile, mesmo sem frame | `layout`, roteiro (zoom) |
+| NF-2 | Skeleton com shimmer sem deslocar layout; respeita movimento reduzido | `layout` (movimento reduzido), roteiro |
 | NF-3 | Teclado, foco visível, foco em diálogos, labels e erros associados, live region, contraste AA | axe em toda spec E2E, roteiro (teclado) |
 | NF-4 | Lighthouse na URL pública: Performance ≥ 90, A11y ≥ 95, Best Practices ≥ 95, SEO ≥ 90 | relatório na entrega |
 | NF-5 | Valores ETH em string decimal no fio, sem perda de precisão | `eth.test.ts` |

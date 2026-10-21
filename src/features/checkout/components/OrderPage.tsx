@@ -1,10 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
-import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { Clock, X, XCircle } from "lucide-react";
 import type { JSX } from "react";
+import { buttonVariants } from "@/components/ui/button";
 import type { Chain } from "@/contracts/common";
 import type { Order } from "@/contracts/order";
 import { formatEth } from "@/lib/eth";
+import { cn } from "@/lib/utils";
 import { useOrderSubscription, useRealtimeConnected } from "@/lib/realtime/instance";
 import { CHAIN_LABELS } from "../../catalog/labels";
 import { ORDER_POLL_MS, orderQuery } from "../queries";
@@ -18,67 +20,125 @@ const EXPLORER_LABELS: Record<Chain, string> = {
 
 const DATE_FORMAT = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 
+function formatReceiptDate(value: string): string {
+  const parts = DATE_FORMAT.formatToParts(new Date(value));
+  const part = (type: Intl.DateTimeFormatPartTypes): string => parts.find((item) => item.type === type)?.value ?? "";
+  const month = part("month").replace(".", "");
+  return `${part("day")} ${month.charAt(0).toUpperCase()}${month.slice(1)}, ${part("year")}`;
+}
+
 function shortHash(hash: string): string {
   return `${hash.slice(0, 6)}…${hash.slice(-4)}`;
+}
+
+const CARD = "relative mx-auto flex w-full max-w-145 flex-col border-b-10 border-primary bg-surface-card";
+const SCREEN = "flex min-h-dvh w-full items-center justify-center px-page py-10";
+
+function CloseButton(): JSX.Element {
+  return (
+    <Link
+      to="/"
+      aria-label="Fechar e voltar ao início"
+      className="absolute top-4 right-4 flex size-9 items-center justify-center rounded-full text-text-accent hover:bg-surface-raised"
+    >
+      <X aria-hidden="true" className="size-5" />
+    </Link>
+  );
 }
 
 function Receipt({ order }: { order: Order }): JSX.Element {
   const { receipt, transaction } = order;
   return (
-    <section aria-labelledby="receipt-title" className="flex max-w-2xl flex-col gap-4">
-      <h2 id="receipt-title" className="text-lg font-semibold">
-        Detalhes da transação
-      </h2>
-      <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
-        <div>
-          <dt className="text-muted-foreground">ID da transação</dt>
-          <dd title={transaction?.hash}>{transaction ? shortHash(transaction.hash) : "-"}</dd>
+    <>
+      <dl className="grid grid-cols-2 gap-4 border-y border-primary px-6 py-4 whitespace-nowrap text-text-secondary sm:flex sm:justify-between sm:gap-0 sm:px-8">
+        <div className="sm:border-r sm:border-primary sm:pr-4">
+          <dt className="text-sm font-bold">ID da transação</dt>
+          <dd title={transaction?.hash} className="text-body">
+            {transaction ? shortHash(transaction.hash) : "-"}
+          </dd>
         </div>
-        <div>
-          <dt className="text-muted-foreground">Data</dt>
-          <dd>{DATE_FORMAT.format(new Date(order.updatedAt))}</dd>
+        <div className="sm:border-r sm:border-primary sm:px-4">
+          <dt className="text-sm">Data</dt>
+          <dd className="text-body">{formatReceiptDate(order.updatedAt)}</dd>
         </div>
-        <div>
-          <dt className="text-muted-foreground">Total</dt>
-          <dd>{formatEth(receipt.total)} ETH</dd>
+        <div className="sm:border-r sm:border-primary sm:px-4">
+          <dt className="text-sm">Total</dt>
+          <dd className="text-body">{formatEth(receipt.total)} ETH</dd>
         </div>
-        <div>
-          <dt className="text-muted-foreground">Carteira</dt>
-          <dd>{PROVIDER_LABELS[receipt.wallet.provider]}</dd>
+        <div className="sm:pl-4">
+          <dt className="text-sm font-bold">Carteira</dt>
+          <dd className="text-body">{PROVIDER_LABELS[receipt.wallet.provider]}</dd>
         </div>
       </dl>
-      <ul aria-label="NFTs comprados" className="flex flex-col gap-2">
-        {receipt.lines.map((line) => (
-          <li key={line.itemId} className="flex items-center gap-3 text-sm">
-            <img src={line.cover.url} alt={line.cover.alt} width={48} height={48} className="size-12 rounded-lg object-cover" />
-            <span className="flex-1">
-              {line.nftName} ({line.editionLabel}) × {line.quantity}
-            </span>
-            <span>{formatEth(line.lineTotal)} ETH</span>
-          </li>
-        ))}
-      </ul>
-      <dl className="grid grid-cols-[1fr_auto] gap-y-1 text-sm">
-        {receipt.coupon && (
-          <>
-            <dt>Desconto ({receipt.coupon.code})</dt>
-            <dd className="text-right">- {formatEth(receipt.discount)} ETH</dd>
-          </>
+      <section aria-labelledby="receipt-title" className="flex flex-col gap-3 px-6 pt-5 pb-12 sm:px-11">
+        <h2 id="receipt-title" className="text-body font-bold">
+          Detalhes da transação
+        </h2>
+        <div aria-hidden="true" className="flex justify-between border-b border-border-strong pb-3 font-bold">
+          <span>NFTs</span>
+          <span className="font-medium sm:hidden">Subtotal</span>
+          <span className="hidden gap-12 sm:flex">
+            <span>Edições</span>
+            <span className="font-medium">Subtotal</span>
+          </span>
+        </div>
+        <ul aria-label="NFTs comprados" className="flex flex-col gap-3">
+          {receipt.lines.map((line) => (
+            <li key={line.itemId} className="flex items-center gap-3 max-sm:rounded-[0.875rem] max-sm:bg-surface-raised max-sm:p-2.5">
+              <img src={line.cover.url} alt={line.cover.alt} width={70} height={70} className="size-14 shrink-0 rounded-lg object-cover sm:size-17.5" />
+              <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <span className="truncate font-bold">{line.nftName}</span>
+                <span className="truncate text-sm text-secondary-base max-sm:text-xs">ID do token: {line.tokenId}</span>
+                <span className="flex items-baseline justify-end gap-2 whitespace-nowrap sm:hidden">
+                  <span className="text-xs text-text-secondary">(x {line.quantity})</span>
+                  <span className="text-base font-bold text-text-accent">{formatEth(line.lineTotal)} ETH</span>
+                </span>
+              </span>
+              <span className="hidden text-sm whitespace-nowrap text-text-secondary sm:inline">(x {line.quantity})</span>
+              <span className="hidden text-right text-lg font-bold whitespace-nowrap text-text-accent sm:inline sm:w-28">
+                {formatEth(line.lineTotal)} ETH
+              </span>
+            </li>
+          ))}
+        </ul>
+        <dl className="ml-auto grid w-full grid-cols-[1fr_auto] items-baseline gap-x-4 gap-y-3 border-b border-border-strong pb-3 max-sm:mt-1 max-sm:pt-1 sm:max-w-80">
+          {receipt.coupon && (
+            <>
+              <dt className="text-body">Desconto ({receipt.coupon.code})</dt>
+              <dd className="text-right text-lg max-sm:text-body">- {formatEth(receipt.discount)} ETH</dd>
+            </>
+          )}
+          <dt className="text-body">Taxa de rede</dt>
+          <dd className="text-right text-lg max-sm:text-body">{formatEth(receipt.networkFee)} ETH</dd>
+          <div className="col-span-2 grid grid-cols-subgrid items-baseline max-sm:border-t max-sm:border-border-strong max-sm:pt-3">
+            <dt className="font-bold">Total</dt>
+            <dd className="text-right text-lg font-bold text-text-accent">{formatEth(receipt.total)} ETH</dd>
+          </div>
+        </dl>
+        <p className="mt-2 text-center text-sm leading-[1.375rem] text-text-secondary">
+          Transação confirmada na {CHAIN_LABELS[receipt.network]}. A propriedade foi registrada na carteira {receipt.wallet.label}.
+        </p>
+        {transaction && (
+          <a
+            href={transaction.explorerUrl}
+            target="_blank"
+            rel="noreferrer"
+            className={cn(buttonVariants({ size: "lg" }), "mt-4 self-center max-sm:h-13 max-sm:w-full max-sm:rounded-full")}
+          >
+            Ver no {EXPLORER_LABELS[receipt.network]} (simulado)
+          </a>
         )}
-        <dt>Taxa de rede</dt>
-        <dd className="text-right">{formatEth(receipt.networkFee)} ETH</dd>
-        <dt className="font-semibold">Total</dt>
-        <dd className="text-right font-semibold">{formatEth(receipt.total)} ETH</dd>
-      </dl>
-      <p className="text-sm">
-        Transação confirmada na {CHAIN_LABELS[receipt.network]}. A propriedade foi registrada na carteira {receipt.wallet.label}.
-      </p>
-      {transaction && (
-        <a href={transaction.explorerUrl} target="_blank" rel="noreferrer" className="self-start underline underline-offset-4">
-          Ver no {EXPLORER_LABELS[receipt.network]} (simulado)
-        </a>
-      )}
-    </section>
+      </section>
+    </>
+  );
+}
+
+function StatusHeader({ icon, title }: { icon: JSX.Element; title: string }): JSX.Element {
+  return (
+    <div className="flex flex-col items-center gap-4 px-6 py-8 text-center">
+      {icon}
+      <h1 className="text-base leading-5 font-bold text-text-secondary">{title}</h1>
+    </div>
   );
 }
 
@@ -90,43 +150,55 @@ export function OrderPage({ userId, orderId }: { userId: string; orderId: string
   });
   useOrderSubscription(order.data?.status === "pending" ? orderId : null);
 
-  if (!order.data) return <main className="p-6">Carregando o pedido...</main>;
+  if (!order.data) {
+    return (
+      <main aria-busy="true" className={SCREEN}>
+        <p className="sr-only">Carregando o pedido...</p>
+        <div className={cn(CARD, "skeleton h-96")} />
+      </main>
+    );
+  }
   const { status, receipt, refusal } = order.data;
 
   return (
-    <main className="mx-auto flex max-w-6xl flex-col gap-6 p-4 md:p-6">
-      {status === "pending" && (
-        <>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold">
-            <Clock aria-hidden="true" className="size-6" />
-            Pedido em processamento
-          </h1>
-          <p role="status">Aguardando a confirmação da rede {CHAIN_LABELS[receipt.network]}. Esta página se atualiza sozinha.</p>
-          <p className="text-sm">Total: {formatEth(receipt.total)} ETH</p>
-        </>
-      )}
-      {status === "confirmed" && (
-        <>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold">
-            <CheckCircle2 aria-hidden="true" className="size-6" />
-            Seus NFTs agora estão na sua carteira
-          </h1>
-          <Receipt order={order.data} />
-        </>
-      )}
-      {status === "refused" && (
-        <>
-          <h1 className="flex items-center gap-2 text-2xl font-semibold">
-            <XCircle aria-hidden="true" className="size-6" />
-            Pagamento recusado
-          </h1>
-          <p role="alert">{refusal?.reason}</p>
-          <p>Seu carrinho foi preservado.</p>
-          <Link to="/cart" className="self-start underline underline-offset-4">
-            Voltar ao carrinho
-          </Link>
-        </>
-      )}
+    <main className={SCREEN}>
+      <div className={CARD}>
+        <CloseButton />
+        {status === "pending" && (
+          <>
+            <StatusHeader icon={<Clock aria-hidden="true" className="size-16 text-primary motion-safe:animate-pulse" />} title="Pedido em processamento" />
+            <div className="flex flex-col items-center gap-3 border-t border-primary px-6 pt-5 pb-10 text-center text-sm">
+              <p role="status" className="text-text-secondary">
+                Aguardando a confirmação da rede {CHAIN_LABELS[receipt.network]}. Esta página se atualiza sozinha.
+              </p>
+              <p className="text-lg font-bold text-text-accent">Total: {formatEth(receipt.total)} ETH</p>
+            </div>
+          </>
+        )}
+        {status === "confirmed" && (
+          <>
+            <StatusHeader
+              icon={<img src="/images/icons/thank-you.svg" alt="" width={65} height={80} className="h-20 w-auto" />}
+              title="Seus NFTs agora estão na sua carteira"
+            />
+            <Receipt order={order.data} />
+          </>
+        )}
+        {status === "refused" && (
+          <>
+            <StatusHeader icon={<XCircle aria-hidden="true" className="size-16 text-destructive" />} title="Pagamento recusado" />
+            <div className="flex flex-col items-center gap-4 border-t border-primary px-6 pt-5 pb-10 text-center">
+              <p role="alert" className="text-destructive">
+                {refusal?.reason}
+              </p>
+              <p className="text-sm text-text-secondary">Seu carrinho foi preservado.</p>
+              <Link to="/cart" className={buttonVariants()}>
+                Voltar ao carrinho
+              </Link>
+            </div>
+          </>
+        )}
+      </div>
     </main>
   );
 }
