@@ -166,6 +166,19 @@ function Pagination({ page, totalPages }: { page: number; totalPages: number }):
   );
 }
 
+const FEATURED_SECTION = "relative flex flex-col gap-4 bg-linear-to-b from-primary/10 to-primary/3 pt-6 pb-1";
+
+function FeaturedHeading(): JSX.Element {
+  return (
+    <div className="flex flex-col gap-4 px-5">
+      <h2 id="featured-title" className="text-center text-2xl leading-8 font-bold text-text-accent uppercase">
+        NFT em destaque
+      </h2>
+      <p className="text-center text-title leading-4 font-bold uppercase">Oferta limitada</p>
+    </div>
+  );
+}
+
 function FeaturedNft(): JSX.Element | null {
   const featured = useQuery(featuredNftsQuery());
   const highlight = featured.data?.[0];
@@ -186,16 +199,19 @@ function FeaturedNft(): JSX.Element | null {
       </section>
     );
   }
+  if (featured.isPending) {
+    return (
+      <section aria-labelledby="featured-title" aria-busy="true" className={FEATURED_SECTION}>
+        <FeaturedHeading />
+        <div className="skeleton aspect-310/368 w-full rounded-[1.375rem]" />
+      </section>
+    );
+  }
   if (!highlight) return null;
 
   return (
-    <section aria-labelledby="featured-title" className="relative flex flex-col gap-4 bg-linear-to-b from-primary/10 to-primary/3 pt-6 pb-1">
-      <div className="flex flex-col gap-4 px-5">
-        <h2 id="featured-title" className="text-center text-2xl leading-8 font-bold text-text-accent uppercase">
-          NFT em destaque
-        </h2>
-        <p className="text-center text-title leading-4 font-bold uppercase">Oferta limitada</p>
-      </div>
+    <section aria-labelledby="featured-title" className={FEATURED_SECTION}>
+      <FeaturedHeading />
       <Link
         to="/nft/$nftId"
         params={{ nftId: highlight.id }}
@@ -243,11 +259,14 @@ function CatalogResults({ search, onSearchChange }: CatalogPageProps): JSX.Eleme
 
   if (list.isPending) {
     return (
-      <div aria-busy="true" className={cn(GRID, !isSkeletonVisible && "[&>:not(p)]:invisible")}>
-        {Array.from({ length: CATALOG_PAGE_SIZE }, (_, index) => (
-          <NftCardSkeleton key={index} />
-        ))}
-        <p className="sr-only">Carregando NFTs...</p>
+      <div aria-busy="true" className="flex flex-col gap-10 lg:gap-22">
+        <div className={cn(GRID, !isSkeletonVisible && "[&>:not(p)]:invisible")}>
+          {Array.from({ length: CATALOG_PAGE_SIZE }, (_, index) => (
+            <NftCardSkeleton key={index} />
+          ))}
+          <p className="sr-only">Carregando NFTs...</p>
+        </div>
+        <div aria-hidden="true" className="h-9" />
       </div>
     );
   }
