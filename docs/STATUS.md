@@ -13,7 +13,12 @@
 > cabeçalho no `index.html`. Desvios registrados em [ARCHITECTURE](ARCHITECTURE.md#15-desvios-do-layout).
 > A spec `layout` passa em 1440 e 390 (e confere 768 e 1024). A revisão de código corrigiu o `cn`
 > descartando os tamanhos de fonte do tema, o contraste do foco e da borda dos campos, o carrinho
-> espremido entre 1024 e 1280, o `aria-current` do cabeçalho e estados marcados só por cor.
+> espremido entre 1024 e 1280, o `aria-current` do cabeçalho e estados marcados só por cor. Depois, o
+> mobile seguiu os frames do protótipo (sem cabeçalho, barra de abas com os ícones do Figma, detalhe e
+> carrinho com barra flutuante, pagamento com cartões de carteira e dados do pedido recolhidos) e uma
+> segunda revisão corrigiu o formulário de login guardando dados, o login reaberto pelo Voltar, a busca
+> refeita ao abrir o login, o foco perdido nos filtros, a galeria ao trocar de NFT, gestos cancelados e a
+> cotação da rede anterior no resumo.
 
 | | |
 |---|---|
@@ -45,8 +50,8 @@ Nenhuma. O gate **G1** (GitHub e Vercel) foi resolvido.
 |---|---|
 | Fatias | 8 de 9; a fatia 8 levou cerca de 2 h, como estimado |
 | Requisitos | 45 funcionais e 7 não funcionais em [REQUIREMENTS](REQUIREMENTS.md) |
-| Verificação | 10 specs E2E planejadas, todas escritas (120 casos entre desktop e mobile); 15 arquivos de unidade (164 casos) e o roteiro manual em [QUALITY](QUALITY.md) |
-| Decisões | 42 em [DECISIONS](DECISIONS.md) |
+| Verificação | 10 specs E2E planejadas, todas escritas (122 casos entre desktop e mobile); 15 arquivos de unidade (164 casos) e o roteiro manual em [QUALITY](QUALITY.md) |
+| Decisões | 43 em [DECISIONS](DECISIONS.md) |
 
 Contados em 2026-10-20. Mudou um documento, atualize esta tabela no mesmo commit.
 
