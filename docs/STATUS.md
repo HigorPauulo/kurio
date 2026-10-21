@@ -6,7 +6,7 @@
 
 ## Onde estou
 
-> **Fatia 8 de 9, concluída em `feature/visual`.** Tokens do protótipo no `@theme` (paleta padrão do
+> **Fatia 8 de 9, publicada (`3990e30`).** Tokens do protótipo no `@theme` (paleta padrão do
 > Tailwind removida e lint contra cor arbitrária), Roboto Mono self-hosted, as quatro artes do protótipo
 > em WebP, cabeçalho, rodapé e barra de abas mobile, e todas as telas compostas como no protótipo em 390
 > e 1440, com 768 sem quebra. Skeleton com shimmer que para com movimento reduzido e casco estático do
@@ -24,15 +24,16 @@
 |---|---|
 | **Repositório** | github.com/HigorPauulo/kurio |
 | **`develop` / `main`** | Existem; `main` é a padrão e só recebe publicação |
-| **Deploy** | Produção pública em `kurio-beta.vercel.app`, com as fatias 1 a 7 (`70a3074`); preview por branch, protegido por login |
+| **Deploy** | Produção pública em `kurio-beta.vercel.app`, com as fatias 1 a 8 (`3990e30`); preview por branch, protegido por login |
 | **Protótipo** | Figma do desafio; campos já mapeados em [API](API.md#campos-do-layout) |
 
 ## O que fazer agora, nesta ordem
 
-1. **Fechar a fatia 8:** PR de `feature/visual` para `develop` e publicação na `main`, seguida do smoke.
-2. **Fatia 9:** publicação final. Lighthouse na URL pública (com o preload das fontes, que ainda não
+1. **Fatia 9:** publicação final. Lighthouse na URL pública (com o preload das fontes, que ainda não
    existe), roteiro manual de [QUALITY](QUALITY.md#4-roteiro-manual), inclusive zoom de 200% e teclado,
    e documentação conferida com o código.
+2. **Decidir os dois pontos visuais em aberto:** campos com 14 px no mobile (zoom de foco do iOS) e a
+   transição do texto do carrossel.
 
 ## O que trava
 
