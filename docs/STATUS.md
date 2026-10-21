@@ -2,38 +2,27 @@
 
 **Este é o único documento que declara estado.** Voltou de uma pausa? Leia só este.
 
-**Atualizado em 2026-10-20: fatias 1 a 8 concluídas; entrega em até 24 h.**
+**Atualizado em 2026-10-21: as 9 fatias concluídas e publicadas; projeto entregue.**
 
 ## Onde estou
 
-> **Fatia 8 de 9, publicada (`3990e30`).** Tokens do protótipo no `@theme` (paleta padrão do
-> Tailwind removida e lint contra cor arbitrária), Roboto Mono self-hosted, as quatro artes do protótipo
-> em WebP, cabeçalho, rodapé e barra de abas mobile, e todas as telas compostas como no protótipo em 390
-> e 1440, com 768 sem quebra. Skeleton com shimmer que para com movimento reduzido e casco estático do
-> cabeçalho no `index.html`. Desvios registrados em [ARCHITECTURE](ARCHITECTURE.md#15-desvios-do-layout).
-> A spec `layout` passa em 1440 e 390 (e confere 768 e 1024). A revisão de código corrigiu o `cn`
-> descartando os tamanhos de fonte do tema, o contraste do foco e da borda dos campos, o carrinho
-> espremido entre 1024 e 1280, o `aria-current` do cabeçalho e estados marcados só por cor. Depois, o
-> mobile seguiu os frames do protótipo (sem cabeçalho, barra de abas com os ícones do Figma, detalhe e
-> carrinho com barra flutuante, pagamento com cartões de carteira e dados do pedido recolhidos) e uma
-> segunda revisão corrigiu o formulário de login guardando dados, o login reaberto pelo Voltar, a busca
-> refeita ao abrir o login, o foco perdido nos filtros, a galeria ao trocar de NFT, gestos cancelados e a
-> cotação da rede anterior no resumo.
+> **Fatia 9 de 9, publicada.** Campos com 16 px no mobile, fade do carrossel, preload da fonte, `meta
+> description`, `robots.txt` e `llms.txt`, layout estável durante o carregamento (CLS 0), foco no primeiro
+> campo do login, Zod sem JIT para respeitar a CSP sem `unsafe-eval` e arquivo inexistente respondendo
+> 404. Auditoria Lighthouse em [LIGHTHOUSE](LIGHTHOUSE.md): Accessibility, Best Practices e SEO em 100 nas
+> 12 medições; Performance 100 no desktop, 92 no início mobile e 77 no detalhe mobile, com as causas
+> registradas. Roteiro manual de [QUALITY](QUALITY.md#4-roteiro-manual) executado no build.
 
 | | |
 |---|---|
 | **Repositório** | github.com/HigorPauulo/kurio |
 | **`develop` / `main`** | Existem; `main` é a padrão e só recebe publicação |
-| **Deploy** | Produção pública em `kurio-beta.vercel.app`, com as fatias 1 a 8 (`3990e30`); preview por branch, protegido por login |
+| **Deploy** | Produção pública em `kurio-beta.vercel.app`, com as 9 fatias; preview por branch, protegido por login |
 | **Protótipo** | Figma do desafio; campos já mapeados em [API](API.md#campos-do-layout) |
 
 ## O que fazer agora, nesta ordem
 
-1. **Fatia 9:** publicação final. Lighthouse na URL pública (com o preload das fontes, que ainda não
-   existe), roteiro manual de [QUALITY](QUALITY.md#4-roteiro-manual), inclusive zoom de 200% e teclado,
-   e documentação conferida com o código.
-2. **Decidir os dois pontos visuais em aberto:** campos com 14 px no mobile (zoom de foco do iOS) e a
-   transição do texto do carrossel.
+Nada pendente. Um passo novo entra pelo [ROADMAP](ROADMAP.md).
 
 ## O que trava
 
@@ -47,9 +36,9 @@ Nenhuma.
 
 | | |
 |---|---|
-| Fatias | 8 de 9; a fatia 8 levou cerca de 2 h, como estimado |
+| Fatias | 9 de 9 |
 | Requisitos | 45 funcionais e 7 não funcionais em [REQUIREMENTS](REQUIREMENTS.md) |
-| Verificação | 10 specs E2E planejadas, todas escritas (122 casos entre desktop e mobile); 15 arquivos de unidade (164 casos) e o roteiro manual em [QUALITY](QUALITY.md) |
+| Verificação | 10 specs E2E planejadas, todas escritas (124 casos entre desktop e mobile); 15 arquivos de unidade (164 casos) e o roteiro manual em [QUALITY](QUALITY.md) |
 | Decisões | 43 em [DECISIONS](DECISIONS.md) |
 
 Contados em 2026-10-20. Mudou um documento, atualize esta tabela no mesmo commit.

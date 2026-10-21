@@ -19,7 +19,7 @@ Para onde o projeto vai. Onde ele está é o [STATUS](STATUS.md); o porquê das 
 | 6 | ✅ **Tempo real** | Socket por sessão, `eventStore`, subscriptions, reconciliação | RT, CRT-5 | 4, 5 | 1,5 |
 | 7 | ✅ **Checkout e pedido** | Campos do layout, revisão, idempotência, recibo, pedido alheio | PAG, PED, AUT-5 | 3, 6 | 2,5 |
 | 8 | ✅ **Visual e responsivo** | Tokens do Figma, composição em 390 e 1440, 768 sem quebra, estados de carregamento | VIS, NF-1, NF-2, NF-3 | 7 | 2 |
-| 9 | ⬜ **Publicação** | Vercel, smoke, Lighthouse, roteiro manual, documentação conferida com o código | NF-4, NF-6, NF-7, MOC-8, VIS-4 | 8 | 1 |
+| 9 | ✅ **Publicação** | Vercel, smoke, Lighthouse, roteiro manual, documentação conferida com o código | NF-4, NF-6, NF-7, MOC-8, VIS-4 | 8 | 1 |
 | | **Linha de chegada** | | | | **18** |
 
 Ordem por dependência e risco: o spike abre a fila porque é a única peça cuja viabilidade não está
@@ -87,3 +87,6 @@ detalhe aberto; `__kurio.build` igual ao SHA da `main`.
 | 2026-10-19 | `b41063a` | ok: fatia 6 e correções da revisão, em 1440 e 390; `__kurio.build` igual ao SHA; `setPrice` chega ao detalhe aberto; carrinho da Ana recalcula para `0,9224 ETH` e anuncia; socket autenticado com 2 subscriptions; `/dev/realtime` mostra não encontrado; sem overflow; nenhuma resposta de erro e console sem exceção |
 | 2026-10-19 | `70a3074` | ok: fatia 7 e correções da revisão e do teste manual, em 1440 e 390; `__kurio.build` igual ao SHA; compra como Ana até o recibo (`confirmed` no servidor); recibo segue `0,8724 ETH` depois do `setPrice` e do refresh na rota do pedido; `setPrice` chega ao detalhe aberto; rota inexistente com não encontrado; sem overflow; nenhuma resposta de erro e console limpo |
 | 2026-10-20 | `3990e30` | ok: fatia 8 e correções das duas revisões, em 1440 e 390; `__kurio.build` igual ao SHA; mobile sem cabeçalho e com a busca do protótipo; home com 12 NFTs; login sobre o detalhe, "Comprar" e compra até o recibo (`confirmed` no servidor); sem overflow; axe sem violação séria; console limpo |
+| 2026-10-20 | `d8e8f4d` | ok: fatia 9, em 1440 e 390; `__kurio.build` igual ao SHA; compra como Ana até o recibo; `robots.txt` e preload da fonte servidos; sem overflow; axe sem violação séria; console limpo |
+| 2026-10-20 | `8179b7a` | ok: Zod sem JIT, sem nenhum aviso de CSP no Chrome; `llms.txt` servido como texto; compra até o recibo em 1440 e 390 |
+| 2026-10-21 | `92ce50c` | ok: `/.well-known/ai-catalog.json` e arquivo inexistente com 404; rotas do app com 200; auditoria Lighthouse deste build em [LIGHTHOUSE](LIGHTHOUSE.md) |
