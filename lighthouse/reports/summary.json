@@ -1,0 +1,314 @@
+{
+  "url": "https://kurio-beta.vercel.app",
+  "build": {
+    "sha": "92ce50c53b2f40fa7f9468ea3ea50059270624fe",
+    "scenario": "default"
+  },
+  "runsPerGroup": 3,
+  "environment": {
+    "lighthouse": "12.8.2",
+    "browser": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+    "benchmarkIndex": 2785,
+    "playwright": "1.64.1",
+    "node": "v24.18.0",
+    "os": "Linux 7.2.9-100.fc43.x86_64 x64",
+    "cpu": "13th Gen Intel(R) Core(TM) i5-13420H (12 núcleos)",
+    "memoryGb": 15
+  },
+  "medians": [
+    {
+      "page": "inicio",
+      "profile": "mobile",
+      "scores": {
+        "performance": 92,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 2803.034,
+        "cls": 0,
+        "tbt": 176,
+        "fcp": 1903.034
+      }
+    },
+    {
+      "page": "inicio",
+      "profile": "desktop",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 574.0889999999999,
+        "cls": 0,
+        "tbt": 0,
+        "fcp": 358.089
+      }
+    },
+    {
+      "page": "detalhe",
+      "profile": "mobile",
+      "scores": {
+        "performance": 77,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 3107.602,
+        "cls": 0,
+        "tbt": 464,
+        "fcp": 1981.6019999999999
+      }
+    },
+    {
+      "page": "detalhe",
+      "profile": "desktop",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 614.4200000000001,
+        "cls": 0,
+        "tbt": 3.5,
+        "fcp": 370.42
+      }
+    }
+  ],
+  "runs": [
+    {
+      "page": "inicio",
+      "profile": "mobile",
+      "run": 1,
+      "fetchTime": "2026-10-21T02:57:03.009Z",
+      "scores": {
+        "performance": 92,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 2789.7799999999997,
+        "cls": 0,
+        "tbt": 160.5,
+        "fcp": 1889.7799999999997
+      },
+      "runWarnings": []
+    },
+    {
+      "page": "inicio",
+      "profile": "mobile",
+      "run": 2,
+      "fetchTime": "2026-10-21T02:57:15.978Z",
+      "scores": {
+        "performance": 88,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 2846.5834999999997,
+        "cls": 0,
+        "tbt": 292,
+        "fcp": 1946.5834999999997
+      },
+      "runWarnings": []
+    },
+    {
+      "page": "inicio",
+      "profile": "mobile",
+      "run": 3,
+      "fetchTime": "2026-10-21T02:57:28.922Z",
+      "scores": {
+        "performance": 92,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 2803.034,
+        "cls": 0,
+        "tbt": 176,
+        "fcp": 1903.034
+      },
+      "runWarnings": []
+    },
+    {
+      "page": "inicio",
+      "profile": "desktop",
+      "run": 1,
+      "fetchTime": "2026-10-21T02:57:41.388Z",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 574.0889999999999,
+        "cls": 0,
+        "tbt": 0,
+        "fcp": 358.089
+      },
+      "runWarnings": []
+    },
+    {
+      "page": "inicio",
+      "profile": "desktop",
+      "run": 2,
+      "fetchTime": "2026-10-21T02:57:54.147Z",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 570.591,
+        "cls": 0,
+        "tbt": 0,
+        "fcp": 356.091
+      },
+      "runWarnings": []
+    },
+    {
+      "page": "inicio",
+      "profile": "desktop",
+      "run": 3,
+      "fetchTime": "2026-10-21T02:58:06.494Z",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 588.1355,
+        "cls": 0,
+        "tbt": 0,
+        "fcp": 371.1355
+      },
+      "runWarnings": []
+    },
+    {
+      "page": "detalhe",
+      "profile": "mobile",
+      "run": 1,
+      "fetchTime": "2026-10-21T02:58:19.684Z",
+      "scores": {
+        "performance": 75,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 3287.585,
+        "cls": 0,
+        "tbt": 517,
+        "fcp": 2055.085
+      },
+      "runWarnings": []
+    },
+    {
+      "page": "detalhe",
+      "profile": "mobile",
+      "run": 2,
+      "fetchTime": "2026-10-21T02:58:31.729Z",
+      "scores": {
+        "performance": 77,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 3107.602,
+        "cls": 0,
+        "tbt": 464,
+        "fcp": 1981.6019999999999
+      },
+      "runWarnings": []
+    },
+    {
+      "page": "detalhe",
+      "profile": "mobile",
+      "run": 3,
+      "fetchTime": "2026-10-21T02:58:43.800Z",
+      "scores": {
+        "performance": 87,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 2899.295,
+        "cls": 0,
+        "tbt": 291,
+        "fcp": 1901.295
+      },
+      "runWarnings": []
+    },
+    {
+      "page": "detalhe",
+      "profile": "desktop",
+      "run": 1,
+      "fetchTime": "2026-10-21T02:58:54.327Z",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 599.502,
+        "cls": 0,
+        "tbt": 0,
+        "fcp": 361.002
+      },
+      "runWarnings": []
+    },
+    {
+      "page": "detalhe",
+      "profile": "desktop",
+      "run": 2,
+      "fetchTime": "2026-10-21T02:59:04.868Z",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 637.3050000000001,
+        "cls": 0,
+        "tbt": 4.5,
+        "fcp": 389.805
+      },
+      "runWarnings": []
+    },
+    {
+      "page": "detalhe",
+      "profile": "desktop",
+      "run": 3,
+      "fetchTime": "2026-10-21T02:59:15.493Z",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "lcp": 614.4200000000001,
+        "cls": 0,
+        "tbt": 3.5,
+        "fcp": 370.42
+      },
+      "runWarnings": []
+    }
+  ]
+}
