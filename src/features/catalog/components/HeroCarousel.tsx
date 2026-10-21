@@ -93,8 +93,8 @@ export function HeroCarousel(): JSX.Element {
               style={isActive && dragOffset ? { transform: `translateX(${dragOffset}px)` } : undefined}
               className={cn(
                 "col-start-1 row-start-1 flex cursor-grab items-center gap-4 lg:h-112.5",
-                dragOffset === null && "transition-transform duration-700",
-                isActive ? "visible" : "invisible",
+                dragOffset === null && "transition-[opacity,transform,visibility] duration-700",
+                isActive ? "visible opacity-100" : "invisible opacity-0",
               )}
             >
               <div className="flex min-w-0 flex-1 flex-col items-start gap-3 md:gap-8">
@@ -128,10 +128,7 @@ export function HeroCarousel(): JSX.Element {
                 width={640}
                 height={640}
                 fetchPriority={index === 0 ? "high" : "low"}
-                className={cn(
-                  "aspect-square w-32 shrink-0 rounded-2xl object-cover transition-opacity duration-700 md:w-72 md:rounded-3xl lg:w-112.5",
-                  isActive ? "opacity-100" : "opacity-0",
-                )}
+                className="aspect-square w-32 shrink-0 rounded-2xl object-cover md:w-72 md:rounded-3xl lg:w-112.5"
               />
             </div>
           );
