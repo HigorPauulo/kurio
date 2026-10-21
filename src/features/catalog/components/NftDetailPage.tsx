@@ -616,7 +616,7 @@ export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchas
         <div className="grid md:grid-cols-2 md:gap-8 lg:grid-cols-[1fr_33rem]">
           <div className="flex flex-col gap-2 max-md:-mx-6 max-md:-mt-6 max-md:bg-linear-to-br max-md:from-surface-card max-md:to-surface-raised max-md:px-7 max-md:pt-6 max-md:pb-14 md:self-start">
             <MobileTopBar nftId={nft.id} />
-            <Gallery nft={nft} />
+            <Gallery key={nft.id} nft={nft} />
           </div>
           <div className="flex min-w-0 flex-col gap-5 max-md:relative max-md:-mx-6 max-md:-mt-8 max-md:rounded-t-[1.9375rem] max-md:bg-surface-card max-md:px-6 max-md:pt-8 max-md:pb-6">
             <div className="flex flex-col gap-3 md:border-b md:border-border-strong md:pb-4">
