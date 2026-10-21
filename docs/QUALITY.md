@@ -89,7 +89,8 @@ Metas de NF-4. Táticas: casco estático no `index.html` enquanto o MSW sobe ant
 bundle inicial; imagens WebP de 640 px com dimensões explícitas, `fetchpriority="high"` e preload na
 LCP (sem `srcset`: são quatro artes reaproveitadas por todo o catálogo, baixadas uma vez só);
 fontes WOFF2 self-hosted com preload; `head` por rota e `lang="pt-BR"`. Nada é desligado só para a
-auditoria. O relatório (HTML) da URL pública vai em `lighthouse/` na entrega.
+auditoria. A medição, o método, o ambiente e as causas do que ficou abaixo da meta estão em
+[LIGHTHOUSE](LIGHTHOUSE.md); os relatórios ficam em `lighthouse/reports/`.
 
 ## 7. CI
 
