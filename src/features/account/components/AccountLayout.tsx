@@ -37,7 +37,7 @@ export function AccountLayout({ title, children }: { title: string; children: Re
     <main className="mx-auto grid w-full max-w-300 grid-cols-1 gap-8 px-page pt-6 md:grid-cols-[15rem_minmax(0,1fr)] lg:grid-cols-[19.375rem_minmax(0,1fr)] lg:gap-7 lg:pt-8">
       <nav aria-label="Conta" className="min-w-0 self-start bg-surface-card py-4">
         <p className="px-2.5 pb-2 text-lg font-bold">Meu perfil</p>
-        <ul className="flex gap-1 overflow-x-auto md:flex-col md:gap-0">
+        <ul className="flex flex-col">
           <li className="shrink-0">
             <Link to="/account/profile" activeOptions={{ exact: true }} className={ITEM}>
               <UserRound aria-hidden="true" className="size-4.5" />
