@@ -1,4 +1,5 @@
-import { Check, SlidersHorizontal } from "lucide-react";
+import { Check } from "lucide-react";
+import { FilterIcon } from "@/components/icons/KurioIcons";
 import { useState, type FormEvent, type JSX } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -265,8 +266,16 @@ export function CatalogFiltersPanel({ filters, facets, onApply, isCompact }: Cat
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger render={<Button size="icon" aria-label="Filtros" className="size-11 shrink-0" />}>
-        <SlidersHorizontal aria-hidden="true" className="size-5" />
+      <DialogTrigger
+        render={
+          <Button
+            size="icon"
+            aria-label="Filtros"
+            className="size-11.25 shrink-0 rounded-[0.875rem] border-transparent bg-transparent bg-linear-137 from-primary/45 to-primary text-primary-foreground"
+          />
+        }
+      >
+        <FilterIcon className="size-5.5" />
       </DialogTrigger>
       <DialogContent className="max-h-[90dvh] overflow-y-auto">
         <DialogHeader>

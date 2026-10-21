@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useEffect, useState, type JSX } from "react";
-import { ChevronDownIcon, SearchIcon } from "@/components/icons/KurioIcons";
+import { ChevronDownIcon, SearchCurvedIcon } from "@/components/icons/KurioIcons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,13 +63,13 @@ function SearchBox({ value, onSearchChange }: { value: string | undefined; onSea
         Buscar NFTs
       </Label>
       <div className="relative">
-        <SearchIcon className="absolute top-1/2 left-3 size-4.5 -translate-y-1/2 text-text-secondary" />
+        <SearchCurvedIcon className="absolute top-1/2 left-3 size-5.5 -translate-y-1/2 text-secondary-base" />
         <Input
           id="catalog-search"
           type="search"
           maxLength={80}
-          placeholder="Explorar coleções, NFTs ou criadores"
-          className="h-11 scroll-mt-6 bg-surface-card pl-10 text-body"
+          placeholder="Explorar coleções"
+          className="h-11.25 scroll-mt-6 rounded-[0.625rem] border-transparent bg-surface-card pl-11 text-body placeholder:font-bold placeholder:text-secondary-base"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
         />
