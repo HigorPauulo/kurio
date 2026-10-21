@@ -65,13 +65,10 @@ export function HeroCarousel(): JSX.Element {
         if (!event.currentTarget.contains(event.relatedTarget)) setIsFocused(false);
       }}
     >
-      <img
-        src="/images/icons/hero-mobile-bg.svg"
-        alt=""
-        width={366}
-        height={190}
-        className="pointer-events-none absolute inset-0 size-full md:hidden"
-      />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-linear-to-br from-primary/20 to-primary/10 md:hidden">
+        <span className="absolute top-[-16%] left-[-22%] aspect-square w-[68%] rounded-full bg-linear-to-b from-text-accent/40 to-primary/5" />
+        <span className="absolute top-[-5%] left-[20%] aspect-square w-[68%] rounded-full bg-linear-to-b from-text-accent/35 to-transparent" />
+      </div>
       <h1 id="hero-title" className="sr-only">
         Kurio, marketplace de arte digital
       </h1>
