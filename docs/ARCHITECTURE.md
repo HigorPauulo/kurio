@@ -83,7 +83,8 @@ não existe mais depois de um deploy (aba aberta antes da publicação) dispara 
 página recarrega com a versão nova, no máximo uma vez a cada 10 s, para uma falha repetida não virar
 loop de recarga. `index.html` traz, dentro de `#root`, o casco estático do cabeçalho com as mesmas
 classes e a mesma altura do cabeçalho real (oculto abaixo de 768, 105 px até 1024, 73 px acima), e faz preload da arte
-do hero, para que CLS e LCP não dependam do bootstrap. Um `<style>` inline mínimo pinta o fundo e
+do hero e, no build, da Roboto Mono latina (plugin `kurio:preload-font` no `vite.config.ts`, que
+lê o nome com hash do bundle), para que CLS e LCP não dependam do bootstrap. Um `<style>` inline mínimo pinta o fundo e
 esconde o casco (`visibility`, que mantém a altura) até o `index.css` carregar e revelá-lo; sem isso, no
 dev, onde o CSS chega por JavaScript, o casco aparecia sem estilo por um instante.
 
@@ -394,7 +395,7 @@ mantido durante a implementação.
 | Pagamento | Duas etapas na mesma rota (`step`): dados e revisão; subtotal, taxa e total ficam na revisão, cotados na rede escolhida | PAG-2 pede revisão antes do envio e novo aceite quando o valor muda; o protótipo mostra uma tela só |
 | Pagamento | "Carteira e rede" mostra os três provedores, só o da carteira escolhida com "Conectar"; os outros dizem qual é o escolhido | Conexão simulada por carteira cadastrada (API) |
 | Confirmação | Recibo é a página `/orders/$orderId` em tela cheia (sem cabeçalho, rodapé e barra de abas), com o cartão do protótipo e um X que volta ao início, em vez de um modal sobre o pagamento; "Ver no Etherscan" vira "Ver no {explorador} (simulado)" | A URL do pedido sobrevive a refresh e reconexão (PED-1); o hash é simulado |
-| Início | Filtro de disponibilidade sem controle na coluna; continua aceito pela URL (`status`) | O protótipo não desenha o controle |
+| Início | Filtro de disponibilidade sem controle na coluna; continua aceito pela URL (`status`) e, ativo, aparece como etiqueta removível ao lado das abas | O protótipo não desenha o controle; filtro ativo precisa ser visível e desfazível |
 | Início | Rede lista Ethereum, Polygon e Base, não Solana | Redes do escopo ([DECISIONS](DECISIONS.md)) |
 | Início | Filtro escolhido marcado também com ícone de seleção | Estado nunca só por cor (QUALITY §5) |
 | Início | Faixa de preço sem digitação; alças movem em passos de 0,001 ETH | O protótipo desenha um controle deslizante; a precisão de 18 casas segue no fio e no cálculo |

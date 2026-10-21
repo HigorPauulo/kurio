@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import type { JSX, ReactNode } from "react";
+import { useRef, type JSX, type ReactNode } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
 type AuthDialogProps = {
@@ -16,10 +16,14 @@ const SOCIAL =
 
 export function AuthDialog({ mode, open, onClose, description, children }: AuthDialogProps): JSX.Element {
   const isLogin = mode === "login";
+  const contentRef = useRef<HTMLDivElement>(null);
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent className="gap-6 px-6 pt-10 pb-12 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:border-b-0 max-sm:bg-background sm:max-w-125 sm:px-20">
+      <DialogContent
+        ref={contentRef}
+        initialFocus={(interaction) => (interaction === "touch" ? true : (contentRef.current?.querySelector("input") ?? true))}
+        className="gap-6 px-6 pt-10 pb-12 max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:border-b-0 max-sm:bg-background sm:max-w-125 sm:px-20">
         <p aria-hidden="true" className="pt-10 pb-6 text-center text-3xl font-bold tracking-brand sm:hidden">
           KURIO
         </p>
