@@ -54,7 +54,7 @@ function RootLayout() {
 
 function NotFound() {
   return (
-    <main className="mx-auto flex w-full max-w-300 flex-col items-start gap-4 px-4 pt-16">
+    <main className="mx-auto flex w-full max-w-300 flex-col items-start gap-4 px-page pt-16">
       <h1 className="text-2xl font-bold">Página não encontrada</h1>
       <p className="text-text-secondary">O endereço acessado não existe no Kurio.</p>
       <Link to="/" className={buttonVariants()}>

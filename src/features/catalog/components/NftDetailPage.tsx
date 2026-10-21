@@ -571,7 +571,7 @@ function CollectionRail({ nftId, collectionId }: { nftId: string; collectionId: 
 
 function NftDetailSkeleton(): JSX.Element {
   return (
-    <main aria-busy="true" className="mx-auto grid w-full max-w-300 gap-8 px-4 pt-14 md:grid-cols-2 lg:grid-cols-[1fr_33rem]">
+    <main aria-busy="true" className="mx-auto grid w-full max-w-300 gap-8 px-page pt-14 md:grid-cols-2 lg:grid-cols-[1fr_33rem]">
       <p className="sr-only">Carregando o NFT...</p>
       <div className="bg-surface-card p-4">
         <div className="skeleton aspect-square w-full rounded-3xl" />
@@ -592,7 +592,7 @@ export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchas
   const edition = pickEdition(nft, editionId);
 
   return (
-    <main className="mx-auto flex w-full max-w-300 flex-col gap-16 px-4 pt-6 lg:gap-24 lg:pt-8">
+    <main className="mx-auto flex w-full max-w-300 flex-col gap-16 px-page pt-6 lg:gap-24 lg:pt-8">
       <div className="flex flex-col gap-4">
         <nav aria-label="Trilha" className="hidden text-sm font-bold md:block">
           <ol className="flex flex-wrap gap-1">
@@ -614,11 +614,11 @@ export function NftDetailPage({ nftId, editionId, onEditionChange, renderPurchas
           </ol>
         </nav>
         <div className="grid md:grid-cols-2 md:gap-8 lg:grid-cols-[1fr_33rem]">
-          <div className="flex flex-col gap-2 max-md:-mx-4 max-md:-mt-6 max-md:bg-linear-to-br max-md:from-surface-card max-md:to-surface-raised max-md:px-7 max-md:pt-6 max-md:pb-14 md:self-start">
+          <div className="flex flex-col gap-2 max-md:-mx-6 max-md:-mt-6 max-md:bg-linear-to-br max-md:from-surface-card max-md:to-surface-raised max-md:px-7 max-md:pt-6 max-md:pb-14 md:self-start">
             <MobileTopBar nftId={nft.id} />
             <Gallery nft={nft} />
           </div>
-          <div className="flex min-w-0 flex-col gap-5 max-md:relative max-md:-mx-4 max-md:-mt-8 max-md:rounded-t-[1.9375rem] max-md:bg-surface-card max-md:px-6 max-md:pt-8 max-md:pb-6">
+          <div className="flex min-w-0 flex-col gap-5 max-md:relative max-md:-mx-6 max-md:-mt-8 max-md:rounded-t-[1.9375rem] max-md:bg-surface-card max-md:px-6 max-md:pt-8 max-md:pb-6">
             <div className="flex flex-col gap-3 md:border-b md:border-border-strong md:pb-4">
               <div className="flex items-center justify-between gap-3">
                 <h1 className="text-xl font-bold md:text-2xl lg:text-3xl">{nft.name}</h1>

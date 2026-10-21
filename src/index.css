@@ -153,6 +153,14 @@
     visibility: visible;
 }
 
+@utility px-page {
+    padding-inline: 1.5rem;
+
+    @media (width >= 48rem) {
+        padding-inline: 1rem;
+    }
+}
+
 @utility skeleton {
     background-color: var(--color-surface-raised);
     background-image: linear-gradient(

@@ -92,7 +92,7 @@ function Newsletter(): JSX.Element {
 
 export function Footer(): JSX.Element {
   return (
-    <footer className="mx-auto mt-24 w-full max-w-300 px-4">
+    <footer className="mx-auto mt-24 w-full max-w-300 px-page">
       <div className="grid grid-cols-1 gap-8 bg-surface-card p-8 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.35fr] lg:gap-0">
         {FEATURES.map((feature) => (
           <div key={feature.initial} className="flex flex-col gap-3 lg:border-r lg:border-primary lg:px-4">

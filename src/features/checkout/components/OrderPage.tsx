@@ -32,7 +32,7 @@ function shortHash(hash: string): string {
 }
 
 const CARD = "relative mx-auto flex w-full max-w-145 flex-col border-b-10 border-primary bg-surface-card";
-const SCREEN = "flex min-h-dvh w-full items-center justify-center px-4 py-10";
+const SCREEN = "flex min-h-dvh w-full items-center justify-center px-page py-10";
 
 function CloseButton(): JSX.Element {
   return (

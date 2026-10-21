@@ -339,7 +339,7 @@ function CartSkeleton(): JSX.Element {
 
 export function CartPage({ owner }: { owner: string | null }): JSX.Element {
   return (
-    <main className="mx-auto flex w-full max-w-300 flex-col gap-6 px-4 pt-6 lg:pt-8">
+    <main className="mx-auto flex w-full max-w-300 flex-col gap-6 px-page pt-6 lg:pt-8">
       <nav aria-label="Trilha" className="hidden text-sm font-bold md:block">
         <ol className="flex flex-wrap gap-1">
           <li>

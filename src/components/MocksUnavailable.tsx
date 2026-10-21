@@ -2,7 +2,7 @@ import type { JSX } from "react";
 
 export function MocksUnavailable(): JSX.Element {
   return (
-    <main className="mx-auto flex w-full max-w-300 flex-col items-start gap-4 px-4 pt-16">
+    <main className="mx-auto flex w-full max-w-300 flex-col items-start gap-4 px-page pt-16">
       <h1 className="text-2xl font-bold">
         Não foi possível iniciar a demonstração
       </h1>

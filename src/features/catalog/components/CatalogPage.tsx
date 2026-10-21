@@ -314,7 +314,7 @@ export function CatalogPage({ search, onSearchChange }: CatalogPageProps): JSX.E
   const searchBox = <SearchBox value={search.q} onSearchChange={onSearchChange} />;
 
   return (
-    <main className="mx-auto flex w-full max-w-300 flex-col gap-6 px-4 pt-6 md:gap-24 md:pt-8">
+    <main className="mx-auto flex w-full max-w-300 flex-col gap-6 px-page pt-6 md:gap-24 md:pt-8">
       {isCompact && (
         <div className="flex items-center gap-3">
           {searchBox}

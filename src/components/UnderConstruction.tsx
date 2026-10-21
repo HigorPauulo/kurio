@@ -95,7 +95,7 @@ export function UnderConstruction({ from }: { from: string | undefined }): JSX.E
   const progress = progressFor(key || "kurio");
 
   return (
-    <main className="mx-auto grid w-full max-w-300 items-center gap-12 overflow-x-clip px-4 pt-10 pb-6 md:grid-cols-[1fr_minmax(0,22.5rem)] md:pt-16 lg:gap-20">
+    <main className="mx-auto grid w-full max-w-300 items-center gap-12 overflow-x-clip px-page pt-10 pb-6 md:grid-cols-[1fr_minmax(0,22.5rem)] md:pt-16 lg:gap-20">
       <div className="flex flex-col items-start gap-6">
         <p className="flex items-center gap-2 overflow-hidden rounded-md bg-[repeating-linear-gradient(135deg,var(--color-primary-base)_0_12px,var(--color-ink)_12px_24px)] p-1">
           <span className="rounded-sm bg-ink px-3 py-1 text-xs font-bold tracking-brand text-text-accent uppercase">
